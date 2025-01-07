@@ -1,8 +1,8 @@
 ---
-title: Comparing Priority Queue in Python and in CPP
-last_modified_at: 
+title: "Comparing Priority Queue in Python and in CPP"
+date: 2024-01-07T15:41:30-04:00
 categories:
-  - Blog
+  - blog
 tags:
   - Algorithm
   - Data
