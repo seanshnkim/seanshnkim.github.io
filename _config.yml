@@ -76,7 +76,6 @@ author:
 
 footer:
   links:
-      url: "https://"
       url: "https://twitter.com/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"
