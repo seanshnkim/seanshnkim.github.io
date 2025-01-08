@@ -17,7 +17,7 @@ title: Sean Kim's Website
 email:
 description: >- # this means to ignore newlines until "baseurl:"
   Sean Kim's Website
-github_username: username
+github_username: seanshnkim
 minimal_mistakes_skin: default
 search: true
 
@@ -76,11 +76,7 @@ author:
 
 footer:
   links:
-    - label: "Website"
-      icon: "fas fa-fw fa-link"
       url: "https://"
-    - label: "Twitter"
-      icon: "fab fa-fw fa-twitter-square"
       url: "https://twitter.com/"
     - label: "GitHub"
       icon: "fab fa-fw fa-github"

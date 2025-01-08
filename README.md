@@ -1,27 +1,6 @@
-# Minimal Mistakes remote theme starter
+# Sean's Website
+AI Engineer with experience in computer vision and deep learning. Led data processing team at RebuilderAI, training AI models for 3D asset search systems. Contributed to image retrieval system development as research intern at POTECH Institute of AI, focusing on model latency reduction through pruning and quantization.
 
-Click [**Use this template**](https://github.com/mmistakes/mm-github-pages-starter/generate) button above for the quickest method of getting started with the [Minimal Mistakes Jekyll theme](https://github.com/mmistakes/minimal-mistakes).
+Expanded expertise beyond ML/AI to data engineering (Kubernetes, Apache Spark, Airflow), data analytics (SQL, scikit-learn), and cloud technologies (AWS).
 
-Contains basic configuration to get you a site with:
-
-- Sample posts.
-- Sample top navigation.
-- Sample author sidebar with social links.
-- Sample footer links.
-- Paginated home page.
-- Archive pages for posts grouped by year, category, and tag.
-- Sample about page.
-- Sample 404 page.
-- Site wide search.
-
-Replace sample content with your own and [configure as necessary](https://mmistakes.github.io/minimal-mistakes/docs/configuration/).
-
----
-
-## Troubleshooting
-
-If you have a question about using Jekyll, start a discussion on the [Jekyll Forum](https://talk.jekyllrb.com/) or [StackOverflow](https://stackoverflow.com/questions/tagged/jekyll). Other resources:
-
-- [Ruby 101](https://jekyllrb.com/docs/ruby-101/)
-- [Setting up a Jekyll site with GitHub Pages](https://jekyllrb.com/docs/github-pages/)
-- [Configuring GitHub Metadata](https://github.com/jekyll/github-metadata/blob/master/docs/configuration.md#configuration) to work properly when developing locally and avoid `No GitHub API authentication could be found. Some fields may be missing or have incorrect data.` warnings.
+Currently pursuing Master's in Computer Engineering at NYU, specializing in AI/ML and embedded systems. Research interests include embedded systems, IoT devices, and efficient ML models on microcontrollers (tinyML).
