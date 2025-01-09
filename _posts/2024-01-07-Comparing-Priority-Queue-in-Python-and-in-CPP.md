@@ -156,7 +156,8 @@ int main() {
 | `heapq.heappush(hq, n)` | `hq.push(n);`                                       |
 | `n = heapq.heappop(hq)` | `int n = hq.top(); hq.pop();`                       |
 
-For the sample code, here is the problem:
+### Reference to sample code
+The sample code is from:
 
 > There are two sorted piles of number cards. If the number of cards in each pile is A and B, then it usually takes A+B comparisons to merge the two piles into one. For example, 50 comparisons are needed to merge a pile of 20 number cards and a pile of 30 number cards. 
 > 
