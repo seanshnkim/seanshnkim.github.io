@@ -3,3 +3,5 @@ _site
 .jekyll-metadata
 Gemfile.lock
 archive
+_posts/.obsidian
+_posts/Templates_post

@@ -1,3 +1,12 @@
+---
+title: "Sort in Python and C++"
+date: 2025-01-09T12:26:20-04:00
+categories:
+  - Algorithm
+tags:
+  - sort
+---
+
 ## Sort in Python
 
 ### 1. In-place method

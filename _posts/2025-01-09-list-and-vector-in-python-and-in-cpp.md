@@ -1,3 +1,13 @@
+---
+title: "List and vector in Python and in C++"
+date: 2025-01-09T12:43:20-04:00
+categories:
+  - Algorithm
+tags:
+  - list
+  - vector
+---
+
 In Python, initializing a list is simple:
 
 ```python

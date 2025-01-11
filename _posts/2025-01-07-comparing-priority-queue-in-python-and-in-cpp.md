@@ -4,10 +4,7 @@ date: 2024-01-07T15:41:30-04:00
 categories:
   - Algorithm
 tags:
-  - Algorithm
-  - Data Structure
-  - Python
-  - C++
+  - priority queue
 ---
 
 ## Priority Queue in Python

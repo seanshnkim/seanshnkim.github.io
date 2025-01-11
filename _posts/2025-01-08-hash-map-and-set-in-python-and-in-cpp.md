@@ -1,3 +1,11 @@
+---
+title: "Hash map and set in Python and in C++"
+date: 2025-01-08T12:30:20-04:00
+categories:
+  - Algorithm
+tags:
+  - hash map
+---
 
 ## Hash map in Python
 
