@@ -7,6 +7,7 @@ search: false
 
 @import "minimal-mistakes/skins/{{ site.minimal_mistakes_skin | default: 'default' }}";
 @import "minimal-mistakes";
+@import "syntax"; // your custom syntax highlighting styles
 
 .page__content {
   p,
