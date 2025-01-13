@@ -34,32 +34,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Install ruby-build
-        run: |
-          git clone https://github.com/rbenv/ruby-build.git
-          cd ruby-build
-          sudo ./install.sh
-      - name: Install Ruby
-        run: |
-          sudo ruby-build 3.1.4 /opt/hostedtoolcache/Ruby/3.1.4/x64
-          sudo touch /opt/hostedtoolcache/Ruby/3.1.4/x64.complete
-      - name: Update PATH
-        run: echo "/opt/hostedtoolcache/Ruby/3.1.4/x64/bin" >> $GITHUB_PATH
-      - name: Verify Ruby installation
-        run: ruby --version
-      # - name: Setup Ruby
-      #   uses: ruby/setup-ruby@8575951200e472d5f2d95c625da0c7bec8217c42 # v1.161.0
-      #   with:
-      #     ruby-version: '3.1' # Not needed with a .ruby-version file
-      #     bundler-cache: true # runs 'bundle install' and caches installed gems automatically
-      #     cache-version: 0 # Increment this number if you need to re-download cached gems
+      # - name: Install ruby-build
+      #   run: |
+      #     git clone https://github.com/rbenv/ruby-build.git
+      #     cd ruby-build
+      #     sudo ./install.sh
+      # - name: Install Ruby
+      #   run: |
+      #     sudo ruby-build 3.1.4 /opt/hostedtoolcache/Ruby/3.1.4/x64
+      #     sudo touch /opt/hostedtoolcache/Ruby/3.1.4/x64.complete
+      # - name: Update PATH
+      #   run: echo "/opt/hostedtoolcache/Ruby/3.1.4/x64/bin" >> $GITHUB_PATH
+      # - name: Verify Ruby installation
+      #   run: ruby --version
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1 # ruby/setup-ruby@8575951200e472d5f2d95c625da0c7bec8217c42 # v1.161.0
+        with:
+          ruby-version: '3.1' # Not needed with a .ruby-version file
+          bundler-cache: true # runs 'bundle install' and caches installed gems automatically
+          cache-version: 0 # Increment this number if you need to re-download cached gems
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v5
-      - name: Install dependencies
-        run: |
-          bundle config path vendor/bundle
-          bundle install --jobs 4 --retry 3
+      # - name: Install dependencies
+      #   run: |
+      #     bundle config path vendor/bundle
+      #     bundle install --jobs 4 --retry 3
       - name: Build with Jekyll
         # Outputs to the './_site' directory by default
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"

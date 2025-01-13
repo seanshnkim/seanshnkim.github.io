@@ -3,7 +3,14 @@ title: DFS (Depth First Search) and Recursion
 date: 2025-01-10T12:35
 tags:
 ---
-## Find max depth in binary tree
+
+# DFS is recursion
+
+DFS(Depth First Search) is a recursive algorithm.
+It repeats the same search procedure down through child nodes but increasing the depth by one.
+To get a better grasp of the concept, let's dive into code right away.
+
+## 1. Find max depth in binary tree
 
 1. Base condition
 2. Recursion = relationship
@@ -21,7 +28,7 @@ int maxDepth(TreeNode* root) {
 ```
 
 
-## Balanced binary tree
+## 2. Balanced binary tree
 
 Given a binary tree, determine if it is a height-balanced tree (a binary tree in which the depth of the two subtrees of every node never differs by more than one).
 
@@ -89,7 +96,7 @@ int getHeight(TreeNode* node) {
 ```
 
 
-## Minimum depth of binary tree
+## 3. Minimum depth of binary tree
 
 1. Analyze given condition: if the child node is NULL (no node), it does not count. Only a leaf node has valid depth value.
 2. Used a function parameter to pass `depth`
@@ -128,7 +135,7 @@ In this case, every possible condition can be broken down into four if-statement
 | NULL      | not NULL   | 1 + depth(right)     |
 | NULL      | NULL       | 1                    |
 
-This is a code without additional parameter:
+This is a code without an additional parameter:
 
 ```cpp
 int minDepth(TreeNode* root) {
