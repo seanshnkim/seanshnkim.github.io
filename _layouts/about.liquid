@@ -68,7 +68,6 @@ layout: default
     {% if page.social %}
       <div class="social">
         <div class="contact-icons">{% include social.liquid %}</div>
-
         <div class="contact-note">{{ site.contact_note }}</div>
       </div>
     {% endif %}
@@ -78,3 +77,12 @@ layout: default
     {% endif %}
   </article>
 </div>
+
+<style>
+  .social .contact-icons {
+    font-size: 2rem; /* Adjusts the size of the icons */
+  }
+  .social .contact-icons a {
+    margin-right: 10px;
+  }
+</style>

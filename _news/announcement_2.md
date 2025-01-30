@@ -1,7 +1,7 @@
 ---
 layout: post
-title: A long announcement with details
-date: 2015-11-07 16:11:00-0400
+title: Made final round to Contech Alliannce Hackathon! :sparkles: :smile:
+date: 2025-01-29 23:23:17-0400
 inline: false
 related_posts: false
 ---
