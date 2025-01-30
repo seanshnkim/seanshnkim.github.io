@@ -553,7 +553,8 @@ footer.sticky-bottom {
   padding-bottom: 3rem;
 
   h1 {
-    color: var(--global-theme-color);
+    // color: var(--global-theme-color);
+    color: var(--grey-color-dark);
     font-size: 5rem;
   }
 }
