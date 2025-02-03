@@ -9,12 +9,12 @@ ninja.data = [{
     handler: () => {
       window.location.href = "/";
     },
-  },{id: "nav-blog",
-          title: "blog",
+  },{id: "nav-post",
+          title: "post",
           description: "",
           section: "Navigation",
           handler: () => {
-            window.location.href = "/blog/";
+            window.location.href = "/post/index.html";
           },
         },{id: "nav-projects",
           title: "projects",
@@ -375,11 +375,11 @@ ninja.data = [{
           window.location.href = "/blog/2015/formatting-and-links/";
         
       },
-    },{id: "news-started-the-first-semester-at-nyu-tandon-school-of-engineering",
-          title: 'Started the first semester at NYU Tandon School of Engineering!',
+    },{id: "news-began-the-first-semester-at-nyu-tandon-school-of-engineering",
+          title: 'Began the first semester at NYU Tandon School of Engineering.',
           description: "",
-          section: "News",},{id: "news-",
-          title: '',
+          section: "News",},{id: "news-made-final-round-to-contech-alliannce-hackathon",
+          title: 'Made final round to Contech Alliannce Hackathon!',
           description: "",
           section: "News",handler: () => {
               window.location.href = "/news/announcement_2/";
