@@ -87,8 +87,8 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: Sean K. Tech Blog # blog_name will be displayed in your blog page
-blog_description: Projects, tech studies, personal thoughts
+blog_name: Sean Kim's Blog # blog_name will be displayed in your blog page
+# blog_description: Projects, tech studies, personal thoughts
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
 

@@ -5,4 +5,4 @@ inline: true
 related_posts: false
 ---
 
-Started the first semester at NYU Tandon School of Engineering!
+Began the first semester at NYU Tandon School of Engineering.

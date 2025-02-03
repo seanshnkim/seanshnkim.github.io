@@ -2,7 +2,7 @@
 layout: about
 title: about
 permalink: /
-subtitle: <a href='#'>Affiliations</a>. Address. Contacts. Motto. Etc.
+subtitle: # <a href='#'>Affiliations</a>. Address. Contacts. Motto. Etc.
 
 profile:
   align: right
@@ -18,8 +18,17 @@ selected_papers: false # includes a list of papers marked as "selected={true}"
 social: true # includes social icons at the bottom of the page
 ---
 
-Write your biography here. Tell the world about yourself. Link to your favorite [subreddit](http://reddit.com). You can put a picture in, too. The code is already in, just name your picture `prof_pic.jpg` and put it in the `img/` folder.
+Hello, and welcome to my new blog!
 
-Put your address / P.O. box / other info right below your picture. You can also disable any of these elements by editing `profile` property of the YAML header of your `_pages/about.md`. Edit `_bibliography/papers.bib` and Jekyll will render your [publications page](/al-folio/publications/) automatically.
+### Why I started this blog
+In the fall of 2024 I began my master's program in the US. Here, I felt the need to showcase myself. A resume is not enough, and Github only displays code. So you will read about my thoughts and motivations deep inside the code I have written, as a student aspiring to be an engineer.
 
-Link to your social media connections, too. This theme is set up to use [Font Awesome icons](https://fontawesome.com/) and [Academicons](https://jpswalsh.github.io/academicons/), like the ones below. Add your Facebook, Twitter, LinkedIn, Google Scholar, or just disable all of them.
+Another reason: writing is the most effective method of learning. I can refine and hone and the concepts I learned through writing. The act of committing to write also becomes a powerful motivation to start studying a new topic.
+
+Last but not least, writing is fun. It is very challenging, yet it is the easiest way for me to dive into a joyful state of 'flow'.
+
+### Topics I will cover
+I will mainly focus on Embedded Systems, IoT, and FreeRTOS. These are the areas I find most interesting (and also relevant to jobs I am seeking - embedded software engineer!). However, I also plan to write about ML/AI, which were my specialties, and the courses I'm taking at school.
+
+### Contacts
+I check the blog at least once a week. But for quicker replies, please email me or send me a Linkedin message.
