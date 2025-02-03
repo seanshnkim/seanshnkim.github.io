@@ -11,14 +11,10 @@
             "id": "d226b99ced52a56e",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "2024-01-26-geojson-map.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "2024-01-26-geojson-map"
+              "title": "New tab"
             }
           }
         ]
@@ -40,7 +36,8 @@
             "state": {
               "type": "file-explorer",
               "state": {
-                "sortOrder": "alphabetical"
+                "sortOrder": "alphabetical",
+                "autoReveal": false
               },
               "icon": "lucide-folder-closed",
               "title": "Files"
@@ -77,7 +74,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 300
+    "width": 245.5
   },
   "right": {
     "id": "7aff53a50fbb9e21",
@@ -159,5 +156,8 @@
     }
   },
   "active": "d226b99ced52a56e",
-  "lastOpenFiles": []
+  "lastOpenFiles": [
+    "2024-05-01-tabs.md",
+    "2024-01-26-geojson-map.md"
+  ]
 }
