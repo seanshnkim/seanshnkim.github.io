@@ -1,4 +1,3 @@
-
 ## Solution 1: Priority Ceiling Inheritance
 
 Fortunately, FreeRTOS provides a mechanism called priority inheritance to mitigate the effects of priority inversion.
@@ -19,14 +18,14 @@ SemaphoreHandle_t xMutex;
 // Task A (High priority)
 void taskA(void *pvParameters) {
     printf("Task A (High priority) started\n");
-    
+
     // Attempt to take the mutex (wait indefinitely)
     if (xSemaphoreTake(xMutex, portMAX_DELAY) == pdTRUE) {
         // Simulate critical section
         printf("Task A acquired the mutex and is working on the shared resource\n");
         vTaskDelay(500 / portTICK_PERIOD_MS);  // Simulate work (e.g., processing)
         printf("Task A finished its work and released the mutex\n");
-        
+
         // Release the mutex
         xSemaphoreGive(xMutex);
     }
@@ -38,13 +37,13 @@ void taskA(void *pvParameters) {
 // Task B (Medium priority)
 void taskB(void *pvParameters) {
     printf("Task B (Medium priority) started\n");
-    
+
     // Simulate some work, but do not try to acquire the mutex
     for (int i = 0; i < 10; i++) {
         printf("Task B is doing some non-critical work\n");
         vTaskDelay(300 / portTICK_PERIOD_MS);  // Simulate work
     }
-    
+
     // Task B is done
     vTaskDelete(NULL);
 }
@@ -52,16 +51,16 @@ void taskB(void *pvParameters) {
 // Task C (Low priority)
 void taskC(void *pvParameters) {
     printf("Task C (Low priority) started\n");
-    
+
 
     xSemaphoreTake(xMutex, portMAX_DELAY);  // Take the mutex
         // Simulate holding the mutex for a long time
     printf("Task C is holding the mutex\n");
     // Simulate work while holding the mutex
     vTaskDelay(2000 / portTICK_PERIOD_MS);  // Simulate long critical section (holding mutex)
-    
+
     printf("Task C finished its work and is releasing the mutex\n");
-    
+
     // Release the mutex
     xSemaphoreGive(xMutex);
 
@@ -98,9 +97,4 @@ It is important to note that FreeRTOS implemented priority inheritance in mutext
 
 But priority inheritance cannot cure priority inversion completely. In the following cases, priority inversion can still occur.
 
-
 ## Solution 2: Priority ceiling protocol
-
-
-
-
