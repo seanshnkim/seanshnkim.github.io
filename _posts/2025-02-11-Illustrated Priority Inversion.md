@@ -1,3 +1,16 @@
+---
+layout: post
+title: Illustrated Priority Inversion
+date: 2025-02-11 12:38:07
+description: 
+tags:
+  - priority
+  - inversion
+categories: RTOS
+thumbnail: _posts/attachments/task_table.png
+---
+
+
 ## What is Priority Inversion?
 
 The definition of priority inversion is well-explained in Wikipedia:
@@ -69,6 +82,27 @@ Afterwards, Mary comes in. Mary came home to clean the house, because she has a 
 Now, Harry is frustrated. His task was the most urgent one, but turns out that Mary is now in the house instead!
 
 ![[task_table.png]]
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    {% include figure.liquid loading="eager" path="_posts/attachments/d6.jpg" class="img-fluid rounded z-depth-1" %}
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    {% include figure.liquid loading="eager" path="_posts/attachments/7.jpg" class="img-fluid rounded z-depth-1" %}
+  </div>
+</div>
+<div class="caption">
+  A simple, elegant caption looks good between image rows.
+</div>
+
+<div class="row mt-3">
+  <div class="col-sm mt-3 mt-md-0">
+    {% include figure.liquid loading="eager" path="_posts/attachments/8.jpg" class="img-fluid rounded z-depth-1" zoomable=true %}
+  </div>
+  <div class="col-sm mt-3 mt-md-0">
+    {% include figure.liquid loading="eager" path="_posts/attachments/10.jpg" class="img-fluid rounded z-depth-1" zoomable=true %}
+  </div>
+</div>
 
 ## Why does priority inversion matter in RTOS?
 

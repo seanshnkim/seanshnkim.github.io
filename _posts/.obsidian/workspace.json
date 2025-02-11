@@ -27,12 +27,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "2025-02-13-Semaphore vs. Mutex.md",
+                "file": "2025-02-11-Illustrated Priority Inversion.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2025-02-13-Semaphore vs. Mutex"
+              "title": "2025-02-11-Illustrated Priority Inversion"
             }
           },
           {
@@ -191,12 +191,15 @@
   },
   "active": "988380920b43d629",
   "lastOpenFiles": [
+    "2024-12-04-photo-gallery.md",
+    "attachments/istockphoto-973619246-612x612.jpg",
+    "attachments/house.png",
     "2025-02-11-Illustrated Priority Inversion.md",
+    "2025-02-13-Semaphore vs. Mutex.md",
     "2025-02-12-Solutions for Priority Inversion - Priority Ceiling vs. Priority Inheritance.md",
     "attachments/Pasted Image 20250206100234_495.png",
     "Untitled.md",
     "Untitled 1.md",
-    "2025-02-13-Semaphore vs. Mutex.md",
     "2025-02-04_12-16-06.png",
     "2025-02-04_12-20-04.png",
     "2025-02-04_12-21-22.png",
@@ -205,13 +208,11 @@
     "Pasted Image 20250206100234_495.png",
     "Excalidraw/Drawing 2025-02-05 21.06.11.excalidraw.md",
     "attachments/task_table.png",
-    "attachments/noname.png",
     "Excalidraw/Drawing 2025-02-05 21.06.11_2.excalidraw",
     "Excalidraw/Drawing 2025-02-05 21.06.11_2.excalidraw.md",
     "Excalidraw/test.excalidraw",
     "Excalidraw/test.md",
     "Excalidraw/Drawing 2025-02-07 10.40.28.excalidraw.md",
-    "attachments/task_table1.png",
     "attachments",
     "Excalidraw",
     "SAB.md",
