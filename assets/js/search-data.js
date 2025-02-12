@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-illustrated-priority-inversion",
+        },{id: "post-solutions-for-priority-inversion",
+      
+        title: "Solutions for Priority Inversion",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/Solutions-for-Priority-Inversion-Priority-Ceiling-vs.-Priority-Inheritance/";
+        
+      },
+    },{id: "post-illustrated-priority-inversion",
       
         title: "Illustrated Priority Inversion",
       
