@@ -53,6 +53,7 @@ footer_fixed: true
 search_enabled: true
 socials_in_search: true
 bib_search: true
+pygments: true # enable code syntax highlighting
 
 # Dimensions
 max_width: 930px
@@ -177,7 +178,7 @@ kramdown:
     span:
       line_numbers: false
     block:
-      line_numbers: false
+      line_numbers: true
       start_line: 1
 
 # Includes & excludes

@@ -1,3 +1,16 @@
+---
+layout: post
+title: Solutions for Priority Inversion
+date: 2025-02-12 15:03:45
+description:
+tags:
+  - priority-inversion
+  - priority-ceiling
+  - priority-inheritance
+categories: RTOS
+# thumbnail: assets/post-attachments/task_table.png
+---
+
 ## Solution 1: Priority Ceiling Inheritance
 
 Fortunately, FreeRTOS provides a mechanism called priority inheritance to mitigate the effects of priority inversion.

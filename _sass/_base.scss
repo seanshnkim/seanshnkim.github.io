@@ -10,7 +10,15 @@ h2,
 h3,
 h4,
 h5,
-h6,
+h6 {
+  margin-top: 2em; // Adjust this value to reduce space above headings
+  // margin-bottom: 0.5em; // Adjust this value to reduce space below headings
+}
+
+p {
+  margin-bottom: 1em; // Adjust this value to reduce space below paragraphs
+}
+
 em,
 div,
 li,
@@ -871,7 +879,7 @@ footer.sticky-bottom {
   }
 }
 
-// Rouge Color Customization
+Rouge Color Customization
 figure.highlight {
   margin: 0 0 1rem;
 }
@@ -891,7 +899,7 @@ pre {
   }
 }
 
-code {
+  code {
   color: var(--global-theme-color);
   background-color: var(--global-code-bg-color);
   border-radius: 3px;
@@ -1342,4 +1350,29 @@ ninja-keys::part(ninja-input-wrapper) {
 ::highlight(search) {
   background-color: var(--global-theme-color);
   color: var(--global-text-color);
+}
+
+// For center-aligned images
+.center-image {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+img {
+  margin-top: 20px;
+  margin-bottom: 20px;
+}
+
+.image-row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 0.5em; /* Adjust this value to control space between images */
+  flex-wrap: wrap; /* This allows the images to wrap on smaller screens */
+}
+
+.image-row figure {
+  flex: 0 1 auto;
+  margin: 0.5em;
 }
