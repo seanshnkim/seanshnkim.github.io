@@ -7,8 +7,8 @@ tags:
   - priority-inversion
   - priority-ceiling
   - priority-inheritance
+  - task
 categories: RTOS
-# thumbnail: assets/post-attachments/task_table.png
 ---
 
 ## Solution 1: Priority Ceiling Inheritance

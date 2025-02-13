@@ -12,6 +12,7 @@ node_modules/
 vendor
 .idea
 .unused
-_posts/.obsidian
+_posts/.obsidian/*
+_posts/attachments/*
 .obsidian
 _posts/Excalidraw

@@ -8,21 +8,19 @@
         "type": "tabs",
         "children": [
           {
-            "id": "10e97120a4e834ff",
+            "id": "988380920b43d629",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "excalidraw",
               "state": {
-                "file": "Illustrated Priority Inversion.md",
-                "mode": "source",
-                "source": false
+                "file": "Excalidraw/Semaphores.excalidraw.md"
               },
-              "icon": "lucide-file",
-              "title": "Illustrated Priority Inversion"
+              "icon": "excalidraw-icon",
+              "title": "Semaphores.excalidraw"
             }
           },
           {
-            "id": "988380920b43d629",
+            "id": "3fef9080235dc6dd",
             "type": "leaf",
             "state": {
               "type": "markdown",
@@ -36,21 +34,19 @@
             }
           },
           {
-            "id": "3fef9080235dc6dd",
+            "id": "962009a11eb7fdd9",
             "type": "leaf",
             "state": {
-              "type": "markdown",
+              "type": "image",
               "state": {
-                "file": "2025-02-12-Solutions for Priority Inversion - Priority Ceiling vs. Priority Inheritance.md",
-                "mode": "source",
-                "source": false
+                "file": "attachments/Pasted Image 20250213001532_639.png"
               },
-              "icon": "lucide-file",
-              "title": "2025-02-12-Solutions for Priority Inversion - Priority Ceiling vs. Priority Inheritance"
+              "icon": "lucide-image",
+              "title": "Pasted Image 20250213001532_639"
             }
           }
         ],
-        "currentTab": 1
+        "currentTab": 2
       }
     ],
     "direction": "vertical"
@@ -107,7 +103,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 283.5
+    "width": 242.5
   },
   "right": {
     "id": "7aff53a50fbb9e21",
@@ -189,26 +185,27 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "988380920b43d629",
+  "active": "ae5e2f48308268b3",
   "lastOpenFiles": [
+    "2025-02-13-Semaphore versus Mutex.md",
+    "2025-02-11-Illustrated Priority Inversion.md",
+    "Excalidraw/Semaphores.excalidraw.md",
+    "Excalidraw/Drawing 2025-02-05 21.06.11.excalidraw.md",
+    "Excalidraw/Drawing 2025-02-05 21.06.11_2.excalidraw",
+    "attachments/Pasted Image 20250213002328_595.png",
+    "attachments/Pasted Image 20250213002239_826.png",
+    "attachments/Pasted Image 20250213002223_014.png",
+    "attachments/Pasted Image 20250213001532_639.png",
+    "attachments/noname.png",
+    "2025-02-12-Solutions for Priority Inversion - Priority Ceiling vs. Priority Inheritance.md",
+    "attachments/binary-semaphore.png",
     "2024-12-04-photo-gallery.md",
     "attachments/istockphoto-973619246-612x612.jpg",
     "attachments/house.png",
-    "2025-02-11-Illustrated Priority Inversion.md",
-    "2025-02-13-Semaphore vs. Mutex.md",
-    "2025-02-12-Solutions for Priority Inversion - Priority Ceiling vs. Priority Inheritance.md",
     "attachments/Pasted Image 20250206100234_495.png",
     "Untitled.md",
     "Untitled 1.md",
     "2025-02-04_12-16-06.png",
-    "2025-02-04_12-20-04.png",
-    "2025-02-04_12-21-22.png",
-    "2025-02-04_12-24-56.png",
-    "2025-02-04_12-29-52.png",
-    "Pasted Image 20250206100234_495.png",
-    "Excalidraw/Drawing 2025-02-05 21.06.11.excalidraw.md",
-    "attachments/task_table.png",
-    "Excalidraw/Drawing 2025-02-05 21.06.11_2.excalidraw",
     "Excalidraw/Drawing 2025-02-05 21.06.11_2.excalidraw.md",
     "Excalidraw/test.excalidraw",
     "Excalidraw/test.md",
