@@ -11,27 +11,30 @@ thumbnail: assets/post-attachments/task_table.png
 
 ## What is Priority Inversion?
 
-The definition of priority inversion is well-explained in Wikipedia:
+According to Wikipedia:
 
-> High priority task is indirectly preempted by a low (or medium) priority task.
+>... High priority task is indirectly preempted by a low (or medium) priority task. [^1]
 
-This should not happen because it is literally a "high priority" task which indicates that it should be executed before all the other lower priority tasks. In other words, priority inversion is a problematic situation and we have to prevent it.
+In RTOS, this should not occur. A "high priority" task indicates it must be executed before all other lower priority tasks. However, surprisingly, such situations can arise despite pre-set priorities. Yes, priority inversion is a **problematic situation** and it must be prevented.
 
-I will first demonstrate the concept with analogy and then with a simple program in C. Lastly, I will discuss solutions to priority inverison.
+In this post, I will:
+
+1. Demonstrate the concept of priority inversion using an analogy for better understanding. 
+2. Guide you through a simple C program to show how priority inversion actually works in code.
 
 ## Real-world Analogy of Priority Inversion
 
-Assume there are three different tasks:
+Imagine there are three different tasks trying to run on a single processor:
 
-- High priority task (i.e. "HP Task")
-- Medium priority task (i.e. "MP Task")
-- Low priority task (i.e. "LP Task")
+- High priority task (HP Task)
+- Medium priority task (MP Task)
+- Low priority task (LP Task)
 
-If there is no problem with a scheduler then HP Task should always be executed first, MP Task next, and at last LP Task.
+In an ideal scenario, the scheduler would always execute these tasks in the right order: HP Task -> MP -> LP Task.
 
-But then there is a "critical section". Critical section is a part of a program or hardware that accesses a shared resource. Only one process (task) is allowed to access the critical section at one time. [Wikipedia: Critical Section](https://en.wikipedia.org/wiki/Critical_section)
+But then the situation gets complicated as a "critical section" is introduced. Critical section is a part of a program or hardware that accesses a shared resource. Only one process (task) is allowed to access the critical section at one time. [^2]
 
-In this example, three different characters represent each task:
+In our analogy, I created three characters each representing a task:
 
 - HP Task = "Harry"
 - MP Task = "Mary"
@@ -39,23 +42,23 @@ In this example, three different characters represent each task:
 
 ### Prerequisites
 
-Before walking through the example, there are some prerequisites to keep in mind:
+Before we continue, keep in mind:
 
-1. Only one person can stay in the house. This is because the processor core cannot accept more than one task.
+1. Only one person can stay in the house at a time. This is because the processor core (in embedded systems) cannot handle more than one task simultaneously.
 
 <figure class="mt-5">
     {% include figure.liquid loading="eager" path="assets/post-attachments/single_thread1.png" class="img-fluid rounded z-depth-1 center-image" width="350px" %}
 </figure>
 
-1. Once a person starts using a pot, it cannot be interrupted or taken by other person until he is done with using it (even if the highest priority task requests using it!)
+2. Once someone starts using the pot (critical section), they cannot be interrupted until they are done, even by a higher priority task.
 
 <figure class="mt-5">
     {% include figure.liquid loading="eager" path="assets/post-attachments/critical_section1.png" class="img-fluid rounded z-depth-1 center-image" width="600px" %}
 </figure>
 
-### 1. LP Task starts first
+### Scenario 1. LP Task starts first
 
-Let's start with Larry. Larry came home in the first place and decided to prepare breakfast for tomorrow. He uses a pot (critical section) in the kitchen. This is the only pot in the kitchen, so unless he is finished no one else can use it. We would assume that making breakfast for tomorrow is not urget, so it is a low priority task.
+Let's start with Larry. Larry enters the house and begins cooking breakfast for tomorrow using the only post in the kitchen. Since making breakfast for tomorrow is not that urgent, it can be considered a low priority task.
 
 <div class="image-row">
   <figure class="mt-3">
@@ -68,15 +71,15 @@ Let's start with Larry. Larry came home in the first place and decided to prepar
 
 ### 2. HP Task "tries to" preempt LP Task
 
-While Larry is cooking her food, Harry comes home (Remember, Harry cannot enter home right away. He would have to wait in front of the door).
+While Larry is cooking her food, Harry arrives home. Remember, Harry cannot enter home instantly. He would have to wait in front of the door.
 
 <figure class="mt-5">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/d3.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
+{% include figure.liquid loading="eager" path="assets/post-attachments/d3.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
 </figure>
 
 ### 3. HP Task is blocked
 
-Because Harry needs to eat lunch before the class, and he was going to make pasta. (Pasta needs a pot to boil it) Harry shouts to the kitchen, "I need to cook!" Obviously Harry's task has higher priority, but he cannot take away Larry's pot. That's why Harry has to wait in front of the house, not being able to start cooking ("**blocked**" state).
+Harry needs to cook pasta for lunch before class, but can't use the pot. Obviously Harry's task has a higher priority, but he cannot do anything. That's why Harry has to wait in front of the house, unable to start cooking ("**blocked**" state).
 
 <figure class="mt-5">
     {% include figure.liquid loading="eager" path="assets/post-attachments/d4.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
@@ -84,7 +87,7 @@ Because Harry needs to eat lunch before the class, and he was going to make past
 
 ### 4. MP Task preempts LP Task
 
-Afterwards, Mary comes in. Mary came home to clean the house, because she has a guest coming in the evening. This task priority is higher than cooking for tomorrow, but less than Harry's. But because she is not using the pot, and because her task has higher priority than Larry's she enters home and kicks out Larry.
+Afterwards, Mary arrives to clean the house for an evening guest. Her task has higher priority than Larry's but lower than Harry's. Since she doesn't need the pot (this is important!), she is able to enter the house directly and kicks out Larry.
 
 <div class="image-row">
   <figure class="mt-3">
@@ -95,15 +98,21 @@ Afterwards, Mary comes in. Mary came home to clean the house, because she has a 
   </figure>
 </div>
 
-Now, Harry is frustrated. His task was the most urgent one, but turns out that Mary is now in the house instead!
+How would Harry feel then? He must be baffled and frustrated! 
+His task is delayed even though it was the most urgent, while a medium-priority task is being executed now.
 
 <figure class="mt-5">
 {% include figure.liquid loading="eager" path="assets/post-attachments/task_table.png" class="img-fluid rounded z-depth-1 center-image" width="700px" %}
 </figure>
 
-## Why does priority inversion matter in RTOS?
+## Why Priority Inversion Matters in RTOS
 
-In RTOS, it is crucial to schedule tasks so that they have a certain limit of deadline. The priority of each task must be carried out in order.
+In RTOS, task scheduling within specific **deadline** is crucial. In fact, the term "**real-time**" itself implies completing tasks within **predetermined** time limits. Because priority inversion can lead to missed deadlines, it must be prevented especially for hard real-time applications.
+
+Keywords:
+- real-time
+- deadline
+- deterministic
 
 ## Demo
 
@@ -154,9 +163,11 @@ In the next post, I will discuss several solutions for priority inversion.
 
 ## References
 
-- https://en.wikipedia.org/wiki/Priority_inversion
 - https://www.embedded.com/how-to-use-priority-inheritance/
 - https://www.foxipex.com/2024/11/08/priority-inversion-and-priority-inheritance-in-freertos/
 - https://www.highintegritysystems.com/downloads/RTOS_Tutorials/Priority_Inversion.pdf
 - https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/02-Queues-mutexes-and-semaphores/04-Mutexes
 - https://www.geeksforgeeks.org/difference-between-priority-inversion-and-priority-inheritance/
+
+[^1]: [Wikipedia: Priority_Inversion](https://en.wikipedia.org/wiki/Priority_inversion)
+[^2]: [Wikipedia: Critical Section](https://en.wikipedia.org/wiki/Critical_section)
