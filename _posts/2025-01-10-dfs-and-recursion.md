@@ -28,11 +28,10 @@ int maxDepth(TreeNode* root) {
 	}
 	int leftDepth = maxDepth(root->left);
 	int rightDepth = maxDepth(root->right);
-	
+
 	return 1 + max(leftDepth, rightDepth);
 }
 ```
-
 
 ## 2. Balanced binary tree
 
@@ -74,8 +73,8 @@ int getHeight(TreeNode* node) {
 }
 ```
 
-
 ### Second solution
+
 First solution is easier to understand, but is slower.
 Second solution uses `-1` as a return value to tell if it is a balanced tree.
 
@@ -100,7 +99,6 @@ int getHeight(TreeNode* node) {
 	return max(left, right) + 1;
 }
 ```
-
 
 ## 3. Minimum depth of binary tree
 

@@ -10,7 +10,9 @@ tags:
   - task
 categories: RTOS
 ---
-In the last post, we discussed priority inversion and 
+
+In the last post, we discussed priority inversion and
+
 ## Solution 1: Priority Ceiling Inheritance
 
 Fortunately, FreeRTOS provides a mechanism called priority inheritance to mitigate the effects of priority inversion.

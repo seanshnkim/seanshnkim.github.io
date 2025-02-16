@@ -6,13 +6,14 @@ description: Bit manipulations and useful techniques
 categories:
   - Data-Structure-and-Algorithms
 ---
+
 ## P1. Single Number (XOR)
 
 - XOR has a property in which:
-	- 0 ^ a = a
-	- a ^ 0 = a
-	- a ^ a = 0
-	- (a ^ b) ^ b = a
+  - 0 ^ a = a
+  - a ^ 0 = a
+  - a ^ a = 0
+  - (a ^ b) ^ b = a
 
 You are given a **non-empty** array of integers `nums`. Every integer appears twice except for one.
 Return the integer that appears only once.
@@ -29,10 +30,10 @@ def singleNumber(self, nums: List[int]) -> int:
 ## P2. Number of One Bits (AND)
 
 This algorithm is also known as Brian Kernighan's algorithm:
+
 - Subtract 1 from a number N, then N-1
 - In N-1, all the bits after the rightmost 1 (including that 1) are flipped
 - So if N AND N-1, then it will clear out (set to 0) the rightmost bits
-
 
 ```python
 def hammingWeight(self, n: int) -> int:
@@ -79,8 +80,8 @@ n-1 = 01111
 - A given number N (in binary form) has at most logN bits that are set to 1.
 - Therefore, time complexity is O(log N).
 
-
 ---
+
 ## P3. Counting Bits
 
 - Given that a, b, c, d and e each represents bits in binary number
@@ -104,7 +105,6 @@ vector<int> countBits(int n) {
 }
 ```
 
-
 ---
 
 ## P4. Reverse Bits
@@ -121,7 +121,6 @@ uint32_t reverseBits(uint32_t n) {
 }
 ```
 
-
 ---
-## P5. Missing Number
 
+## P5. Missing Number

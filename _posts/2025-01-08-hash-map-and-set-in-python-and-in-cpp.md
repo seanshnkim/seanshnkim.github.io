@@ -34,12 +34,15 @@ for i, n in enumerate(nums):
 ## Hash Map in C++
 
 ### 1. header file
+
 ```cpp
 #include <unordered_map>
 ```
 
 ### 2. Define
+
 There needs to be two values:
+
 ```cpp
 unordered_map<int, int> hashMap;
 ```
@@ -51,8 +54,8 @@ You have to pre-define each type of key and pair of the dictionary, unlike dicti
 unordered_map<int, string> hashStrMap;
 ```
 
-
 ### 3. Sample code
+
 ```cpp
 class Solution {
 public:
@@ -73,7 +76,6 @@ public:
 };
 ```
 
-
 ## Map Comparison Table (Python vs. C++)
 
 | Python           | C++                                     |
@@ -82,7 +84,6 @@ public:
 | `hashMap = {}`   | `unordered_map<int, int> hashMap;`      |
 | `hashMap[1] = 3` | `hashMap[1] = 3; myMap.insert({1, 1});` |
 |                  |                                         |
-
 
 ## Set in Python
 
@@ -113,7 +114,6 @@ bool hasDuplicate(vector<int>& nums) {
 	return false;
 }
 ```
-
 
 ## Set Comparison Table (Python vs. C++)
 

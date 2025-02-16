@@ -2,7 +2,7 @@
 layout: post
 title: Semaphore vs. Mutex
 date: 2025-02-12 21:02:37
-description: 
+description:
 tags:
   - semaphore
   - mutex
@@ -35,7 +35,6 @@ SemaphoreHandle_t xSemaphoreCreateBinary( void );
 ```
 
 I strongly recommend you to read through FreeRTOS official document[^1].
-
 
 ### Counting semaphore
 

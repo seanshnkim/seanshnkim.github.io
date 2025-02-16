@@ -6,7 +6,6 @@ description: How to handle array and hash map & set
 categories: Data-Structure-and-Algorithms
 ---
 
-
 ## Group Anagrams
 
 - There are 26 alphabetics in English. By using a vector variable `count = [0]*26`, we can save counts for each letter in (yes, it is technically O(26) ) time complexity of O(1).
@@ -19,11 +18,11 @@ class Solution:
         # time complexity: O(n + 26)
         for c in s:
             alph_cnt[ord(c) - ord('a')] += 1
-            
+
         key = ""
         for i in range(26):
             key += chr(i + ord('a')) * alph_cnt[i]
-        
+
         return key
 
 
@@ -39,13 +38,12 @@ class Solution:
                 keyMap[key] = [s]
             else:
                 keyMap[key].append(s)
-        
+
         for key, listOfStr in keyMap.items():
             res.append(listOfStr)
-        
+
         return res
 ```
-
 
 ## Top K Frequent Elements
 
@@ -102,7 +100,7 @@ public:
 
     vector<string> decode(string s) {
         vector<string> res;
-        
+
         int start = 0;
         while (start < s.size()) {
             int end = start;
@@ -167,7 +165,7 @@ class Solution {
 public:
     int firstUniqChar(string s) {
         unordered_map<char, int> count;
-        
+
         for (char c : s) {
 	        // C++ unordered_map works like defaultdict(int) in Python
             count[c]++;
@@ -193,7 +191,7 @@ public:
     int maxProfit(vector<int>& prices) {
         int profit = 0;
         int sell = prices[0], buy = prices[0];
-        
+
         for (int price : prices) {
             if (price > sell) {
                 sell = price;
@@ -210,8 +208,6 @@ public:
 ```
 
 -> For every for loop, you must update the maximum profit. (I did not in the first try, got wrong)
-
-
 
 Second solution:
 
@@ -235,8 +231,6 @@ public:
     }
 };
 ```
-
-
 
 ```python
 class Solution:
@@ -288,6 +282,7 @@ bool isAnagram(string s, string t) {
 ```
 
 What determines the two strings to be anagrams of each other?
+
 1. If there is a character in string `s`, then the same character must exist in string `t` as well
 2. The count of each character is the same
 
@@ -345,8 +340,7 @@ bool isAnagram(string s, string t) {
 Instead of using a map (unordered_map), it uses a vector. How is this possible?
 It uses ASCII value of each character, and it enables to map a character to an integer.
 
-In the same for loop, it increments and decrements at the same  time.
-
+In the same for loop, it increments and decrements at the same time.
 
 # P2. Two Sum
 
@@ -355,14 +349,13 @@ def twoSum(self, nums: List[int], target: int) -> List[int]:
 	hashDict = {}
 	for i in range(len(nums)):
 		hashDict[nums[i]] = i
-	
+
 	for i in range(len(nums)):
 		n = nums[i]
 		if (target-n) in hashDict and \
 		hashDict[target-n] != i:
 			return [i, hashDict[target-n]]
 ```
-
 
 ```c++
 vector<int> twoSum(vector<int>& nums, int target) {

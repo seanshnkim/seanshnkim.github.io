@@ -9,11 +9,12 @@ tags:
   - sort
 ---
 
-
 ## Sort in Python
 
 ### 1. In-place method
+
 This method sorts a list in-place, which means it modifies the original list directly without returning a new list.
+
 ```python
 listA = [1, 5, 4, 3]
 listA.sort()
@@ -26,7 +27,9 @@ To sort it in descending order, use `reverse` parameter:
 listA = [1, 5, 4, 3]
 listA.sort(reverse=True)
 ```
+
 ### 2. Return a new list
+
 This method creates a new sorted list and does not modify the original list.
 
 ```python
@@ -34,7 +37,9 @@ listA = [1, 5, 4, 3]
 sorted_listA = sorted(listA)
 sorted_rv_listA = sorted(listA, reverse=True)
 ```
+
 ### 3. Key parameter
+
 How to sort a lists of pairs? Use `key` paramter.
 
 ```python
@@ -45,12 +50,12 @@ sorted_listOfPairs = sorted(listOfPairs, key=lambda x: x[0])
 sorted_listOfPairs = sorted(listOfPairs, key=lambda x: x[1])
 ```
 
-
-
 ## Sort in C++
 
 ### 1. Header file
+
 `sort` is in \<algorithm\> header file.
+
 ```cpp
 #include <algorithm>
 
@@ -69,6 +74,7 @@ sort(v.begin(), v.end());
 As the same as Python, it sorts a list in ascending order (`{1, 3, 4, 5}`).
 
 ### 3. Return a new vector
+
 If you want to return a new sorted vector without modifying the original one, create a new function, pass the original vector directly (not reference) and sort it inside:
 
 ```cpp
@@ -89,8 +95,8 @@ int main() {
 }
 ```
 
-
 ### 4. Comparator
+
 C++ sort has `comparator` parameter. `comparator` is optional.
 With this comparator, you can sort a vector in descending order, you can sort a vector of pairs, etc.
 
@@ -102,6 +108,7 @@ sort(v1.begin(), v1.end(), greater<int>);
 ```
 
 ### 6. Sort a vector of pairs
+
 For comparator, it should be a function that returns boolean value (binary function).
 
 ```cpp
@@ -115,7 +122,7 @@ sort(v.begin(), v.end(), comp);
 Instead of defining a new function, you can use lambda function:
 
 ```cpp
-sort(v.begin(), v.end(), 
+sort(v.begin(), v.end(),
 	[] (const auto& lhs, const auto& rhs) {
     return lhs.first < rhs.first;
     });

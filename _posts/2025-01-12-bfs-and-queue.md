@@ -10,8 +10,8 @@ tags:
   - queue
 ---
 
-
 # BFS is queue
+
 BFS (Breadth First Search) algorithm uses a data structure called queue.
 
 The basic structure of the algorithm is:
@@ -32,10 +32,10 @@ while (!q.empty()) {
 	while(qSize--) {
 		TreeNode* node = q.front();
 		q.pop();
-		
+
 		// Do something with the current node
 		// ...
-		
+
 		if (node->left != nullptr) {
 			q.push(node->left);
 		}
@@ -55,16 +55,17 @@ q.push(root);
 while (!q.empty()) {
 	TreeNode* node = q.front();
 	q.pop();
-	
+
 	// Do something with the current node
 	// ...
-	
+
 	if (!node) continue;
 
 	q.push(node->left);
 	q.push(node->right);
 }
 ```
+
 ## 1. Same Tree
 
 Given the roots of two binary trees `p` and `q`, return `true` if the trees are **equivalent**, otherwise return `false`.
@@ -99,7 +100,6 @@ bool isSameTree(TreeNode* p, TreeNode* q) {
 }
 ```
 
-
 Note that this code is equivalent to
 
 ```cpp
@@ -113,7 +113,6 @@ bool isSameTree(TreeNode* p, TreeNode* q) {
 	return isSameTree(p->left, q->left) && isSameTree(p->right, q->right);
 }
 ```
-
 
 ## 2. Symmetric Tree
 
@@ -144,6 +143,5 @@ public:
     }
 };
 ```
-
 
 Some problems can be solved with both DFS and with BFS.

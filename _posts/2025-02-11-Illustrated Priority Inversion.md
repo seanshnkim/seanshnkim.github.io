@@ -13,13 +13,13 @@ thumbnail: assets/post-attachments/task_table.png
 
 According to Wikipedia:
 
->... High priority task is indirectly preempted by a low (or medium) priority task. [^1]
+> ... High priority task is indirectly preempted by a low (or medium) priority task. [^1]
 
 In RTOS, this should not occur. A "high priority" task indicates it must be executed before all other lower priority tasks. However, surprisingly, such situations can arise despite pre-set priorities. Yes, priority inversion is a **problematic situation** and it must be prevented.
 
 In this post, I will:
 
-1. Demonstrate the concept of priority inversion using an analogy for better understanding. 
+1. Demonstrate the concept of priority inversion using an analogy for better understanding.
 2. Guide you through a simple C program to show how priority inversion actually works in code.
 
 ## Real-world Analogy of Priority Inversion
@@ -98,7 +98,7 @@ Afterwards, Mary arrives to clean the house for an evening guest. Her task has h
   </figure>
 </div>
 
-How would Harry feel then? He must be baffled and frustrated! 
+How would Harry feel then? He must be baffled and frustrated!
 His task is delayed even though it was the most urgent, while a medium-priority task is being executed now.
 
 <figure class="mt-5">
@@ -110,6 +110,7 @@ His task is delayed even though it was the most urgent, while a medium-priority 
 In RTOS, task scheduling within specific **deadline** is crucial. In fact, the term "**real-time**" itself implies completing tasks within **predetermined** time limits. Because priority inversion can lead to missed deadlines, it must be prevented especially for hard real-time applications.
 
 Keywords:
+
 - real-time
 - deadline
 - deterministic

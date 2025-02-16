@@ -6,7 +6,6 @@ description:
 categories: Data-Structure-and-Algorithms
 ---
 
-
 # P1. Kth Largest Element in a Stream
 
 My first solution:
@@ -16,11 +15,11 @@ def __init__(self, k: int, nums: List[int]):
 	heapq.heapify(nums)
 	for _ in range(len(nums) - k):
 		heapq.heappop(nums)
-	
+
 	self.k = k
 	self.nums = nums
 
-def add(self, val: int) -> int: 
+def add(self, val: int) -> int:
 	heapq.heappush(self.nums, val)
 	res = heapq.heappop(self.nums)
 
@@ -32,7 +31,6 @@ def add(self, val: int) -> int:
 	heapq.heappush(self.nums, res)
 	return res
 ```
-
 
 Simpler code:
 
@@ -67,7 +65,7 @@ public:
         }
         this->k = k;
     }
-    
+
     int add(int val) {
         this->minHeap.push(val);
         if (this->minHeap.size() > this->k) {
@@ -81,8 +79,8 @@ public:
 - In C++, shared variables (`minHeap`, `k`) need to be declared first as private.
 - It is better to use a for-loop once than twice.
 
-
 ---
+
 # P2. Last Stone Weight
 
 First solution:
@@ -122,13 +120,13 @@ class Solution {
 public:
     int lastStoneWeight(vector<int>& stones) {
         priority_queue<int> maxHeap(stones.begin(), stones.end());
-        
+
         while (maxHeap.size() > 1) {
             int s1 = maxHeap.top();
             maxHeap.pop();
             int s2 = maxHeap.top();
             maxHeap.pop();
-            
+
             if (s1 - s2 > 0) {
                 maxHeap.push(diff);
             }
@@ -142,4 +140,3 @@ public:
     }
 };
 ```
-

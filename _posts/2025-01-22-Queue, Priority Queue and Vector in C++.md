@@ -15,7 +15,9 @@ categories:
 | `int n = hq.top();` <br>                                 | `int n = q.front();` <br> | `int n = v.front();` |
 | `hq.pop();`                                              | `q.pop();`                | `v.pop_back();`      |
 |                                                          | `int n = q.back();`       | `int n = v.back();`  |
+
 ### queue::pop() vs. queue::front()
+
 The element removed is the "oldest" element in the [queue](https://cplusplus.com/queue) whose value can be retrieved by calling member [queue::front](https://cplusplus.com/queue::front).
 
 ```c++
@@ -35,5 +37,3 @@ int main() {
     return 0;
 }
 ```
-
-

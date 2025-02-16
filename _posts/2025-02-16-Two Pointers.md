@@ -10,17 +10,16 @@ categories:
 ## Two pointer approach: When to use it?
 
 ### 1. When a given array is sorted
+
 As long as a given array is sorted, two pointer approach is applicable.
 
 In [Two Integer Sum II](https://neetcode.io/problems/two-integer-sum-ii), input array is sorted.
 
 Sometimes let's look into [3sum](https://neetcode.io/problems/three-integer-sum) problem.
 
-
-
 ### What I missed
-It is always good to 
 
+It is always good to
 
 ```cpp
 class Solution {
@@ -32,7 +31,7 @@ class Solution {
             // And O(nlogn) < O(n^2)
             sort(nums.begin(), nums.end());
             int N = nums.size();
-            
+
             for (int i = 0; i < N-2; i++) {
                 // Remove duplicate triplets
                 if (i > 0 && nums[i] == nums[i-1]) {
@@ -40,7 +39,7 @@ class Solution {
                 }
                 int target = -1 * nums[i];
                 int left = i+1, right = N-1;
-    
+
                 while (left < right) {
                     if (nums[left] + nums[right] == target) {
                         res.push_back({nums[i], nums[left], nums[right]});
