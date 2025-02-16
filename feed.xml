@@ -1,4 +1,204 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://seanshnkim.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://seanshnkim.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2025-02-13T01:49:43+00:00</updated><id>https://seanshnkim.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">Semaphore vs. mutex</title><link href="https://seanshnkim.github.io/blog/2025/Semaphore-vs.-Mutex/" rel="alternate" type="text/html" title="Semaphore vs. mutex"/><published>2025-02-13T00:00:00+00:00</published><updated>2025-02-13T00:00:00+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Semaphore%20vs.%20Mutex</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Semaphore-vs.-Mutex/"><![CDATA[]]></content><author><name></name></author><summary type="html"><![CDATA[]]></summary></entry><entry><title type="html">Solutions for Priority Inversion</title><link href="https://seanshnkim.github.io/blog/2025/Solutions-for-Priority-Inversion-Priority-Ceiling-vs.-Priority-Inheritance/" rel="alternate" type="text/html" title="Solutions for Priority Inversion"/><published>2025-02-12T15:03:45+00:00</published><updated>2025-02-12T15:03:45+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Solutions%20for%20Priority%20Inversion%20-%20Priority%20Ceiling%20vs.%20Priority%20Inheritance</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Solutions-for-Priority-Inversion-Priority-Ceiling-vs.-Priority-Inheritance/"><![CDATA[<h2 id="solution-1-priority-ceiling-inheritance">Solution 1: Priority Ceiling Inheritance</h2> <p>Fortunately, FreeRTOS provides a mechanism called priority inheritance to mitigate the effects of priority inversion.</p> <h3 id="how-does-priority-inheritance-work">How does priority inheritance work?</h3> <p>In priority inheritance, the program makes the priority of low priority task (LP Task) temporarily to that of high priority task. In this way, medium priority task cannot preempt the previous LP Task, and HP Task can access critical section as soon as LP Task releases the mutex.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://seanshnkim.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://seanshnkim.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2025-02-16T16:29:24+00:00</updated><id>https://seanshnkim.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">Sort in Python and C++</title><link href="https://seanshnkim.github.io/blog/2025/Sort-in-Python-and-CPP/" rel="alternate" type="text/html" title="Sort in Python and C++"/><published>2025-02-16T12:26:20+00:00</published><updated>2025-02-16T12:26:20+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Sort-in-Python-and-CPP</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Sort-in-Python-and-CPP/"><![CDATA[<h2 id="sort-in-python">Sort in Python</h2> <h3 id="1-in-place-method">1. In-place method</h3> <p>This method sorts a list in-place, which means it modifies the original list directly without returning a new list.</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="rouge-code"><pre><span class="n">listA</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">listA</span><span class="p">.</span><span class="nf">sort</span><span class="p">()</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>By default, it sorts a list in ascending order (<code class="language-plaintext highlighter-rouge">[1, 3, 4, 5]</code>). To sort it in descending order, use <code class="language-plaintext highlighter-rouge">reverse</code> parameter:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="rouge-code"><pre><span class="n">listA</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">listA</span><span class="p">.</span><span class="nf">sort</span><span class="p">(</span><span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="2-return-a-new-list">2. Return a new list</h3> <p>This method creates a new sorted list and does not modify the original list.</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="rouge-code"><pre><span class="n">listA</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span>
+<span class="n">sorted_listA</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">listA</span><span class="p">)</span>
+<span class="n">sorted_rv_listA</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">listA</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="3-key-parameter">3. Key parameter</h3> <p>How to sort a lists of pairs? Use <code class="language-plaintext highlighter-rouge">key</code> paramter.</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="rouge-code"><pre><span class="n">listOfPairs</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">)]</span>
+<span class="c1"># Sort by first item
+</span><span class="n">sorted_listOfPairs</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">listOfPairs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="c1"># Sort by second item
+</span><span class="n">sorted_listOfPairs</span> <span class="o">=</span> <span class="nf">sorted</span><span class="p">(</span><span class="n">listOfPairs</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="sort-in-c">Sort in C++</h2> <h3 id="1-header-file">1. Header file</h3> <p><code class="language-plaintext highlighter-rouge">sort</code> is in &lt;algorithm&gt; header file.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="rouge-code"><pre><span class="cp">#include</span> <span class="cpf">&lt;algorithm&gt;</span><span class="cp">
+</span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="2-in-place-method-is-default">2. In-place method is default</h3> <p>By default, it modifies the original vector.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="rouge-code"><pre><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">};</span>
+<span class="n">sort</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>As the same as Python, it sorts a list in ascending order (<code class="language-plaintext highlighter-rouge">{1, 3, 4, 5}</code>).</p> <h3 id="3-return-a-new-vector">3. Return a new vector</h3> <p>If you want to return a new sorted vector without modifying the original one, create a new function, pass the original vector directly (not reference) and sort it inside:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="rouge-code"><pre><span class="cp">#include</span> <span class="cpf">&lt;vector&gt;</span><span class="cp">
+#include</span> <span class="cpf">&lt;algorithm&gt;</span><span class="cp">
+</span>
+<span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">not_in_place_sort</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">original</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">sort</span><span class="p">(</span><span class="n">original</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">original</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+    <span class="k">return</span> <span class="n">original</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">};</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v_sorted</span> <span class="o">=</span> <span class="n">not_in_place_sort</span><span class="p">(</span><span class="n">v</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="4-comparator">4. Comparator</h3> <p>C++ sort has <code class="language-plaintext highlighter-rouge">comparator</code> parameter. <code class="language-plaintext highlighter-rouge">comparator</code> is optional. With this comparator, you can sort a vector in descending order, you can sort a vector of pairs, etc.</p> <h3 id="5-sort-in-descending-order-using-comparator">5. Sort in descending order using comparator</h3> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td><td class="rouge-code"><pre><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v1</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">};</span>
+<span class="n">sort</span><span class="p">(</span><span class="n">v1</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v1</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">greater</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="6-sort-a-vector-of-pairs">6. Sort a vector of pairs</h3> <p>For comparator, it should be a function that returns boolean value (binary function).</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+</pre></td><td class="rouge-code"><pre><span class="kt">bool</span> <span class="nf">comp</span><span class="p">(</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">left</span><span class="p">,</span> <span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">right</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">return</span> <span class="n">left</span><span class="p">.</span><span class="n">first</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">sort</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">comp</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Instead of defining a new function, you can use lambda function:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="rouge-code"><pre><span class="n">sort</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> 
+	<span class="p">[]</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">rhs</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">lhs</span><span class="p">.</span><span class="n">first</span> <span class="o">&lt;</span> <span class="n">rhs</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+    <span class="p">});</span>
+</pre></td></tr></tbody></table></code></pre></div></div>]]></content><author><name></name></author><category term="Data-Structure-and-Algorithms"/><category term="sort"/><summary type="html"><![CDATA[Sort in Python]]></summary></entry><entry><title type="html">Two Pointers</title><link href="https://seanshnkim.github.io/blog/2025/Two-Pointers/" rel="alternate" type="text/html" title="Two Pointers"/><published>2025-02-16T10:53:46+00:00</published><updated>2025-02-16T10:53:46+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Two%20Pointers</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Two-Pointers/"><![CDATA[<h2 id="two-pointer-approach-in-sorted-array">Two pointer approach in sorted array</h2> <p>Two pointer approach is available when given array is sorted.</p> <p>Let’s look into <a href="https://neetcode.io/problems/three-integer-sum">3sum</a> problem.</p> <h3 id="what-i-missed">What I missed</h3> <p>It is always good to</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+    <span class="nl">public:</span>
+        <span class="c1">// I should aim for a solution with O(n^2) time complexity and O(1) space</span>
+        <span class="n">vector</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">threeSum</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">vector</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">res</span><span class="p">;</span>
+            <span class="c1">// Sorting is allowed, because its time complexity is O(nlogn)</span>
+            <span class="c1">// And O(nlogn) &lt; O(n^2)</span>
+            <span class="n">sort</span><span class="p">(</span><span class="n">nums</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">nums</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+            <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="n">nums</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+            
+            <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="o">-</span><span class="mi">2</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+                <span class="c1">// Remove duplicate triplets</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="p">{</span>
+                    <span class="k">continue</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="kt">int</span> <span class="n">target</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+                <span class="kt">int</span> <span class="n">left</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    
+                <span class="k">while</span> <span class="p">(</span><span class="n">left</span> <span class="o">&lt;</span> <span class="n">right</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="n">right</span><span class="p">]</span> <span class="o">==</span> <span class="n">target</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">res</span><span class="p">.</span><span class="n">push_back</span><span class="p">({</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">left</span><span class="p">],</span> <span class="n">nums</span><span class="p">[</span><span class="n">right</span><span class="p">]});</span>
+                        <span class="n">left</span><span class="o">++</span><span class="p">;</span>
+
+                        <span class="k">while</span> <span class="p">(</span><span class="n">left</span> <span class="o">&lt;</span> <span class="n">right</span> <span class="o">&amp;&amp;</span> <span class="n">nums</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">==</span> <span class="n">nums</span><span class="p">[</span><span class="n">left</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="p">{</span>
+                            <span class="n">left</span><span class="o">++</span><span class="p">;</span>
+                        <span class="p">}</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">nums</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">+</span> <span class="n">nums</span><span class="p">[</span><span class="n">right</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">target</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="n">left</span><span class="o">++</span><span class="p">;</span>
+                    <span class="p">}</span>
+                    <span class="k">else</span> <span class="p">{</span>
+                        <span class="n">right</span><span class="o">--</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div>]]></content><author><name></name></author><category term="Data-Structure-and-Algorithms"/><summary type="html"><![CDATA[Different approaches to solve two pointer algorithm problems]]></summary></entry><entry><title type="html">Schedulers</title><link href="https://seanshnkim.github.io/blog/2025/Schedulers/" rel="alternate" type="text/html" title="Schedulers"/><published>2025-02-15T16:43:10+00:00</published><updated>2025-02-15T16:43:10+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Schedulers</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Schedulers/"><![CDATA[<h2 id="what-are-schedulers">What are schedulers?</h2> <ul> <li>vPortSVCHandler()</li> <li>xPortPendSVHandler()</li> <li>xPortSysTickHandler()</li> </ul> <h3 id="what-does-vportsvchandler-do">What does vPortSVCHandler() do?</h3> <p>It is used to launch the very first task. It is triggered by SVC Instruction</p> <h3 id="what-does-xportpendsvhandler-do">What does xPortPendSVHandler() do?</h3> <p>It is used to achieve the <strong>context switching</strong> between tasks. It triggered by pending the PendSV System exception of ARM.</p> <h3 id="what-does-xportsystickhandler-do">What does xPortSysTickHandler() do?</h3> <p>This implements the RTOS Tick management. Triggered periodically by Systick timer of ARM cortex Mx processor.</p> <h3 id="portc-is-important">port.c is important</h3> <p>These are all found in port.c</p> <h3 id="vtaskstartscheduler">vTaskStartScheduler()</h3> <p>This is implemented in tasks.c of FreeRTOS kernel and used to start the RTOS scheduler.</p> <blockquote> <p>A FreeRTOS application will start up and execute just like a non-RTOS application until <a href="https://www.freertos.org/Documentation/02-Kernel/04-API-references/04-RTOS-kernel-control/03-vTaskStartScheduler">vTaskStartScheduler()</a> is called. vTaskStartScheduler() is normally called from the application’s main() function. The RTOS only controls the execution sequencing after vTaskStartScheduler() has been called. <sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup></p> </blockquote> <p>What does vTaskStartScheduler() create? It creates the idle and timer daemon task.</p> <p>What does vTaskStartScheduler() call? It calls xPortStartScheduler() to do the architecture specific initializations. xPortStartScheduler() is actually in port.c</p> <p>1) Configure sysTick timer to issue interrupts at desired rate. This is configured in FreeRTOSConfig.h -&gt; configTick_RATE_HZ (<code class="language-plaintext highlighter-rouge">vPortSetupTimerInterrupt()</code>) 2) Configures the priority for PendSV and Systick interrupts (<code class="language-plaintext highlighter-rouge">portNVIC_SHPR3_REG |= portNVIC_PENDSV_PRI</code>, <code class="language-plaintext highlighter-rouge">portNVIC_SHPR3_REG |= portNVIC_SYSTICK_PRI</code>) 3) Starts the first task by executing the SVC instruction (<code class="language-plaintext highlighter-rouge">prvPortStartFirstTask</code>)</p> <p>In <code class="language-plaintext highlighter-rouge">prvPortStartFirstTask</code>, it will execute SVC instruction</p> <p>SVC Handler will execute.</p> <p>vPortSVCHandler() PendSVHandler() SysTickHandler()</p> <h2 id="freertos-kernel-interrupts">FreeRTOS Kernel Interrupts</h2> <p>When FreeRTOS runs on ARM Cortex Mx Processor based MCU, below interrupts are used to implement the scheduling of tasks.</p> <ol> <li>SVCInterrupt (SVC handler will be used to launch the very first task)</li> <li>PendSVInterrupt (PendSV handler is used to carry out context switching between tasks)</li> <li>SysTick Interrupt (SysTick handler implements the RTOS Tick Management)</li> </ol> <p>If SysTick interrupt is used for some other purpose in your application, then you may use any other available timer peripheral.</p> <p>All interrupts are configured at the lowest interrupt priority possible.</p> <h2 id="why-is-systick-timer-important-how-do-we-set-the-timer">Why is SysTick Timer important? How do we set the timer?</h2> <p>In FreeRTOSConfig.h, there is a variable called <code class="language-plaintext highlighter-rouge">configTICK_RATE_HZ</code> portTickType 1000 -&gt; It means interrupt is fired by SysTick timer for every 1ms</p> <p>This sets how often interrupts are “fired” (It is fired by systick timer)</p> <p>RTOS ticking is implemented using timer hardware of the MCU</p> <p>To keep track of time. xTickCount variable is a key. For example, it is used for vTaskDelay(100).</p> <p>RTOS tick, apart from incrementing the tick count, is used to trigger the context switch to the next potential task.</p> <ol> <li>The tick ISR runs</li> <li>All the ready state tasks are scanned</li> <li>Determines which is the next potential task to run</li> <li>If found, triggers the context switching by pending the PendSV interrupt</li> <li>The PendSV handler takes care of switching out of old task and switching in of new task</li> </ol> <p>Let’s go to <code class="language-plaintext highlighter-rouge">port.c</code> and see xPortSysTickHandler. First, increment the tick.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="rouge-code"><pre><span class="kt">void</span> <span class="nf">xPortSysTickHandler</span><span class="p">(</span> <span class="kt">void</span> <span class="p">)</span>
+<span class="p">{</span>
+	<span class="cm">/* The SysTick runs at the lowest interrupt priority, so when this interrupt
+	executes all interrupts must be unmasked.  There is therefore no need to
+	save and then restore the interrupt mask value as its value is already
+	known. */</span>
+	<span class="n">portDISABLE_INTERRUPTS</span><span class="p">();</span>
+	<span class="p">{</span>
+		<span class="cm">/* Increment the RTOS tick. */</span>
+		<span class="k">if</span><span class="p">(</span> <span class="n">xTaskIncrementTick</span><span class="p">()</span> <span class="o">!=</span> <span class="n">pdFALSE</span> <span class="p">)</span>
+		<span class="p">{</span>
+			<span class="cm">/* A context switch is required.  Context switching is performed in
+			the PendSV interrupt.  Pend the PendSV interrupt. */</span>
+			<span class="n">portNVIC_INT_CTRL_REG</span> <span class="o">=</span> <span class="n">portNVIC_PENDSVSET_BIT</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="n">portENABLE_INTERRUPTS</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>xTaskIncrementTick() returns <code class="language-plaintext highlighter-rouge">xSwitchRequired</code>. Then what does xPortSysTickHandler() do?</p> <p>The SysTick timer when started, down counts from 24999 to 0. It generates an interrupt when the count value reaches 0 and again reloads the load count value.</p> <p>So, 24999 is the systick load value required to generate interrupt for every 1ms (1000Hz)</p> <div class="footnotes" role="doc-endnotes"> <ol> <li id="fn:1"> <p>https://www.freertos.org/Documentation/01-FreeRTOS-quick-start/01-Beginners-guide/03-Build-your-first-project <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> </ol> </div>]]></content><author><name></name></author><category term="RTOS"/><category term="Schedulers"/><summary type="html"><![CDATA[What are schedulers?]]></summary></entry><entry><title type="html">Semaphore vs. Mutex</title><link href="https://seanshnkim.github.io/blog/2025/Semaphore-versus-Mutex/" rel="alternate" type="text/html" title="Semaphore vs. Mutex"/><published>2025-02-12T21:02:37+00:00</published><updated>2025-02-12T21:02:37+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Semaphore%20versus%20Mutex</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Semaphore-versus-Mutex/"><![CDATA[<h2 id="key-words">Key words</h2> <p>task, shared resource, wait, release, task synchronization</p> <h2 id="what-is-semaphore">What is semaphore?</h2> <p>In operating systems, semaphore is defined as an integer variable to handle task scheduling. There are two types of semaphores: <strong>binary semaphore</strong> and <strong>counting semaphore</strong>.</p> <h3 id="binary-semaphore">Binary semaphore</h3> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/Semaphore/binary-semaphore-480.webp 480w,/assets/post-attachments/Semaphore/binary-semaphore-800.webp 800w,/assets/post-attachments/Semaphore/binary-semaphore-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/Semaphore/binary-semaphore.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <p>“Binary” semaphores have a value of either 0 or 1. Because they behave similarly to mutex, it can be confusing. We will discuss the difference between the two later.</p> <p>Binary semaphores are implemented through <code class="language-plaintext highlighter-rouge">xSemaphoreCreateBinary()</code> method.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td><td class="rouge-code"><pre><span class="n">SemaphoreHandle_t</span> <span class="nf">xSemaphoreCreateBinary</span><span class="p">(</span> <span class="kt">void</span> <span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>I strongly recommend you to read through FreeRTOS official document<sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup>.</p> <h3 id="counting-semaphore">Counting semaphore</h3> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/Semaphore/counting-semaphore-480.webp 480w,/assets/post-attachments/Semaphore/counting-semaphore-800.webp 800w,/assets/post-attachments/Semaphore/counting-semaphore-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/Semaphore/counting-semaphore.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h2 id="what-is-mutex">What is mutex?</h2> <p>As the word “mutex” implies, it provides mutual exclusion for multiple tasks. However, it is different from semaphores in that it acts as a <strong>lock</strong>. Mutex also claims ownership of the lock, while semaphore does not.</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/Semaphore/mutex-illustration-480.webp 480w,/assets/post-attachments/Semaphore/mutex-illustration-800.webp 800w,/assets/post-attachments/Semaphore/mutex-illustration-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/Semaphore/mutex-illustration.png" class="img-fluid rounded z-depth-1 center-image" width="700px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h2 id="what-are-differences">What are differences?</h2> <p>Semaphores, like mutex locks, can be used to provide mutual exclusion. Whereas a mutex lock has a binary value that indicates if the lock is available or not, a semaphore has an integer value and can therefore be used to solve a variety of synchronization problems.</p> <h2 id="references">References</h2> <ul> <li>https://www.freertos.org/Documentation/02-Kernel/04-API-references/10-Semaphore-and-Mutexes/00-Semaphores</li> <li>https://www.geeksforgeeks.org/mutex-vs-semaphore/</li> </ul> <div class="footnotes" role="doc-endnotes"> <ol> <li id="fn:1"> <p>https://www.freertos.org/Documentation/02-Kernel/04-API-references/10-Semaphore-and-Mutexes/01-xSemaphoreCreateBinary <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> </ol> </div>]]></content><author><name></name></author><category term="RTOS,"/><category term="OperatingSystem"/><category term="semaphore"/><category term="mutex"/><category term="priority-inheritance"/><category term="task-scheduling"/><summary type="html"><![CDATA[Key words]]></summary></entry><entry><title type="html">Solutions for Priority Inversion</title><link href="https://seanshnkim.github.io/blog/2025/Solutions-for-Priority-Inversion-Priority-Ceiling-vs.-Priority-Inheritance/" rel="alternate" type="text/html" title="Solutions for Priority Inversion"/><published>2025-02-12T15:03:45+00:00</published><updated>2025-02-12T15:03:45+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Solutions%20for%20Priority%20Inversion%20-%20Priority%20Ceiling%20vs.%20Priority%20Inheritance</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Solutions-for-Priority-Inversion-Priority-Ceiling-vs.-Priority-Inheritance/"><![CDATA[<p>In the last post, we discussed priority inversion and</p> <h2 id="solution-1-priority-ceiling-inheritance">Solution 1: Priority Ceiling Inheritance</h2> <p>Fortunately, FreeRTOS provides a mechanism called priority inheritance to mitigate the effects of priority inversion.</p> <h3 id="how-does-priority-inheritance-work">How does priority inheritance work?</h3> <p>In priority inheritance, the program makes the priority of low priority task (LP Task) temporarily to that of high priority task. In this way, medium priority task cannot preempt the previous LP Task, and HP Task can access critical section as soon as LP Task releases the mutex.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -162,7 +362,7 @@
 
 <span class="p">}</span>
 
-</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="priority-inheritance-cannot-cure-priority-inheritance">Priority inheritance cannot cure priority inheritance</h2> <p>It is important to note that FreeRTOS implemented priority inheritance in mutext API.</p> <p>But priority inheritance cannot cure priority inversion completely. In the following cases, priority inversion can still occur.</p> <h2 id="solution-2-priority-ceiling-protocol">Solution 2: Priority ceiling protocol</h2>]]></content><author><name></name></author><category term="RTOS"/><category term="priority-inversion"/><category term="priority-ceiling"/><category term="priority-inheritance"/><summary type="html"><![CDATA[Solution 1: Priority Ceiling Inheritance]]></summary></entry><entry><title type="html">Illustrated Priority Inversion</title><link href="https://seanshnkim.github.io/blog/2025/Illustrated-Priority-Inversion/" rel="alternate" type="text/html" title="Illustrated Priority Inversion"/><published>2025-02-11T12:38:07+00:00</published><updated>2025-02-11T12:38:07+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Illustrated%20Priority%20Inversion</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Illustrated-Priority-Inversion/"><![CDATA[<h2 id="what-is-priority-inversion">What is Priority Inversion?</h2> <p>The definition of priority inversion is well-explained in Wikipedia:</p> <blockquote> <p>High priority task is indirectly preempted by a low (or medium) priority task.</p> </blockquote> <p>This should not happen because it is literally a “high priority” task which indicates that it should be executed before all the other lower priority tasks. In other words, priority inversion is a problematic situation and we have to prevent it.</p> <p>I will first demonstrate the concept with analogy and then with a simple program in C. Lastly, I will discuss solutions to priority inverison.</p> <h2 id="real-world-analogy-of-priority-inversion">Real-world Analogy of Priority Inversion</h2> <p>Assume there are three different tasks:</p> <ul> <li>High priority task (i.e. “HP Task”)</li> <li>Medium priority task (i.e. “MP Task”)</li> <li>Low priority task (i.e. “LP Task”)</li> </ul> <p>If there is no problem with a scheduler then HP Task should always be executed first, MP Task next, and at last LP Task.</p> <p>But then there is a “critical section”. Critical section is a part of a program or hardware that accesses a shared resource. Only one process (task) is allowed to access the critical section at one time. <a href="https://en.wikipedia.org/wiki/Critical_section">Wikipedia: Critical Section</a></p> <p>In this example, three different characters represent each task:</p> <ul> <li>HP Task = “Harry”</li> <li>MP Task = “Mary”</li> <li>LP Task = “Larry”</li> </ul> <h3 id="prerequisites">Prerequisites</h3> <p>Before walking through the example, there are some prerequisites to keep in mind:</p> <ol> <li>Only one person can stay in the house. This is because the processor core cannot accept more than one task.</li> </ol> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/single_thread1-480.webp 480w,/assets/post-attachments/single_thread1-800.webp 800w,/assets/post-attachments/single_thread1-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/single_thread1.png" class="img-fluid rounded z-depth-1 center-image" width="350px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <ol> <li>Once a person starts using a pot, it cannot be interrupted or taken by other person until he is done with using it (even if the highest priority task requests using it!)</li> </ol> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/critical_section1-480.webp 480w,/assets/post-attachments/critical_section1-800.webp 800w,/assets/post-attachments/critical_section1-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/critical_section1.png" class="img-fluid rounded z-depth-1 center-image" width="600px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h3 id="1-lp-task-starts-first">1. LP Task starts first</h3> <p>Let’s start with Larry. Larry came home in the first place and decided to prepare breakfast for tomorrow. He uses a pot (critical section) in the kitchen. This is the only pot in the kitchen, so unless he is finished no one else can use it. We would assume that making breakfast for tomorrow is not urget, so it is a low priority task.</p> <div class="image-row"> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d1-480.webp 480w,/assets/post-attachments/d1-800.webp 800w,/assets/post-attachments/d1-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d1.png" class="img-fluid rounded z-depth-1" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d2-480.webp 480w,/assets/post-attachments/d2-800.webp 800w,/assets/post-attachments/d2-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d2.png" class="img-fluid rounded z-depth-1" width="150px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> </div> <h3 id="2-hp-task-tries-to-preempt-lp-task">2. HP Task “tries to” preempt LP Task</h3> <p>While Larry is cooking her food, Harry comes home (Remember, Harry cannot enter home right away. He would have to wait in front of the door).</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d3-480.webp 480w,/assets/post-attachments/d3-800.webp 800w,/assets/post-attachments/d3-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d3.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h3 id="3-hp-task-is-blocked">3. HP Task is blocked</h3> <p>Because Harry needs to eat lunch before the class, and he was going to make pasta. (Pasta needs a pot to boil it) Harry shouts to the kitchen, “I need to cook!” Obviously Harry’s task has higher priority, but he cannot take away Larry’s pot. That’s why Harry has to wait in front of the house, not being able to start cooking (“<strong>blocked</strong>” state).</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d4-480.webp 480w,/assets/post-attachments/d4-800.webp 800w,/assets/post-attachments/d4-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d4.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h3 id="4-mp-task-preempts-lp-task">4. MP Task preempts LP Task</h3> <p>Afterwards, Mary comes in. Mary came home to clean the house, because she has a guest coming in the evening. This task priority is higher than cooking for tomorrow, but less than Harry’s. But because she is not using the pot, and because her task has higher priority than Larry’s she enters home and kicks out Larry.</p> <div class="image-row"> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d5-480.webp 480w,/assets/post-attachments/d5-800.webp 800w,/assets/post-attachments/d5-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d5.png" class="img-fluid rounded z-depth-1" width="250px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d6-480.webp 480w,/assets/post-attachments/d6-800.webp 800w,/assets/post-attachments/d6-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d6.png" class="img-fluid rounded z-depth-1" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> </div> <p>Now, Harry is frustrated. His task was the most urgent one, but turns out that Mary is now in the house instead!</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/task_table-480.webp 480w,/assets/post-attachments/task_table-800.webp 800w,/assets/post-attachments/task_table-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/task_table.png" class="img-fluid rounded z-depth-1 center-image" width="700px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h2 id="why-does-priority-inversion-matter-in-rtos">Why does priority inversion matter in RTOS?</h2> <p>In RTOS, it is crucial to schedule tasks so that they have a certain limit of deadline. The priority of each task must be carried out in order.</p> <h2 id="demo">Demo</h2> <p>Here is source code that can be run in STM32F4xx device:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="priority-inheritance-cannot-cure-priority-inheritance">Priority inheritance cannot cure priority inheritance</h2> <p>It is important to note that FreeRTOS implemented priority inheritance in mutext API.</p> <p>But priority inheritance cannot cure priority inversion completely. In the following cases, priority inversion can still occur.</p> <h2 id="solution-2-priority-ceiling-protocol">Solution 2: Priority ceiling protocol</h2>]]></content><author><name></name></author><category term="RTOS"/><category term="priority-inversion"/><category term="priority-ceiling"/><category term="priority-inheritance"/><category term="task"/><summary type="html"><![CDATA[In the last post, we discussed priority inversion and Solution 1: Priority Ceiling Inheritance]]></summary></entry><entry><title type="html">Illustrated Priority Inversion</title><link href="https://seanshnkim.github.io/blog/2025/Illustrated-Priority-Inversion/" rel="alternate" type="text/html" title="Illustrated Priority Inversion"/><published>2025-02-11T12:38:07+00:00</published><updated>2025-02-11T12:38:07+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Illustrated%20Priority%20Inversion</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Illustrated-Priority-Inversion/"><![CDATA[<h2 id="what-is-priority-inversion">What is Priority Inversion?</h2> <p>According to Wikipedia:</p> <blockquote> <p>… High priority task is indirectly preempted by a low (or medium) priority task. <sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup></p> </blockquote> <p>In RTOS, this should not occur. A “high priority” task indicates it must be executed before all other lower priority tasks. However, surprisingly, such situations can arise despite pre-set priorities. Yes, priority inversion is a <strong>problematic situation</strong> and it must be prevented.</p> <p>In this post, I will:</p> <ol> <li>Demonstrate the concept of priority inversion using an analogy for better understanding.</li> <li>Guide you through a simple C program to show how priority inversion actually works in code.</li> </ol> <h2 id="real-world-analogy-of-priority-inversion">Real-world Analogy of Priority Inversion</h2> <p>Imagine there are three different tasks trying to run on a single processor:</p> <ul> <li>High priority task (HP Task)</li> <li>Medium priority task (MP Task)</li> <li>Low priority task (LP Task)</li> </ul> <p>In an ideal scenario, the scheduler would always execute these tasks in the right order: HP Task -&gt; MP -&gt; LP Task.</p> <p>But then the situation gets complicated as a “critical section” is introduced. Critical section is a part of a program or hardware that accesses a shared resource. Only one process (task) is allowed to access the critical section at one time. <sup id="fnref:2"><a href="#fn:2" class="footnote" rel="footnote" role="doc-noteref">2</a></sup></p> <p>In our analogy, I created three characters each representing a task:</p> <ul> <li>HP Task = “Harry”</li> <li>MP Task = “Mary”</li> <li>LP Task = “Larry”</li> </ul> <h3 id="prerequisites">Prerequisites</h3> <p>Before we continue, keep in mind:</p> <ol> <li>Only one person can stay in the house at a time. This is because the processor core (in embedded systems) cannot handle more than one task simultaneously.</li> </ol> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/single_thread1-480.webp 480w,/assets/post-attachments/single_thread1-800.webp 800w,/assets/post-attachments/single_thread1-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/single_thread1.png" class="img-fluid rounded z-depth-1 center-image" width="350px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <ol> <li>Once someone starts using the pot (critical section), they cannot be interrupted until they are done, even by a higher priority task.</li> </ol> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/critical_section1-480.webp 480w,/assets/post-attachments/critical_section1-800.webp 800w,/assets/post-attachments/critical_section1-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/critical_section1.png" class="img-fluid rounded z-depth-1 center-image" width="600px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h3 id="scenario-1-lp-task-starts-first">Scenario 1. LP Task starts first</h3> <p>Let’s start with Larry. Larry enters the house and begins cooking breakfast for tomorrow using the only post in the kitchen. Since making breakfast for tomorrow is not that urgent, it can be considered a low priority task.</p> <div class="image-row"> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d1-480.webp 480w,/assets/post-attachments/d1-800.webp 800w,/assets/post-attachments/d1-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d1.png" class="img-fluid rounded z-depth-1" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d2-480.webp 480w,/assets/post-attachments/d2-800.webp 800w,/assets/post-attachments/d2-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d2.png" class="img-fluid rounded z-depth-1" width="150px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> </div> <h3 id="2-hp-task-tries-to-preempt-lp-task">2. HP Task “tries to” preempt LP Task</h3> <p>While Larry is cooking her food, Harry arrives home. Remember, Harry cannot enter home instantly. He would have to wait in front of the door.</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d3-480.webp 480w,/assets/post-attachments/d3-800.webp 800w,/assets/post-attachments/d3-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d3.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h3 id="3-hp-task-is-blocked">3. HP Task is blocked</h3> <p>Harry needs to cook pasta for lunch before class, but can’t use the pot. Obviously Harry’s task has a higher priority, but he cannot do anything. That’s why Harry has to wait in front of the house, unable to start cooking (“<strong>blocked</strong>” state).</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d4-480.webp 480w,/assets/post-attachments/d4-800.webp 800w,/assets/post-attachments/d4-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d4.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h3 id="4-mp-task-preempts-lp-task">4. MP Task preempts LP Task</h3> <p>Afterwards, Mary arrives to clean the house for an evening guest. Her task has higher priority than Larry’s but lower than Harry’s. Since she doesn’t need the pot (this is important!), she is able to enter the house directly and kicks out Larry.</p> <div class="image-row"> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d5-480.webp 480w,/assets/post-attachments/d5-800.webp 800w,/assets/post-attachments/d5-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d5.png" class="img-fluid rounded z-depth-1" width="250px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <figure class="mt-3"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/d6-480.webp 480w,/assets/post-attachments/d6-800.webp 800w,/assets/post-attachments/d6-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/d6.png" class="img-fluid rounded z-depth-1" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> </div> <p>How would Harry feel then? He must be baffled and frustrated! His task is delayed even though it was the most urgent, while a medium-priority task is being executed now.</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/task_table-480.webp 480w,/assets/post-attachments/task_table-800.webp 800w,/assets/post-attachments/task_table-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/task_table.png" class="img-fluid rounded z-depth-1 center-image" width="700px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <h2 id="why-priority-inversion-matters-in-rtos">Why Priority Inversion Matters in RTOS</h2> <p>In RTOS, task scheduling within specific <strong>deadline</strong> is crucial. In fact, the term “<strong>real-time</strong>” itself implies completing tasks within <strong>predetermined</strong> time limits. Because priority inversion can lead to missed deadlines, it must be prevented especially for hard real-time applications.</p> <p>Keywords:</p> <ul> <li>real-time</li> <li>deadline</li> <li>deterministic</li> </ul> <h2 id="demo">Demo</h2> <p>Here is source code that can be run in STM32F4xx device:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -238,4 +438,764 @@
     <span class="n">xTaskCreate</span><span class="p">(</span><span class="n">mediumPriorityTask</span><span class="p">,</span> <span class="s">"Medium"</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
     <span class="n">xTaskCreate</span><span class="p">(</span><span class="n">highPriorityTask</span><span class="p">,</span> <span class="s">"High"</span><span class="p">,</span> <span class="mi">2048</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
 <span class="p">}</span>
-</pre></td></tr></tbody></table></code></pre></div></div> <p>In the next post, I will discuss several solutions for priority inversion.</p> <h2 id="references">References</h2> <ul> <li>https://en.wikipedia.org/wiki/Priority_inversion</li> <li>https://www.embedded.com/how-to-use-priority-inheritance/</li> <li>https://www.foxipex.com/2024/11/08/priority-inversion-and-priority-inheritance-in-freertos/</li> <li>https://www.highintegritysystems.com/downloads/RTOS_Tutorials/Priority_Inversion.pdf</li> <li>https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/02-Queues-mutexes-and-semaphores/04-Mutexes</li> <li>https://www.geeksforgeeks.org/difference-between-priority-inversion-and-priority-inheritance/</li> </ul>]]></content><author><name></name></author><category term="RTOS"/><category term="priority-inversion"/><summary type="html"><![CDATA[What is Priority Inversion?]]></summary></entry></feed>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>In the next post, I will discuss several solutions for priority inversion.</p> <h2 id="references">References</h2> <ul> <li>https://www.embedded.com/how-to-use-priority-inheritance/</li> <li>https://www.foxipex.com/2024/11/08/priority-inversion-and-priority-inheritance-in-freertos/</li> <li>https://www.highintegritysystems.com/downloads/RTOS_Tutorials/Priority_Inversion.pdf</li> <li>https://www.freertos.org/Documentation/02-Kernel/02-Kernel-features/02-Queues-mutexes-and-semaphores/04-Mutexes</li> <li>https://www.geeksforgeeks.org/difference-between-priority-inversion-and-priority-inheritance/</li> </ul> <div class="footnotes" role="doc-endnotes"> <ol> <li id="fn:1"> <p><a href="https://en.wikipedia.org/wiki/Priority_inversion">Wikipedia: Priority_Inversion</a> <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> <li id="fn:2"> <p><a href="https://en.wikipedia.org/wiki/Critical_section">Wikipedia: Critical Section</a> <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> </ol> </div>]]></content><author><name></name></author><category term="RTOS"/><category term="priority-inversion"/><summary type="html"><![CDATA[What is Priority Inversion?]]></summary></entry><entry><title type="html">Analysis on ‘Third Maximum Number’ Problem in Depth</title><link href="https://seanshnkim.github.io/blog/2025/Third-Maximum-Number/" rel="alternate" type="text/html" title="Analysis on ‘Third Maximum Number’ Problem in Depth"/><published>2025-02-10T08:52:25+00:00</published><updated>2025-02-10T08:52:25+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Third%20Maximum%20Number</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Third-Maximum-Number/"><![CDATA[<p>In Leetcode, you can find the problem: <a href="https://leetcode.com/problems/third-maximum-number">Third Maximum Number</a>. I will dive into the solution right away assuming that you have already solved (or at least tackled) the problem.</p> <h2 id="1-limit-the-size-of-priority-queue">1. Limit the size of priority queue</h2> <p>Although this solution may look simple and good, it takes extra time.</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">thirdMax</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">priority_queue</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">pq</span><span class="p">;</span>
+        <span class="n">unordered_set</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">distNumSet</span><span class="p">;</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">:</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">distNumSet</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">distNumSet</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+                <span class="n">distNumSet</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+                <span class="n">pq</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+            <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">pq</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Why is that? Let’s look at the second solution:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">thirdMax</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">priority_queue</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">greater</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">pq</span><span class="p">;</span>
+        <span class="n">unordered_set</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">distNumSet</span><span class="p">;</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">:</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">distNumSet</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">distNumSet</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+                <span class="n">distNumSet</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+                <span class="n">pq</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">pq</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>The second solution always maintains the size of priority queue to three, making the time complexity of <code class="language-plaintext highlighter-rouge">push</code> operation to O(1) (at most log3). On the other hand the first solution inserts every distinct element in <code class="language-plaintext highlighter-rouge">nums</code> into the priority queue. This will cause <code class="language-plaintext highlighter-rouge">push</code> operation to take O(logn) time.</p> <p>But I wasn’t still satisfied. It still gives 7 ms of runtime. In Leetcode, well-optimized C++ code submission usually returns 0 ms.</p> <figure class="mt-5"> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2025-02-10_09-25-24-480.webp 480w,/assets/post-attachments/2025-02-10_09-25-24-800.webp 800w,/assets/post-attachments/2025-02-10_09-25-24-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2025-02-10_09-25-24.png" class="img-fluid rounded z-depth-1 center-image" width="300px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> </figure> <p>How can we make even faster?</p> <h2 id="2-third-solution">2. Third Solution</h2> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">thirdMax</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">priority_queue</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">,</span> <span class="n">greater</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">pq</span><span class="p">;</span>
+        <span class="n">unordered_set</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">distNumSet</span><span class="p">;</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">n</span><span class="o">:</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">distNumSet</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">==</span> <span class="n">distNumSet</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">3</span> <span class="o">&amp;&amp;</span> <span class="n">n</span> <span class="o">&gt;</span> <span class="n">pq</span><span class="p">.</span><span class="n">top</span><span class="p">())</span> <span class="p">{</span>
+                    <span class="n">distNumSet</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">top</span><span class="p">());</span>
+                    <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+                    <span class="n">pq</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+                    <span class="n">distNumSet</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="nf">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">pq</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+                    <span class="n">distNumSet</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pq</span><span class="p">.</span><span class="n">size</span><span class="p">()</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">pq</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">pq</span><span class="p">.</span><span class="n">top</span><span class="p">();</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>This code has some more improvements:</p> <ul> <li>It removes an element from set if the element is smaller than the current num <code class="language-plaintext highlighter-rouge">n</code> <ul> <li>In this way, it reduces the size of the set. In C++, set find method takes average time of O(1) but in worst case it takes O(n).</li> </ul> </li> <li>It compares the current number <code class="language-plaintext highlighter-rouge">n</code> and the minimum number in pq (<code class="language-plaintext highlighter-rouge">pq.top()</code>) first, and then decides to run <code class="language-plaintext highlighter-rouge">push</code> or <code class="language-plaintext highlighter-rouge">pop</code> operation. This prevents unnecessary execution of <code class="language-plaintext highlighter-rouge">push</code> operation in some cases. <ul> <li>In the previous solution, it ran <code class="language-plaintext highlighter-rouge">push</code> operation no matter what the current number <code class="language-plaintext highlighter-rouge">n</code> was and then it popped an element from <code class="language-plaintext highlighter-rouge">pq</code>. The code looks simpler in this way, but it may take more time if the size of <code class="language-plaintext highlighter-rouge">pq</code> is much greater.</li> </ul> </li> </ul> <h2 id="3-intersting-fact-index-based-iteration-in-c-does-make-difference">3. Intersting fact: index-based iteration in C++ does make difference</h2> <p>If you change a line in the third solution:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">thirdMax</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+		<span class="c1">// ...</span>
+        
+        <span class="c1">// for (int n: nums) {</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">nums</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// ...</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>It will improve the runtime complexity from 3 ms to 0 ms. Why does it make such big difference?</p> <h3 id="1-compiler-optimization">1. Compiler Optimization</h3> <p>Index-based loops are often easier for compilers to optimize. In this case, the compiler might be able to apply more aggressive optimizations to the index-based loop, such as:</p> <ul> <li>Loop unrolling</li> <li>Vectorization</li> <li>Better instruction pipelining</li> </ul> <p>These optimizations can lead to significant performance improvements, especially for large arrays.</p> <h3 id="2-memory-access-patterns">2. Memory Access Patterns</h3> <p>Index-based loops can sometimes result in more cache-friendly memory access patterns. When iterating over a vector using indices, the memory accesses are typically more predictable and sequential, which can lead to better cache utilization.</p> <h3 id="3-iterator-overhead">3. Iterator Overhead</h3> <p>Range-based for loops use iterators internally. While modern compilers are generally good at optimizing these, there can still be some overhead associated with iterator creation and manipulation, especially for complex container types.</p> <h3 id="4-inlining-and-function-call-elimination">4. Inlining and Function Call Elimination</h3> <p>Index-based loops may allow the compiler to more easily inline and eliminate function calls. This can reduce function call overhead and allow for more aggressive optimizations across loop iterations.</p> <h3 id="5-bounds-checking">5. Bounds Checking</h3> <p>Some implementations of range-based for loops may include additional bounds checking that isn’t as easily optimized away as with index-based loops.</p>]]></content><author><name></name></author><category term="Data-Structure-and-Algorithms"/><summary type="html"><![CDATA[How to improve code efficiency]]></summary></entry><entry><title type="html">Mistake Collections</title><link href="https://seanshnkim.github.io/blog/2025/Mistakes/" rel="alternate" type="text/html" title="Mistake Collections"/><published>2025-02-05T09:37:07+00:00</published><updated>2025-02-05T09:37:07+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Mistakes</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Mistakes/"><![CDATA[<h2 id="spiral-matrix-ii">Spiral Matrix II</h2> <p>While I was solving this problem, I found out myself making some stupid mistakes:</p> <ul> <li>Wrong return value: <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="rouge-code"><pre><span class="k">else</span> <span class="p">{</span>
+ <span class="k">return</span> <span class="p">{</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">};</span> <span class="c1">// should be {-1, 0}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div> </div> </li> <li>Wrong while statement:</li> </ul> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+</pre></td><td class="rouge-code"><pre><span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">n</span><span class="o">*</span><span class="n">n</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// should be n*n</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Mistakes do matter. Sometimes I had to waste 30 minutes finding out that a single typo I made or false condition statement was the main problem.</p> <p>To prevent this, I should:</p> <ul> <li>Always test a block of code before running the entire program.</li> <li>Be aware of iteration statements.</li> <li>Don’t change variable names frequently.</li> </ul>]]></content><author><name></name></author><category term="Data-Structure-and-Algorithms"/><summary type="html"><![CDATA[Spiral Matrix II]]></summary></entry><entry><title type="html">Array and Hashing Part 1</title><link href="https://seanshnkim.github.io/blog/2025/Array-and-Hashing/" rel="alternate" type="text/html" title="Array and Hashing Part 1"/><published>2025-02-02T10:08:01+00:00</published><updated>2025-02-02T10:08:01+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Array%20and%20Hashing</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Array-and-Hashing/"><![CDATA[<h2 id="group-anagrams">Group Anagrams</h2> <ul> <li>There are 26 alphabetics in English. By using a vector variable <code class="language-plaintext highlighter-rouge">count = [0]*26</code>, we can save counts for each letter in (yes, it is technically O(26) ) time complexity of O(1).</li> </ul> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">convert2key</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">s</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">alph_cnt</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="mi">26</span>
+
+        <span class="c1"># time complexity: O(n + 26)
+</span>        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
+            <span class="n">alph_cnt</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
+            
+        <span class="n">key</span> <span class="o">=</span> <span class="sh">""</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">26</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">+=</span> <span class="nf">chr</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">))</span> <span class="o">*</span> <span class="n">alph_cnt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        
+        <span class="k">return</span> <span class="n">key</span>
+
+
+    <span class="k">def</span> <span class="nf">groupAnagrams</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">strs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="n">keyMap</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># time complexity:  O(m*n + 26*m)
+</span>        <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">strs</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="nf">convert2key</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keyMap</span><span class="p">:</span>
+                <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">listOfStr</span> <span class="ow">in</span> <span class="n">keyMap</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
+            <span class="n">res</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">listOfStr</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">res</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="top-k-frequent-elements">Top K Frequent Elements</h2> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">topKFrequent</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">,</span> <span class="kt">int</span> <span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">N</span> <span class="o">=</span> <span class="n">nums</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+        <span class="c1">// buckets[i] = j -&gt; i is count, j is the number</span>
+        <span class="n">vector</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">buckets</span><span class="p">(</span><span class="n">N</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+        <span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">countMap</span><span class="p">;</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">n</span> <span class="o">:</span> <span class="n">nums</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">countMap</span><span class="p">[</span><span class="n">n</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">pair</span><span class="o">:</span> <span class="n">countMap</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">n</span> <span class="o">=</span> <span class="n">pair</span><span class="p">.</span><span class="n">first</span><span class="p">;</span>
+            <span class="kt">int</span> <span class="n">nCnt</span> <span class="o">=</span> <span class="n">pair</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
+            <span class="n">buckets</span><span class="p">[</span><span class="n">nCnt</span><span class="p">].</span><span class="n">push_back</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">res</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="o">||</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">N</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">buckets</span><span class="p">[</span><span class="n">N</span><span class="o">-</span><span class="n">i</span><span class="p">].</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
+                <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">m</span><span class="o">:</span> <span class="n">buckets</span><span class="p">[</span><span class="n">N</span><span class="o">-</span><span class="n">i</span><span class="p">])</span> <span class="p">{</span>
+                    <span class="n">res</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">m</span><span class="p">);</span>
+                    <span class="n">k</span><span class="o">--</span><span class="p">;</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">k</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+                        <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+                    <span class="p">}</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="n">i</span><span class="o">++</span><span class="p">;</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="encode-and-decode-strings">Encode and Decode Strings</h2> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="n">string</span> <span class="n">encode</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;&amp;</span> <span class="n">strs</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">string</span> <span class="n">res</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">s</span><span class="o">:</span> <span class="n">strs</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">res</span> <span class="o">+=</span> <span class="n">to_string</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">())</span> <span class="o">+</span> <span class="s">"#"</span> <span class="o">+</span> <span class="n">s</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">decode</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">res</span><span class="p">;</span>
+        
+        <span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">while</span> <span class="p">(</span><span class="n">start</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>
+            <span class="kt">int</span> <span class="n">end</span> <span class="o">=</span> <span class="n">start</span><span class="p">;</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">s</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="o">!=</span> <span class="sc">'#'</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">end</span><span class="o">++</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="c1">// length can be two-digit number or more</span>
+            <span class="kt">int</span> <span class="n">length</span> <span class="o">=</span> <span class="n">stoi</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">));</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">end</span> <span class="o">+</span> <span class="mi">1</span><span class="p">;</span>
+
+            <span class="n">res</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">substr</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">length</span><span class="p">));</span>
+            <span class="n">start</span> <span class="o">+=</span> <span class="n">length</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">res</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="first-unique-character-in-a-string">First Unique Character in a String</h2> <p>Compared to my first solution:</p> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">firstUniqChar</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">nonRepChar</span><span class="p">;</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="kt">char</span> <span class="n">c</span> <span class="o">=</span> <span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">nonRepChar</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="n">nonRepChar</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+                <span class="n">nonRepChar</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">nonRepChar</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="kt">int</span> <span class="n">firstIdx</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+        <span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="n">pair</span><span class="o">:</span> <span class="n">nonRepChar</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">pair</span><span class="p">.</span><span class="n">second</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">continue</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">firstIdx</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                    <span class="n">firstIdx</span> <span class="o">=</span> <span class="n">pair</span><span class="p">.</span><span class="n">second</span><span class="p">;</span>
+                <span class="p">}</span>
+                <span class="k">else</span> <span class="p">{</span>
+                    <span class="n">firstIdx</span> <span class="o">=</span> <span class="n">min</span><span class="p">(</span><span class="n">firstIdx</span><span class="p">,</span> <span class="n">pair</span><span class="p">.</span><span class="n">second</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">firstIdx</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>The second solution is better:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">firstUniqChar</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">count</span><span class="p">;</span>
+        
+        <span class="k">for</span> <span class="p">(</span><span class="kt">char</span> <span class="n">c</span> <span class="o">:</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+	        <span class="c1">// C++ unordered_map works like defaultdict(int) in Python</span>
+            <span class="n">count</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+	        <span class="c1">// non-repeating character has the count value of 1</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">count</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">return</span> <span class="n">i</span><span class="p">;</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="best-time-to-buy-and-sell-stock">Best Time to Buy and Sell Stock</h2> <p>First solution:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">maxProfit</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">prices</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">profit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">sell</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">buy</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
+        
+        <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">price</span> <span class="o">:</span> <span class="n">prices</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">price</span> <span class="o">&gt;</span> <span class="n">sell</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">sell</span> <span class="o">=</span> <span class="n">price</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">price</span> <span class="o">&lt;</span> <span class="n">buy</span><span class="p">)</span> <span class="p">{</span>
+                <span class="n">buy</span> <span class="o">=</span> <span class="n">price</span><span class="p">;</span>
+                <span class="n">sell</span> <span class="o">=</span> <span class="n">buy</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">profit</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">profit</span><span class="p">,</span> <span class="n">sell</span> <span class="o">-</span> <span class="n">buy</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">profit</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>-&gt; For every for loop, you must update the maximum profit. (I did not in the first try, got wrong)</p> <p>Second solution:</p> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">int</span> <span class="n">maxProfit</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">prices</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">l</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">r</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+        <span class="kt">int</span> <span class="n">maxProfit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="n">r</span> <span class="o">&lt;</span> <span class="n">prices</span><span class="p">.</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">prices</span><span class="p">[</span><span class="n">l</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">prices</span><span class="p">[</span><span class="n">r</span><span class="p">])</span> <span class="p">{</span>
+                <span class="n">maxProfit</span> <span class="o">=</span> <span class="n">max</span><span class="p">(</span><span class="n">maxProfit</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="n">r</span><span class="p">]</span> <span class="o">-</span> <span class="n">prices</span><span class="p">[</span><span class="n">l</span><span class="p">]);</span>
+            <span class="p">}</span>
+            <span class="k">else</span> <span class="p">{</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">r</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="n">r</span><span class="o">++</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">maxProfit</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td><td class="rouge-code"><pre><span class="k">class</span> <span class="nc">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">maxProfit</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">prices</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">profit</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">N</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">prices</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="n">N</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">prices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">prices</span><span class="p">[</span><span class="n">start</span><span class="p">]:</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">i</span>
+            <span class="k">elif</span> <span class="n">prices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">prices</span><span class="p">[</span><span class="n">end</span><span class="p">]:</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">i</span>
+                <span class="n">profit</span> <span class="o">=</span> <span class="nf">max</span><span class="p">(</span><span class="n">profit</span><span class="p">,</span> <span class="n">prices</span><span class="p">[</span><span class="n">end</span><span class="p">]</span> <span class="o">-</span> <span class="n">prices</span><span class="p">[</span><span class="n">start</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">profit</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <h1 id="p1-valid-anagram">P1. Valid Anagram</h1> <h3 id="first-solution">First solution</h3> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+</pre></td><td class="rouge-code"><pre><span class="kt">bool</span> <span class="nf">isAnagram</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">,</span> <span class="n">string</span> <span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">sMap</span><span class="p">;</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">char</span> <span class="n">c</span><span class="o">:</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">sMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">!=</span> <span class="n">sMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+			<span class="n">sMap</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="k">else</span> <span class="p">{</span>
+			<span class="n">sMap</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">char</span> <span class="n">c</span><span class="o">:</span> <span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">sMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">==</span> <span class="n">sMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+		<span class="p">}</span>
+		<span class="k">else</span> <span class="p">{</span>
+			<span class="n">sMap</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">--</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="p">(</span><span class="k">const</span> <span class="k">auto</span><span class="o">&amp;</span> <span class="p">[</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span> <span class="o">:</span> <span class="n">sMap</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">value</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>What determines the two strings to be anagrams of each other?</p> <ol> <li>If there is a character in string <code class="language-plaintext highlighter-rouge">s</code>, then the same character must exist in string <code class="language-plaintext highlighter-rouge">t</code> as well</li> <li> <p>The count of each character is the same</p> </li> <li>There are total three for loops. Save each count of characters in string s in <code class="language-plaintext highlighter-rouge">sMap</code></li> <li>For each character of string t, decrease the count of the character</li> <li>If the value (count) of sMap is not 0, it means it is not an anagram</li> </ol> <p>However, the solution above is quite long. It can be shorter:</p> <h3 id="second-solution">Second solution</h3> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+</pre></td><td class="rouge-code"><pre><span class="kt">bool</span> <span class="nf">isAnagram</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">,</span> <span class="n">string</span> <span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">!=</span> <span class="n">t</span><span class="p">.</span><span class="n">length</span><span class="p">())</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">countS</span><span class="p">;</span>
+	<span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">countT</span><span class="p">;</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">length</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">countS</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">++</span><span class="p">;</span>
+		<span class="n">countT</span><span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">++</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">countS</span> <span class="o">==</span> <span class="n">countT</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <ol> <li>First it checks if lengths of the two strings are the same. If the lengths are not equal, it will return false and exit the function. Afterwards it runs a for loop with the same iterator (<code class="language-plaintext highlighter-rouge">int i</code>) in string s and t, so the lengths of the two strings must be the same.</li> <li>It uses a map for each string -&gt; total two maps</li> <li>Lastly, it compares two maps</li> </ol> <h3 id="third-solution">Third solution</h3> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+</pre></td><td class="rouge-code"><pre><span class="kt">bool</span> <span class="nf">isAnagram</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">,</span> <span class="n">string</span> <span class="n">t</span><span class="p">)</span> <span class="p">{</span>
+	<span class="k">if</span> <span class="p">(</span><span class="n">s</span><span class="p">.</span><span class="n">length</span><span class="p">()</span> <span class="o">!=</span> <span class="n">t</span><span class="p">.</span><span class="n">length</span><span class="p">())</span> <span class="p">{</span>
+		<span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">count</span><span class="p">(</span><span class="mi">26</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">length</span><span class="p">();</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">count</span><span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="sc">'a'</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
+		<span class="n">count</span><span class="p">[</span><span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="sc">'a'</span><span class="p">]</span><span class="o">--</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">val</span> <span class="o">:</span> <span class="n">count</span><span class="p">)</span> <span class="p">{</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">val</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+			<span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Instead of using a map (unordered_map), it uses a vector. How is this possible? It uses ASCII value of each character, and it enables to map a character to an integer.</p> <p>In the same for loop, it increments and decrements at the same time.</p> <h1 id="p2-two-sum">P2. Two Sum</h1> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+</pre></td><td class="rouge-code"><pre><span class="k">def</span> <span class="nf">twoSum</span><span class="p">(</span><span class="n">self</span><span class="p">,</span> <span class="n">nums</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">target</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+	<span class="n">hashDict</span> <span class="o">=</span> <span class="p">{}</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">nums</span><span class="p">)):</span>
+		<span class="n">hashDict</span><span class="p">[</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">i</span>
+	
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">nums</span><span class="p">)):</span>
+		<span class="n">n</span> <span class="o">=</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+		<span class="nf">if </span><span class="p">(</span><span class="n">target</span><span class="o">-</span><span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hashDict</span> <span class="ow">and</span> \
+		<span class="n">hashDict</span><span class="p">[</span><span class="n">target</span><span class="o">-</span><span class="n">n</span><span class="p">]</span> <span class="o">!=</span> <span class="n">i</span><span class="p">:</span>
+			<span class="k">return</span> <span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">hashDict</span><span class="p">[</span><span class="n">target</span><span class="o">-</span><span class="n">n</span><span class="p">]]</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="rouge-code"><pre><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">twoSum</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">nums</span><span class="p">,</span> <span class="kt">int</span> <span class="n">target</span><span class="p">)</span> <span class="p">{</span>
+	<span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">hashMap</span><span class="p">;</span>
+	<span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">nums</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">k</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		<span class="n">hashMap</span><span class="p">[</span><span class="n">nums</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">k</span><span class="p">;</span>
+	<span class="p">}</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">k</span> <span class="o">&lt;</span> <span class="n">nums</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="n">k</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+		<span class="kt">int</span> <span class="n">diff</span> <span class="o">=</span> <span class="n">target</span> <span class="o">-</span> <span class="n">nums</span><span class="p">[</span><span class="n">k</span><span class="p">];</span>
+		<span class="n">i</span> <span class="o">=</span> <span class="n">k</span><span class="p">;</span>
+		<span class="c1">// j = hashMap.find(diff)-&gt;second;</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">hashMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span> <span class="o">!=</span> <span class="n">hashMap</span><span class="p">.</span><span class="n">end</span><span class="p">())</span> <span class="p">{</span>
+			<span class="n">j</span> <span class="o">=</span> <span class="n">hashMap</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">second</span><span class="p">;</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">!=</span> <span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+				<span class="k">break</span><span class="p">;</span>
+			<span class="p">}</span>
+		<span class="p">}</span>
+	<span class="p">}</span>
+	<span class="k">return</span> <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="p">{</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">};</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>]]></content><author><name></name></author><category term="Data-Structure-and-Algorithms"/><summary type="html"><![CDATA[How to handle array and hash map & set]]></summary></entry><entry><title type="html">Queue, Priority Queue and Vector in C++</title><link href="https://seanshnkim.github.io/blog/2025/Queue,-Priority-Queue-and-Vector-in-C++/" rel="alternate" type="text/html" title="Queue, Priority Queue and Vector in C++"/><published>2025-01-22T10:23:58+00:00</published><updated>2025-01-22T10:23:58+00:00</updated><id>https://seanshnkim.github.io/blog/2025/Queue,%20Priority%20Queue%20and%20Vector%20in%20C++</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/Queue,-Priority-Queue-and-Vector-in-C++/"><![CDATA[<p>| Priority Queue | Queue | Vector | | ——————————————————– | ————————- | ——————– | | <code class="language-plaintext highlighter-rouge">#include &lt;queue&gt;</code> | <code class="language-plaintext highlighter-rouge">#include &lt;queue&gt;</code> | <code class="language-plaintext highlighter-rouge">#include &lt;vector&gt;</code> | | <code class="language-plaintext highlighter-rouge">priority_queue&lt;int&gt;</code><br/><code class="language-plaintext highlighter-rouge">pq(nums.begin(), nums.end());</code> | <code class="language-plaintext highlighter-rouge">queue&lt;int&gt; q;</code> | <code class="language-plaintext highlighter-rouge">vector&lt;int&gt; v;</code> | | <code class="language-plaintext highlighter-rouge">hq.push(n);</code> | <code class="language-plaintext highlighter-rouge">q.push(n);</code> | <code class="language-plaintext highlighter-rouge">v.push_back(n);</code> | | <code class="language-plaintext highlighter-rouge">int n = hq.top();</code> <br/> | <code class="language-plaintext highlighter-rouge">int n = q.front();</code> <br/> | <code class="language-plaintext highlighter-rouge">int n = v.front();</code> | | <code class="language-plaintext highlighter-rouge">hq.pop();</code> | <code class="language-plaintext highlighter-rouge">q.pop();</code> | <code class="language-plaintext highlighter-rouge">v.pop_back();</code> | | | <code class="language-plaintext highlighter-rouge">int n = q.back();</code> | <code class="language-plaintext highlighter-rouge">int n = v.back();</code> |</p> <h3 id="queuepop-vs-queuefront">queue::pop() vs. queue::front()</h3> <p>The element removed is the “oldest” element in the <a href="https://cplusplus.com/queue">queue</a> whose value can be retrieved by calling member <a href="https://cplusplus.com/queue::front">queue::front</a>.</p> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+</pre></td><td class="rouge-code"><pre><span class="cp">#include</span> <span class="cpf">&lt;queue&gt;</span><span class="cp">
+</span><span class="k">using</span> <span class="k">namespace</span> <span class="n">std</span><span class="p">;</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">queue</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">q</span><span class="p">;</span>
+    <span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+    <span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">5</span><span class="p">);</span>
+    <span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">7</span><span class="p">);</span>
+    <span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span>
+
+    <span class="kt">int</span> <span class="n">front1</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">front</span><span class="p">();</span> <span class="c1">// front1 = 3</span>
+    <span class="n">q</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
+    <span class="kt">int</span> <span class="n">front2</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">front</span><span class="p">();</span> <span class="c1">// front1 = 5</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div>]]></content><author><name></name></author><category term="Data-Structure-and-Algorithms"/><summary type="html"><![CDATA[Convenient Cheat Sheet for queue, priority queue and vector methods in vector]]></summary></entry></feed>
