@@ -6,8 +6,8 @@ Starting the blog on January 2025, I will mainly discuss my side projects and le
 
 # How to customize al-folio's blog template
 
-## Table of Contents
 
+## Table of Contents
 - [[#1. Before commit and push, don't forget to run prettier|1. Before commit and push, don't forget to run prettier]]
 - [[#2. How to run demo in local|2. How to run demo in local]]
 - [[#3. Images embedded in blog post|3. Images embedded in blog post]]

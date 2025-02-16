@@ -8,7 +8,7 @@ tags:
   - mutex
   - priority-inheritance
   - task-scheduling
-categories: RTOS, OperatingSystem
+categories: RTOS
 ---
 
 ## Key words

@@ -7,11 +7,16 @@ categories:
   - Data-Structure-and-Algorithms
 ---
 
-## Two pointer approach in sorted array
+## Two pointer approach: When to use it?
 
-Two pointer approach is available when given array is sorted.
+### 1. When a given array is sorted
+As long as a given array is sorted, two pointer approach is applicable.
 
-Let's look into [3sum](https://neetcode.io/problems/three-integer-sum) problem.
+In [Two Integer Sum II](https://neetcode.io/problems/two-integer-sum-ii), input array is sorted.
+
+Sometimes let's look into [3sum](https://neetcode.io/problems/three-integer-sum) problem.
+
+
 
 ### What I missed
 It is always good to 

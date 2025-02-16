@@ -20,11 +20,13 @@ social: true # includes social icons at the bottom of the page
 
 Welcome to my humble corner of the web!
 
-In the fall of 2024, I began my master's program in the United States. I felt it was necessary to create this space to showcase myself other than a simple resume.
+Since Fall 2024, I've been pursuing my master's degree in Computer Engineering in the United States.
+I wanted to share what I learn and code every day in this space.
 
 I believe that writing is a surprisingly effective method of learning. Through writing, I can refine and hone the concepts I've learned. The act of committing to write also motivates myself to start studying new topics.
 
-I am interested in embedded systems, IoT, operating systems, robotics and AI.
+I previously worked as a ML engineer, but now I am aiming to transition my career towards embedded systems & firmware.
+My interests in the field range from TinyML, MLOps to FreeRTOS, IoT, robotics and low-level programming.
 
 ### Contacts
 
