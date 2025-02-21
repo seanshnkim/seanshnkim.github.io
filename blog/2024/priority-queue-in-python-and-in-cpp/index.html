@@ -50,10 +50,10 @@
 <span class="n">ans</span> <span class="o">=</span> <span class="mi">0</span>
 <span class="k">while</span> <span class="n">q</span><span class="p">:</span>
     <span class="n">first</span> <span class="o">=</span> <span class="n">heapq</span><span class="p">.</span><span class="nf">heappop</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
-    
+
     <span class="k">if</span> <span class="ow">not</span> <span class="n">q</span><span class="p">:</span>
         <span class="k">break</span>
-    
+
     <span class="n">second</span> <span class="o">=</span> <span class="n">heapq</span><span class="p">.</span><span class="nf">heappop</span><span class="p">(</span><span class="n">q</span><span class="p">)</span>
     <span class="n">heapq</span><span class="p">.</span><span class="nf">heappush</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">first</span> <span class="o">+</span> <span class="n">second</span><span class="p">)</span>
     <span class="n">ans</span> <span class="o">+=</span> <span class="p">(</span><span class="n">first</span> <span class="o">+</span> <span class="n">second</span><span class="p">)</span>

@@ -16,7 +16,7 @@
 	<span class="p">}</span>
 	<span class="kt">int</span> <span class="n">leftDepth</span> <span class="o">=</span> <span class="n">maxDepth</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span>
 	<span class="kt">int</span> <span class="n">rightDepth</span> <span class="o">=</span> <span class="n">maxDepth</span><span class="p">(</span><span class="n">root</span><span class="o">-&gt;</span><span class="n">right</span><span class="p">);</span>
-	
+
 	<span class="k">return</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">max</span><span class="p">(</span><span class="n">leftDepth</span><span class="p">,</span> <span class="n">rightDepth</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></td> </tr></tbody></table></code></pre></div></div> <h2 id="2-balanced-binary-tree">2. Balanced binary tree</h2> <p>Given a binary tree, determine if it is a height-balanced tree (a binary tree in which the depth of the two subtrees of every node never differs by more than one).</p> <h3 id="first-solution">First solution</h3> <ol> <li>Analyze given question. What defines a “height-balance” tree?</li> <li>Base condition.</li> <li>Recursion = relationship</li> <li>Set if-statements (conditions, restraints).</li> <li>Consider using a helper function.</li> </ol> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>

@@ -85,7 +85,7 @@
 	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">root</span><span class="p">)</span> <span class="p">{</span>
 		<span class="k">return</span> <span class="n">root</span><span class="p">;</span>
 	<span class="p">}</span>
-	
+
 	<span class="n">queue</span><span class="o">&lt;</span><span class="n">TreeNode</span><span class="o">*&gt;</span> <span class="n">q</span><span class="p">;</span>
 	<span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">root</span><span class="p">);</span>
 
@@ -175,7 +175,7 @@
 	<span class="p">}</span>
 	<span class="c1">// This is wrong, because it also takes null nodes into the count</span>
 	<span class="c1">// It should be depth-1</span>
-	<span class="k">return</span> <span class="n">depth</span><span class="p">;</span> 
+	<span class="k">return</span> <span class="n">depth</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></td> </tr></tbody></table></code></pre></div></div> <ul> <li>The return value <code class="language-plaintext highlighter-rouge">depth</code> is wrong, because at the bottom level it also takes null nodes into the count. It should be <code class="language-plaintext highlighter-rouge">depth-1</code>.</li> <li>However, this can be misleading. Let’s change the code so that it prevents from inserting null nodes into the queue:</li> </ul> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
 <td class="rouge-gutter gl"><pre class="lineno">1
@@ -224,7 +224,7 @@
 		<span class="p">}</span>
 		<span class="n">depth</span><span class="o">++</span><span class="p">;</span>
 	<span class="p">}</span>
-	<span class="k">return</span> <span class="n">depth</span><span class="p">;</span> 
+	<span class="k">return</span> <span class="n">depth</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></td> </tr></tbody></table></code></pre></div></div> <ul> <li>One thing to note: In C++, you can initialize a queue with one value in two ways:</li> </ul> <div class="language-c++ highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
 <td class="rouge-gutter gl"><pre class="lineno">1

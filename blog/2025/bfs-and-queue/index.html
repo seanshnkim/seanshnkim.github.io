@@ -38,10 +38,10 @@
 	<span class="k">while</span><span class="p">(</span><span class="n">qSize</span><span class="o">--</span><span class="p">)</span> <span class="p">{</span>
 		<span class="n">TreeNode</span><span class="o">*</span> <span class="n">node</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">front</span><span class="p">();</span>
 		<span class="n">q</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
-		
+
 		<span class="c1">// Do something with the current node</span>
 		<span class="c1">// ...</span>
-		
+
 		<span class="k">if</span> <span class="p">(</span><span class="n">node</span><span class="o">-&gt;</span><span class="n">left</span> <span class="o">!=</span> <span class="nb">nullptr</span><span class="p">)</span> <span class="p">{</span>
 			<span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">node</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span>
 		<span class="p">}</span>
@@ -72,10 +72,10 @@
 <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">q</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="p">{</span>
 	<span class="n">TreeNode</span><span class="o">*</span> <span class="n">node</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="n">front</span><span class="p">();</span>
 	<span class="n">q</span><span class="p">.</span><span class="n">pop</span><span class="p">();</span>
-	
+
 	<span class="c1">// Do something with the current node</span>
 	<span class="c1">// ...</span>
-	
+
 	<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">node</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>
 
 	<span class="n">q</span><span class="p">.</span><span class="n">push</span><span class="p">(</span><span class="n">node</span><span class="o">-&gt;</span><span class="n">left</span><span class="p">);</span>

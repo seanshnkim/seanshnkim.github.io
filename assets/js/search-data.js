@@ -42,6 +42,17 @@ ninja.data = [{
       section: "Posts",
       handler: () => {
         
+          window.location.href = "/blog/2025/Rotate-Array/";
+        
+      },
+    },{id: "post-two-pointers",
+      
+        title: "Two Pointers",
+      
+      description: "Different approaches to solve two pointer algorithm problems",
+      section: "Posts",
+      handler: () => {
+        
           window.location.href = "/blog/2025/Two-Pointers/";
         
       },

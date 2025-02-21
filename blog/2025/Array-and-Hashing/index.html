@@ -40,11 +40,11 @@
         <span class="c1"># time complexity: O(n + 26)
 </span>        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">s</span><span class="p">:</span>
             <span class="n">alph_cnt</span><span class="p">[</span><span class="nf">ord</span><span class="p">(</span><span class="n">c</span><span class="p">)</span> <span class="o">-</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">)]</span> <span class="o">+=</span> <span class="mi">1</span>
-            
+
         <span class="n">key</span> <span class="o">=</span> <span class="sh">""</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="mi">26</span><span class="p">):</span>
             <span class="n">key</span> <span class="o">+=</span> <span class="nf">chr</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="nf">ord</span><span class="p">(</span><span class="sh">'</span><span class="s">a</span><span class="sh">'</span><span class="p">))</span> <span class="o">*</span> <span class="n">alph_cnt</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
-        
+
         <span class="k">return</span> <span class="n">key</span>
 
 
@@ -60,10 +60,10 @@
                 <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">keyMap</span><span class="p">[</span><span class="n">key</span><span class="p">].</span><span class="nf">append</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
-        
+
         <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">listOfStr</span> <span class="ow">in</span> <span class="n">keyMap</span><span class="p">.</span><span class="nf">items</span><span class="p">():</span>
             <span class="n">res</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">listOfStr</span><span class="p">)</span>
-        
+
         <span class="k">return</span> <span class="n">res</span>
 </pre></td> </tr></tbody></table></code></pre></div></div> <h2 id="top-k-frequent-elements">Top K Frequent Elements</h2> <div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
 <td class="rouge-gutter gl"><pre class="lineno">1
@@ -179,7 +179,7 @@
 
     <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">decode</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">vector</span><span class="o">&lt;</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">res</span><span class="p">;</span>
-        
+
         <span class="kt">int</span> <span class="n">start</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
         <span class="k">while</span> <span class="p">(</span><span class="n">start</span> <span class="o">&lt;</span> <span class="n">s</span><span class="p">.</span><span class="n">size</span><span class="p">())</span> <span class="p">{</span>
             <span class="kt">int</span> <span class="n">end</span> <span class="o">=</span> <span class="n">start</span><span class="p">;</span>
@@ -283,7 +283,7 @@
 <span class="nl">public:</span>
     <span class="kt">int</span> <span class="n">firstUniqChar</span><span class="p">(</span><span class="n">string</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">unordered_map</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="kt">int</span><span class="o">&gt;</span> <span class="n">count</span><span class="p">;</span>
-        
+
         <span class="k">for</span> <span class="p">(</span><span class="kt">char</span> <span class="n">c</span> <span class="o">:</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
 	        <span class="c1">// C++ unordered_map works like defaultdict(int) in Python</span>
             <span class="n">count</span><span class="p">[</span><span class="n">c</span><span class="p">]</span><span class="o">++</span><span class="p">;</span>
@@ -322,7 +322,7 @@
     <span class="kt">int</span> <span class="n">maxProfit</span><span class="p">(</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;</span> <span class="n">prices</span><span class="p">)</span> <span class="p">{</span>
         <span class="kt">int</span> <span class="n">profit</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
         <span class="kt">int</span> <span class="n">sell</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">buy</span> <span class="o">=</span> <span class="n">prices</span><span class="p">[</span><span class="mi">0</span><span class="p">];</span>
-        
+
         <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">price</span> <span class="o">:</span> <span class="n">prices</span><span class="p">)</span> <span class="p">{</span>
             <span class="k">if</span> <span class="p">(</span><span class="n">price</span> <span class="o">&gt;</span> <span class="n">sell</span><span class="p">)</span> <span class="p">{</span>
                 <span class="n">sell</span> <span class="o">=</span> <span class="n">price</span><span class="p">;</span>
@@ -532,7 +532,7 @@
 	<span class="n">hashDict</span> <span class="o">=</span> <span class="p">{}</span>
 	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">nums</span><span class="p">)):</span>
 		<span class="n">hashDict</span><span class="p">[</span><span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span> <span class="o">=</span> <span class="n">i</span>
-	
+
 	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nf">range</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">nums</span><span class="p">)):</span>
 		<span class="n">n</span> <span class="o">=</span> <span class="n">nums</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
 		<span class="nf">if </span><span class="p">(</span><span class="n">target</span><span class="o">-</span><span class="n">n</span><span class="p">)</span> <span class="ow">in</span> <span class="n">hashDict</span> <span class="ow">and</span> \
