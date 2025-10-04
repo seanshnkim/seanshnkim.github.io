@@ -8,10 +8,12 @@ Starting the blog on January 2025, I will mainly discuss my side projects and le
 
 ## Table of Contents
 
-- [[#1. Before commit and push, don't forget to run prettier|1. Before commit and push, don't forget to run prettier]]
-- [[#2. How to run demo in local|2. How to run demo in local]]
-- [[#3. Images embedded in blog post|3. Images embedded in blog post]]
-- [[#4. Blog post template rules|4. Blog post template rules]]
+[Headers](#headers)
+
+- [1. Run Prettier](#1-before-commit-and-push-dont-forget-to-run-prettier)
+- [2. Run Demo](#2-how-to-run-demo-in-local)
+- [3. Insert Images](#3-images-embedded-in-blog-post)
+- [4. Template Rules](#4-blog-post-template-rules)
 
 This blog was forked from [alshedivat/al-folio](https://github.com/alshedivat/al-folio). Although the blog template already looks awesome, some people might want to customize its settings to their own taste. Without nearly no background in front-end development, I struggled days and days debugging and finding solutions. Here is what I have gone through, and if it is helpful for you please don't hesitate to start this repository!
 
