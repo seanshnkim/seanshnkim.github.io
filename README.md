@@ -22,6 +22,8 @@ This blog was forked from [alshedivat/al-folio](https://github.com/alshedivat/al
 This is already mentioned in [FAQ.md](https://github.com/alshedivat/al-folio/blob/main/FAQ.md). However, I would like to emphasize once again.
 Before commiting and pushing changes into remote repository every time, make sure to run `npx prettier . --write`. Otherwise you will encounter `prettier code formatter workflow run failed for main branch` and you would have to run the workflow again.
 
+If Github Action returns warning or error while it returns no error when you run `npx prettier . --write` in local, it may be due to some outdated node packages. Run `npm update` in local to update to latest.
+
 ## 2. How to run demo in local
 
 Triggering deployment actions for every step you change is bad idea. Not only it takes a long time but is also heavy workload for servers. Instead, we can run tests in local machine for minor changes. Deployment should be performed in final step.
