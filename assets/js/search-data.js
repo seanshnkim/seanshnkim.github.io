@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-how-does-platformio-project-work",
+        },{id: "post-why-does-it-display-white-screen-after-removing-systick-handler",
+      
+        title: "Why does it display white screen after removing SysTick_Handler?",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/SysTick_Handler/";
+        
+      },
+    },{id: "post-how-does-platformio-project-work",
       
         title: "How does PlatformIO Project Work?",
       
@@ -34,9 +45,9 @@ ninja.data = [{
           window.location.href = "/blog/2025/PlatformIO-What-it-does/";
         
       },
-    },{id: "post-how-to-set-freertos-with-the-latest-version-in-your-project",
+    },{id: "post-part-1-how-to-set-freertos-in-your-project",
       
-        title: "How to Set FreeRTOS with the Latest Version in Your Project",
+        title: "Part 1. How to Set FreeRTOS in Your Project",
       
       description: "",
       section: "Posts",
@@ -45,9 +56,20 @@ ninja.data = [{
           window.location.href = "/blog/2025/Setting-FreeRTOS/";
         
       },
-    },{id: "post-schedulers",
+    },{id: "post-how-to-use-segger-trace-tool-for-debugging",
       
-        title: "Schedulers",
+        title: "How to Use SEGGER Trace Tool for Debugging",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/SEGGER-Trace-Tool/";
+        
+      },
+    },{id: "post-schedulers-in-freertos",
+      
+        title: "Schedulers in FreeRTOS",
       
       description: "",
       section: "Posts",
