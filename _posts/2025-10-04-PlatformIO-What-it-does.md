@@ -6,11 +6,13 @@ description:
 tags:
 categories:
 ---
+
 ## How to Create a PlatformIO Project
+
 In VS Code, I'll assume that PlatformIO extension has been already installed. I'll choose STM32F429I Discovery Kit for board type. The framework and the board type will depend on which type of microcontroller you'd use.
 
 1. Select Board: ST 32F429IDISCOVERY
-2. Framework: STM32Cube  
+2. Framework: STM32Cube
 
 PlatformIO will then automatically create folders and files.
 In the current workspace:
@@ -37,7 +39,7 @@ In the current workspace:
 └── test
     └── README
 ```
-  
+
 Run this command. It lists file size existing in current directory and sort them from the largest:
 
 ```bash
@@ -62,6 +64,7 @@ The result:
 Note that 1) `c_cpp_properties.json` and 2) `disco_f407vg/idedata.json` have the biggest file size. I couldn't find out what exactly `idedata.json` does. Yet both files seem to contain important information about build and compile process.
 
 ### platformio.ini, project config file for modification
+
 Every time you want to change project settings (for example, changing board type or using different framework or RTOS), you do not need to update the json files by yourself. Instead, platformio.ini takes care of all the heavy lifting.
 
 For example, if I change environment and board settings in `platformio.ini`:
@@ -89,17 +92,19 @@ There is no need for an user to change files in `.pio` folder directly. Use `pla
 This is the official tutorial on how to use platformio.ini: https://docs.platformio.org/en/latest/projectconf/index.html
 
 ---
+
 ## Simple Demo: Printing Text on LCD
 
 Now let's wrap it up with a simple demo project: https://github.com/seanshnkim/Simple-Print-LCD
 
 You can:
+
 1. git clone the repository
 2. Wait for PlatformIO to identify the `platformio.ini` file and create configuration files
 3. Build and upload the project onto your board
 
-What are custom files other than PlatformIO-created default files? 
-Except `main.h` and `main.c` source code, there is `stm32f4xx_it.h` and `stm32f4xx_it.c`. What happens if you take them out? 
+What are custom files other than PlatformIO-created default files?
+Except `main.h` and `main.c` source code, there is `stm32f4xx_it.h` and `stm32f4xx_it.c`. What happens if you take them out?
 
-It returns no error, but you won't see any text on LCD (only white blank screen). 
+It returns no error, but you won't see any text on LCD (only white blank screen).
 We'll see why in the next post.
