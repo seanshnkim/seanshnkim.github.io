@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-how-to-set-freertos-with-the-latest-version-in-your-project",
+        },{id: "post-how-does-platformio-project-work",
+      
+        title: "How does PlatformIO Project Work?",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/PlatformIO-What-it-does/";
+        
+      },
+    },{id: "post-how-to-set-freertos-with-the-latest-version-in-your-project",
       
         title: "How to Set FreeRTOS with the Latest Version in Your Project",
       
