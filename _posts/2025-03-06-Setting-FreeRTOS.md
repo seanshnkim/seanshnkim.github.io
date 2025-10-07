@@ -1,7 +1,7 @@
 ---
 layout: post
-title: How to Set FreeRTOS with the Latest Version in Your Project
-date: 2025-09-30 23:23:30
+title: Part 1. How to Set FreeRTOS in Your Project
+date: 2025-10-03 21:50:31
 description:
 tags:
 categories:
@@ -171,6 +171,9 @@ Go to the project .ioc file and choose `4 bits for pre-emption priority 0 bits f
 ## References
 
 [^1]: https://freertos.org/Documentation/04-Roadmap-and-release-note/02-Release-notes/00-Release-history#changes-between-freertos-v1062-and-freertos-v1100-released-december-18-2023
+
 [^2]: https://arm-software.github.io/CMSIS_5/Core/html/index.html
+
 [^3]: https://www.freertos.org/Documentation/02-Kernel/03-Supported-devices/02-Customization#:~:text=processor%20include%20path.-,FreeRTOSConfig.,RTOS%20kernel%20source%20code%20directories.
+
 [^4]: https://stackoverflow.com/questions/17572519/what-do-the-cc-arm-iccarm-gnuc-and-tasking-macros-mean

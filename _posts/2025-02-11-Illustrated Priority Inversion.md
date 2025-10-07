@@ -171,4 +171,5 @@ In the next post, I will discuss several solutions for priority inversion.
 - https://www.geeksforgeeks.org/difference-between-priority-inversion-and-priority-inheritance/
 
 [^1]: [Wikipedia: Priority_Inversion](https://en.wikipedia.org/wiki/Priority_inversion)
+
 [^2]: [Wikipedia: Critical Section](https://en.wikipedia.org/wiki/Critical_section)

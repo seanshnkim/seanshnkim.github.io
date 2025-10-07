@@ -1,11 +1,12 @@
 ---
 layout: post
-title: Schedulers
+title: Schedulers in FreeRTOS
 date: 2025-02-15 16:43:10
 description:
 tags:
   - Schedulers
-categories: RTOS
+categories:
+  - RTOS
 ---
 
 ## Scheduler
@@ -22,9 +23,14 @@ There is a clock inside computer, and tick tells computer how long it took.
 2. Time delays: Tasks sometimes need to be delayed. In other words, they are assigned a specific number of clock ticks to wait before execution.
 3. Context Switching: This is more in-depth (심화 내용) part. The interrupt happens at a certain tick, and it enables to switch between different tasks. If there is a higher priority task needs to run, the tick interrupt allows the RTOS to determine.
 
-{% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/tick_1.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
-
-{% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/tick_2.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
+<div class="image-row">
+  <figure class="mt-3">
+    {% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/tick_1.png" class="img-fluid rounded z-depth-1" width="150px" %}
+  </figure>
+  <figure class="mt-3">
+    {% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/tick_2.png" class="img-fluid rounded z-depth-1" width="500px" %}
+  </figure>
+</div>
 
 I took only a few examples, but in fact tick is like heartbeat of RTOS, 중추 역할을 한다. Tick drives internal RTOS functionalities, ranging from task management to system monitoring. And the function that generates tick is actually named "TickISR (Interrupt Service Routine)".[^3]
 
@@ -33,23 +39,23 @@ I took only a few examples, but in fact tick is like heartbeat of RTOS, 중추 �
 Now theoretical part is explained, it is time to dissect how it is actually implemented in code.
 Let's look into `main.c` code.
 
-### 1. `vTaskStartScheduler()`
+### 1. `vTaskStartScheduler()` in `main.c`
 
 This function is defined in `tasks.c` of FreeRTOS kernel (`FreeRTOS > tasks.c`) and used to start the RTOS scheduler.
 
 > A FreeRTOS application will start up and execute just like a non-RTOS application until [vTaskStartScheduler()](https://www.freertos.org/Documentation/02-Kernel/04-API-references/04-RTOS-kernel-control/03-vTaskStartScheduler) is called. vTaskStartScheduler() is normally called from the application's main() function. The RTOS only controls the execution sequencing after vTaskStartScheduler() has been called. [^1]
 
-First, it creates the idle and timer daemon task. Then it calls `xPortStartScheduler()` to do the architecture specific initializations. To be more specific, it:
+First, it creates the idle and timer daemon task. Then it calls `xPortStartScheduler()` to do the architecture specific initializations.
 
-1. configures `SysTick` timer to issue interrupts at a desired rate. This is configured in the variable `FreeRTOSConfig.h > configTick_RATE_HZ`.
-2. configures priority for PendSV and Systick interrupts. This is implemented as saving priority value in a register: `portNVIC_SHPR3_REG |= portNVIC_PENDSV_PRI`, `portNVIC_SHPR3_REG |= portNVIC_SYSTICK_PRI`.
-3. starts the first task by executing the SVC instruction. (`prvPortStartFirstTask`)
+### 2. `xPortStartScheduler()` in `port.c`
 
-As said, `port.c` provides hardware-specific implementations for RTOS. In `port.c` (`FreeRTOS (Kernel) > portable > RVDS > ARM_CM4F > port.c`), and you will be able to find the following three key functions:
+To be more specific, it:
 
-1. vPortSVCHandler():
-2. xPortPendSVHandler():
-3. xPortSysTickHandler()
+1. configures priority for PendSV and SysTick Timer interrupts to be lowest as possible. This is implemented as saving priority value in a register: `portNVIC_SHPR3_REG |= portNVIC_PENDSV_PRI`, `portNVIC_SHPR3_REG |= portNVIC_SYSTICK_PRI`.
+2. configures `SysTick` timer to issue interrupts at a desired rate. The customized rate is assigned into the variable `FreeRTOSConfig.h > configTick_RATE_HZ`.
+3. enables the SysTick timer interrupt and starts the first task (including timer) by executing the SVC instruction. (`prvPortStartFirstTask`)
+
+As said, `port.c` provides hardware-specific implementations for RTOS. In `port.c` (`FreeRTOS (Kernel) > portable > RVDS > ARM_CM4F > port.c`), and you will be able to find the following three key functions: 4. vPortSVCHandler(): 5. xPortPendSVHandler(): 6. xPortSysTickHandler()
 
 Though their names are quite unfamiliar (알아듣기 어렵지만), each of its role is simple and clear.
 
@@ -65,7 +71,9 @@ If you are using a type of processor other than ARM Cortex-M processors, you won
 
 `xPortPendSVHandler()` is triggered by pending the PendSV system exception of ARM. In its name, PendSV stands for 'Pendable Service'.
 
-{% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/context-switch.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
+<figure class="mt-5">
+{% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/context-switch.png" class="img-fluid rounded z-depth-1 center-image" width="600px" %}
+</figure>
 
 ### 4. Handles tick-relevant tasks: `xPortSysTickHandler()`
 
@@ -79,11 +87,7 @@ There is another important function named `vPortSetupTimerInterrupt()` in `xPort
 
 ## FreeRTOS Kernel Interrupts
 
-Interrupt is a fundamental mechanism in OS to stop and resume scheduler tasks. FreeRTOS has the following "kernel" interrupts:
-
-1. SVCInterrupt: SVC handler will be used to launch the very first task.
-2. PendSVInterrupt: PendSV handler is used to carry out context switching between tasks.
-3. SysTick Interrupt: SysTick handler implements the RTOS Tick Management.
+Interrupt is a fundamental mechanism in OS to stop and resume scheduler tasks. FreeRTOS has the following "kernel" interrupts: 7. SVCInterrupt: SVC handler will be used to launch the very first task. 8. PendSVInterrupt: PendSV handler is used to carry out context switching between tasks. 9. SysTick Interrupt: SysTick handler implements the RTOS Tick Management.
 
 If SysTick interrupt is used for some other purposes in your application, then you may have to use any other available timer peripheral. All interrupts are configured at the lowest interrupt priority possible.
 
@@ -93,14 +97,9 @@ In FreeRTOSConfig.h, there is a variable called `configTICK_RATE_HZ`. It means t
 
 To keep track of time. xTickCount variable is a key. For example, it is used for vTaskDelay(100).
 
-RTOS tick, apart from incrementing the tick count, is used to trigger the context switch to the next potential task.
+RTOS tick, apart from incrementing the tick count, is used to trigger the context switch to the next potential task. 10. The tick ISR runs `xPortSysTickTimer()` 11. portDISABLE_INTERRUPTS() is turned on. 12. xTickCount++. Also, if xTaskIncrementTick() return value is equal to TRUE if actually context switch is required 13. Checks to see if the new tick value will cause any tasks to be unblocked. 14. Determines which is the next potential task to run. All the ready state tasks are scanned If found, triggers the context switching by pending the PendSV interrupt 15. portENABLE_INTERRUPTS() is turned on.
 
-4. The tick ISR runs
-5. All the ready state tasks are scanned
-6. Determines which is the next potential task to run
-7. If found, triggers the context switching by pending the PendSV interrupt
-8. The PendSV handler takes care of switching out of old task and switching in of new task
-
+The PendSV handler takes care of switching out of old task and switching in of new task
 Let's go to `port.c` and see xPortSysTickHandler.
 
 ```c
@@ -124,15 +123,18 @@ void xPortSysTickHandler( void )
 }
 ```
 
-First, it increments the tick. In this example CPU clock is set to 16MHz, and `configTICK_RATE_HZ` is set to 1000.
+First, it increments the tick. In this example, let's say CPU clock frequency is set to 16MHz and `configTICK_RATE_HZ` is set to 1000Hz. "Clock" means the processor generates a pulse to perform basic operations at the speed of $16 \times 10^6$ times per second. By the same token, the tick occurs 1000 times every second.
 
-$$ 16 \times 10^6 \div 1,000 = 16,000$$
+Now the "load register" of SysTick (i.e. "SysTick Reload Value Register", `portSYSTICK_NVIC_LOAD_REG`) stores the value that will be loaded into the counter. It will count from certain value X down to 0 every 1 second.
 
-As the SysTick timer starts, it counts down from 15,999 to 0.
-It generates an interrupt when the count value reaches 0 and again reloads the load count value. Therefore, 15,999 is the SysTick load value required to generate interrupt for every 1ms.
+$$ X = 16 \times 10^6 \div 1,000 = 16,000$$
+
+As the SysTick timer starts, it counts down from 15,999 to 0. It generates an interrupt when the count value reaches 0 and again reloads the load count value. Therefore, 15,999 is the initial SysTick load value required to generate interrupt for every 1ms.
 
 ## References
 
 [^1]: https://www.freertos.org/Documentation/01-FreeRTOS-quick-start/01-Beginners-guide/03-Build-your-first-project
+
 [^2]: https://www.techtarget.com/whatis/definition/context-switch
+
 [^3]: https://www.freertos.org/Documentation/02-Kernel/05-RTOS-implementation-tutorial/02-Building-blocks/03-The-RTOS-tick
