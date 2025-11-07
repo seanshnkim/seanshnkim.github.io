@@ -6,8 +6,7 @@
         <a class="navbar-brand title font-weight-lighter" href="{{ site.baseurl }}/">
           {% if site.title == 'blank' %}
             {% if site.first_name %}
-              <span class="font-weight-bold">
-                {{- site.first_name -}}
+              {{- site.first_name -}}
               </span>
             {% endif %}
             {% if site.middle_name %}
@@ -42,15 +41,22 @@
 
       <div class="collapse navbar-collapse text-right" id="navbarNav">
         <ul class="navbar-nav ml-auto flex-nowrap">
+          {%- comment -%}
+            Determine the "About" page title. The original template assumed the page
+            with permalink '/' was the About page. That breaks when you set the blog
+            as the site root. Prefer the explicit '/about/' permalink if present.
+          {%- endcomment -%}
           {% for page in site.pages %}
-            {% if page.permalink == '/' %} {% assign about_title = page.title %} {% endif %}
+            {% if page.permalink == '/about/' %}
+              {% assign about_title = page.title %}
+            {% endif %}
           {% endfor %}
 
           <!-- About -->
-          <li class="nav-item {% if page.permalink == '/' %}active{% endif %}">
-            <a class="nav-link" href="{{ '/' | relative_url }}">
+          <li class="nav-item {% if page.permalink == '/about/' %}active{% endif %}">
+            <a class="nav-link" href="{{ '/about/' | relative_url }}">
               {{- about_title }}
-              {% if page.permalink == '/' %}
+              {% if page.permalink == '/about/' %}
                 <span class="sr-only">(current)</span>
               {% endif %}
             </a>
