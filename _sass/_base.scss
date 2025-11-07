@@ -658,7 +658,7 @@ footer.sticky-bottom {
   border-radius: 4px;
   background: transparent;
   color: var(--global-text-color);
-  font-weight: 600;
+  font-weight: 400;
 }
 
 .category-sidebar details[open] summary {
@@ -1075,6 +1075,45 @@ html.transition *:after {
       }
     }
   }
+}
+
+/* Adjustments: make post page title more prominent and subheadings slightly smaller
+   Scoped to `.post` so other pages/layouts aren't affected. */
+.post .post-title {
+  font-size: 2.2rem; /* larger title on post pages */
+  line-height: 1.08;
+  margin-bottom: 0.35rem;
+}
+
+/* Reduce sizes of in-post headings to improve hierarchy relative to the H1 post title */
+.post h2 {
+  font-size: 1.6rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
+}
+
+.post h3 {
+  font-size: 1.25rem;
+  margin-top: 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.post h4 {
+  font-size: 1.1rem;
+  margin-top: 0.9rem;
+  margin-bottom: 0.4rem;
+}
+
+.post h5 {
+  font-size: 1rem;
+  margin-top: 0.8rem;
+  margin-bottom: 0.35rem;
+}
+
+.post h6 {
+  font-size: 0.95rem;
+  margin-top: 0.7rem;
+  margin-bottom: 0.3rem;
 }
 
 progress {
