@@ -26,14 +26,33 @@ code {
   color: inherit;
 }
 
-.highlight .hll { background-color: #f1f3f5; }
-.highlight .c { color: #6a737d; } /* comments */
-.highlight .k { color: #cf222e; } /* keywords */
-.highlight .n { color: #24292e; } /* names */
-.highlight .s { color: #0a3069; } /* strings */
-.highlight .p { color: #24292e; } /* punctuation */
-.highlight .o { color: #24292e; } /* operators */
-.highlight .mi, .highlight .mf { color: #005cc5; } /* numbers */
+.highlight .hll {
+  background-color: #f1f3f5;
+}
+.highlight .c {
+  color: #6a737d;
+} /* comments */
+.highlight .k {
+  color: #cf222e;
+} /* keywords */
+.highlight .n {
+  color: #24292e;
+} /* names */
+.highlight .s {
+  color: #0a3069;
+} /* strings */
+.highlight .p {
+  color: #24292e;
+} /* punctuation */
+.highlight .o {
+  color: #24292e;
+} /* operators */
+.highlight .mi,
+.highlight .mf {
+  color: #005cc5;
+} /* numbers */
 
 /* make sure block tokens inherit the block background where necessary */
-.highlight .err { background-color: transparent; }
+.highlight .err {
+  background-color: transparent;
+}

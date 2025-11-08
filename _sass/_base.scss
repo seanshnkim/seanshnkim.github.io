@@ -581,13 +581,13 @@ footer.sticky-bottom {
     p,
     li {
       list-style: none;
-  /* use inline-flex so icons and text are vertically centered */
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  /* give symmetric vertical spacing */
-  margin: 0.25rem 0.25rem;
-  padding: 0.35rem 0.25rem;
+      /* use inline-flex so icons and text are vertically centered */
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      /* give symmetric vertical spacing */
+      margin: 0.25rem 0.25rem;
+      padding: 0.35rem 0.25rem;
       color: var(--global-text-color-light);
       font-size: 1.2rem;
       line-height: 1; /* keep items compact and aligned */
@@ -612,11 +612,11 @@ footer.sticky-bottom {
   }
 }
 
-    /* Reduce large top margin on main content containers (override Bootstrap's .mt-5)
+/* Reduce large top margin on main content containers (override Bootstrap's .mt-5)
        This targets the main role container so other mt-5 uses are unaffected. */
-    div[role="main"].mt-5 {
-      margin-top: 0.75rem !important;
-    }
+div[role="main"].mt-5 {
+  margin-top: 0.75rem !important;
+}
 
 .post-title {
   /* Slightly smaller post titles and tighter line-height for better balance */
@@ -639,7 +639,7 @@ footer.sticky-bottom {
   border: 1px solid var(--global-divider-color);
   border-radius: 6px;
   padding: 0.5rem;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
   z-index: 1050;
   max-height: calc(100vh - 100px);
   overflow: auto;
@@ -672,7 +672,7 @@ footer.sticky-bottom {
 
 .category-sidebar details[open] summary {
   background: var(--global-bg-color);
-  box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03);
+  box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.03);
 }
 
 .category-sidebar ul {
@@ -708,10 +708,10 @@ footer.sticky-bottom {
   li {
     border-bottom: 1px solid var(--global-divider-color);
     list-style: none;
-      /* make list rows a little shorter */
-      padding-top: 0.125rem;
-      padding-bottom: 0.125rem;
-      line-height: 1.08;
+    /* make list rows a little shorter */
+    padding-top: 0.125rem;
+    padding-bottom: 0.125rem;
+    line-height: 1.08;
 
     h3 {
       margin-top: 0.5em;
@@ -897,7 +897,7 @@ footer.sticky-bottom {
     li {
       margin-bottom: 1rem;
 
-  /* preview block intentionally left out (no custom styles) */
+      /* preview block intentionally left out (no custom styles) */
 
       .abbr {
         margin-bottom: 0.5rem;
