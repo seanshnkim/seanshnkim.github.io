@@ -3,8 +3,8 @@ const ninja = document.querySelector('ninja-keys');
 
 // add the home and posts menu items
 ninja.data = [{
-    id: "nav-about",
-    title: "about",
+    id: "nav-",
+    title: "",
     section: "Navigation",
     handler: () => {
       window.location.href = "/";
@@ -14,7 +14,7 @@ ninja.data = [{
           description: "",
           section: "Navigation",
           handler: () => {
-            window.location.href = "/post/index.html";
+            window.location.href = "/index.html";
           },
         },{id: "nav-projects",
           title: "projects",
@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-why-does-it-display-white-screen-after-removing-systick-handler",
+        },{id: "post-lightweight-ip-lwip",
+      
+        title: "LightWeight IP (lwIP)",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-Lightweight-IP/";
+        
+      },
+    },{id: "post-why-does-it-display-white-screen-after-removing-systick-handler",
       
         title: "Why does it display white screen after removing SysTick_Handler?",
       
@@ -65,6 +76,17 @@ ninja.data = [{
       handler: () => {
         
           window.location.href = "/blog/2025/SEGGER-Trace-Tool/";
+        
+      },
+    },{id: "post-context-switching-in-rtos",
+      
+        title: "Context Switching in RTOS",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/Context-Switching/";
         
       },
     },{id: "post-schedulers-in-freertos",
@@ -122,15 +144,7 @@ ninja.data = [{
           window.location.href = "/blog/2025/Third-Maximum-Number/";
         
       },
-    },{id: "news-began-the-first-semester-at-nyu-tandon-school-of-engineering",
-          title: 'Began the first semester at NYU Tandon School of Engineering.',
-          description: "",
-          section: "News",},{id: "news-made-final-round-to-contech-alliannce-hackathon",
-          title: 'Made final round to Contech Alliannce Hackathon!',
-          description: "",
-          section: "News",handler: () => {
-              window.location.href = "/news/announcement_2/";
-            },},{
+    },{
         id: 'social-email',
         title: 'email',
         section: 'Socials',
