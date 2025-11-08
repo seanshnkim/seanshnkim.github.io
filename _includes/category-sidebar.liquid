@@ -2,29 +2,33 @@
 <div class="category-sidebar" aria-label="Categories">
   <button id="category-toggle-all" class="btn btn-sm" aria-expanded="true" aria-controls="category-list">Collapse all</button>
   <div id="category-list">
-  {% for category in site.display_categories %}
-    {% assign idx = forloop.index0 %}
-    {% assign posts_in_cat = site.posts | where_exp: "post", "post.categories contains category" %}
-    {% if idx < open_after %}
-      <details class="category-item" open>
-        <summary>{{ category }}</summary>
-        <ul>
-          {% for p in posts_in_cat %}
-            <li><a href="{{ p.url | relative_url }}">{{ p.title }}</a></li>
-          {% endfor %}
-        </ul>
-      </details>
-    {% else %}
-      <details class="category-item">
-        <summary>{{ category }}</summary>
-        <ul>
-          {% for p in posts_in_cat %}
-            <li><a href="{{ p.url | relative_url }}">{{ p.title }}</a></li>
-          {% endfor %}
-        </ul>
-      </details>
-    {% endif %}
-  {% endfor %}
+    {% for category in site.display_categories %}
+      {% assign idx = forloop.index0 %}
+      {% assign posts_in_cat = site.posts | where_exp: 'post', 'post.categories contains category' %}
+      {% if idx < open_after %}
+        <details class="category-item" open>
+          <summary>{{ category }}</summary>
+          <ul>
+            {% for p in posts_in_cat %}
+              <li>
+                <a href="{{ p.url | relative_url }}">{{ p.title }}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% else %}
+        <details class="category-item">
+          <summary>{{ category }}</summary>
+          <ul>
+            {% for p in posts_in_cat %}
+              <li>
+                <a href="{{ p.url | relative_url }}">{{ p.title }}</a>
+              </li>
+            {% endfor %}
+          </ul>
+        </details>
+      {% endif %}
+    {% endfor %}
   </div>
   <script src="{{ '/assets/js/category-sidebar.js' | relative_url }}" defer></script>
 </div>
