@@ -30,8 +30,6 @@ pagination:
   </div>
   {% endif %} -->
 
-{# category list moved to a right-hand sidebar (rendered below) #}
-
 {% assign featured_posts = site.posts | where: "featured", "true" %}
 {% if featured_posts.size > 0 %}
 <br>
@@ -96,7 +94,7 @@ pagination:
     {% assign tags = post.tags | join: "" %}
     {% assign categories = post.categories | join: "" %}
 
-    <li>
+  <li data-post-url="{{ post.url | relative_url }}">
 
 {% if post.thumbnail %}
 
@@ -171,8 +169,15 @@ pagination:
 
 <!-- Right-hand category sidebar: sticky on desktop, hidden on small screens -->
 <div class="category-sidebar" aria-label="Categories">
+  <h3 class="category-sidebar-title">Categories</h3>
+  {% assign open_after = site.sidebar_open_categories | default: 0 %}
   {% for category in site.display_categories %}
-    <details class="category-item">
+    {% assign idx = forloop.index0 %}
+    {% if idx < open_after %}
+      <details class="category-item" open>
+    {% else %}
+      <details class="category-item">
+    {% endif %}
       <summary>{{ category }}</summary>
       <ul>
         {% assign posts_in_cat = site.posts | where_exp: "post", "post.categories contains category" %}

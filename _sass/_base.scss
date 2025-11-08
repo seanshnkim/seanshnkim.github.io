@@ -69,7 +69,7 @@ blockquote {
   border-left: 5px solid var(--global-theme-color);
   margin: 1.5em 0;
   padding: 1em;
-  font-size: 1.2rem;
+  font-size: 1rem;
 
   p {
     margin-bottom: 0;
@@ -643,7 +643,16 @@ footer.sticky-bottom {
   z-index: 1050;
   max-height: calc(100vh - 100px);
   overflow: auto;
-  font-size: 0.95rem;
+  font-size: 0.8rem;
+}
+
+/* Title within the category sidebar — slightly larger than the item font-size */
+.category-sidebar .category-sidebar-title {
+  font-size: 1rem;
+  font-weight: 400;
+  margin: 0 0 0.5rem 0;
+  color: var(--global-text-color);
+  padding: 0.15rem 0.35rem;
 }
 
 .category-sidebar .category-item {
@@ -829,6 +838,17 @@ footer.sticky-bottom {
     width: 250px;
     margin-bottom: 10px;
   }
+
+  /* Final override: some highlight/rouge styles inject generic `code` rules
+     later in the build. Make sure inline code (not inside <pre>) uses the
+     inline-code variable and readable text color. Use higher specificity
+     and !important to reliably override generated styles. */
+  // :not(pre) code {
+  //   background-color: var(--global-inline-code-bg-color) !important;
+  //   color: var(--global-text-color) !important;
+  //   border-radius: 3px !important;
+  //   padding: 2px 6px !important;
+  // }
 
   h2.category {
     color: var(--global-divider-color);
@@ -1037,10 +1057,12 @@ pre {
 }
 
 code {
-  color: var(--global-theme-color);
+  /* Inline code should use the document text color for readability across themes */
+  color: var(--global-text-color);
   background-color: var(--global-code-bg-color);
   border-radius: 3px;
-  padding: 3px 3px;
+  padding: 2px 6px;
+  font-size: 0.8em;
 }
 
 // Transitioning Themes
@@ -1078,9 +1100,10 @@ html.transition *:after {
 }
 
 /* Adjustments: make post page title more prominent and subheadings slightly smaller
-   Scoped to `.post` so other pages/layouts aren't affected. */
-.post .post-title {
-  font-size: 2.2rem; /* larger title on post pages */
+   Target the actual post header title so index/list pages (which also live
+   inside a `.post` wrapper) keep the smaller list-style title. */
+.post > header.post-header > h1.post-title {
+  font-size: 2.2rem; /* larger title on single post pages */
   line-height: 1.08;
   margin-bottom: 0.35rem;
 }

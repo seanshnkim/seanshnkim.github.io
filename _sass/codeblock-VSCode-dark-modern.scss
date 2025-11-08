@@ -3,13 +3,13 @@
 }
 
 .highlight pre {
-  background-color: #1e1e1e;
+  background-color: var(--global-code-bg-color);
   color: #d4d4d4;
 }
 
 code {
   color: #d4d4d4;
-  background-color: #1e1e1e;
+  background-color: var(--global-code-bg-color);
 }
 
 .post-content .highlight,
@@ -19,17 +19,17 @@ code {
 }
 
 .highlight pre {
-  background-color: #1e1e1e;
+  background-color: var(--global-code-bg-color);
 }
 .highlight .hll {
-  background-color: #1e1e1e;
+  background-color: var(--global-code-bg-color);
 }
 .highlight .c {
   color: #6a9955;
 } /* Comment */
 .highlight .err {
   color: #f44747;
-  background-color: #1e1e1e;
+  background-color: var(--global-code-bg-color);
 } /* Error */
 .highlight .k {
   color: #569cd6;

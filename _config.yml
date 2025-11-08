@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: blank # the website title (if blank, full name will be used instead)
+title: Sean Kim's Blog # the website title (if blank, full name will be used instead)
 first_name: Sean
 last_name: Kim
 # contact_note: >
@@ -268,7 +268,9 @@ jekyll-archives:
     category: "/blog/category/:name/"
 
 display_tags: [] # these tags will be displayed on the front page of your blog
-display_categories: ["FreeRTOS", "Linux", "Operating-Systems", "C/C++Programming"] # these categories will be displayed on the front page of your blog
+display_categories: ["Embedded Systems", "System Programming", "TIL"] # these categories will be displayed on the front page of your blog
+# How many categories to keep expanded/open by default in the sidebar
+sidebar_open_categories: 2
 
 # -----------------------------------------------------------------------------
 # Jekyll Scholar
