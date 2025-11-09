@@ -739,19 +739,30 @@ div[role="main"].mt-5 {
     .post-meta {
       color: var(--global-text-color-light);
       font-size: 0.875rem;
-      margin-top: 0.3em;
-      margin-bottom: 0.3em;
+      /* make meta inline with tags on post list rows */
+      display: inline-block;
+      margin: 0;
       padding-top: 0;
       padding-bottom: 0;
     }
 
     .post-tags {
       color: var(--global-text-color-light);
-      font-size: 0.7rem;
-      margin-top: 0.3em;
-      margin-bottom: 0.5em;
+      font-size: 0.875rem;
+      /* keep tags inline with the meta and allow wrapping on small screens */
+      display: inline-block;
+      margin: 0 0 0 0.5rem; /* small left gap from meta */
       padding-top: 0;
       padding-bottom: 0;
+
+      a {
+        color: var(--global-text-color-light);
+        text-decoration: none;
+
+        &:hover {
+          color: var(--global-theme-color);
+        }
+      }
     }
 
     a {
@@ -1574,4 +1585,35 @@ img {
 .image-row figure {
   flex: 0 1 auto;
   margin: 0.5em;
+}
+
+/* Make any immediate child (including paragraphs that some Markdown
+   renderers inject) behave as a flex-item so images align horizontally
+   even when the include output gets wrapped in a <p> or other container. */
+.image-row > * {
+  display: inline-flex;
+  align-items: flex-end;
+  justify-content: center;
+  flex: 0 1 auto;
+}
+
+/* Helper: size images relative to current text line height
+   Usage: add the `figure-lines` class to the image/figure element and
+   optionally override the number of lines and line-height via CSS vars:
+
+     <figure class="figure-lines" style="--figure-lines:5; --figure-line-height:1.2">
+       <!-- image here (no width attribute) -->
+     </figure>
+
+   The computed width = --figure-lines * --figure-line-height * 1em
+   (so 5 lines with 1.2 line-height => 6em). `max-width:100%` ensures
+   the image stays responsive on narrow viewports.
+*/
+.figure-lines {
+  --figure-lines: 8; /* number of text lines */
+  --figure-line-height: 1.15; /* fallback numeric line-height */
+  width: calc(var(--figure-lines) * var(--figure-line-height) * 1em);
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
 }

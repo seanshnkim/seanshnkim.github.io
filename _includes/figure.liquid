@@ -3,6 +3,12 @@
 {% assign ext = parts.last %}
 
 <figure
+  {% if include.figure_class %}
+    class="{{ include.figure_class }}"
+  {% endif %}
+  {% if include.figure_style %}
+    style="{{ include.figure_style }}"
+  {% endif %}
   {% if include.slot %}
     slot="{{ include.slot }}"
   {% endif %}
