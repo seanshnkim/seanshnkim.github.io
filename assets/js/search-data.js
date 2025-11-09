@@ -17,13 +17,24 @@ ninja.data = [{
             window.location.href = "/index.html";
           },
         },{id: "nav-projects",
-          title: "projects",
+          title: "Projects",
           description: "A collection of side projects.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-lightweight-ip-lwip",
+        },{id: "post-what-is-fpu-and-why-does-it-cause-assembler-error",
+      
+        title: "What is FPU and why does it cause assembler error?",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-FPU/";
+        
+      },
+    },{id: "post-lightweight-ip-lwip",
       
         title: "LightWeight IP (lwIP)",
       
