@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-what-is-fpu-and-why-does-it-cause-assembler-error",
+        },{id: "post-what-is-mqtt",
+      
+        title: "What is MQTT?",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-MQTT-1/";
+        
+      },
+    },{id: "post-what-is-fpu-and-why-does-it-cause-assembler-error",
       
         title: "What is FPU and why does it cause assembler error?",
       
