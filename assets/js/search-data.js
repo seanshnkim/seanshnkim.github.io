@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-what-is-mqtt",
+        },{id: "post-real-time-clock-in-stm32",
+      
+        title: "Real Time Clock in STM32",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-Real-Time-Clock/";
+        
+      },
+    },{id: "post-what-is-mqtt",
       
         title: "What is MQTT?",
       
