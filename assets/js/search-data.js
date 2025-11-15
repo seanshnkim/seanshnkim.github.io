@@ -23,7 +23,29 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-real-time-clock-in-stm32",
+        },{id: "post-external-clock-will-not-work-unless-you-have-a-external-hardware",
+      
+        title: "External Clock Will Not Work Unless You Have A External Hardware",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-external-clock-will-not-work/";
+        
+      },
+    },{id: "post-clock-sources-and-types-in-stm32",
+      
+        title: "Clock Sources and Types in STM32",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-Real-Time-Clock-2/";
+        
+      },
+    },{id: "post-real-time-clock-in-stm32",
       
         title: "Real Time Clock in STM32",
       
