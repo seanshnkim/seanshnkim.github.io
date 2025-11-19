@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-external-clock-will-not-work-unless-you-have-a-external-hardware",
+        },{id: "post-fork-vs-clone-what-is-the-difference",
+      
+        title: "fork() vs. clone(): What is the difference?",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/fork-and-clone/";
+        
+      },
+    },{id: "post-external-clock-will-not-work-unless-you-have-a-external-hardware",
       
         title: "External Clock Will Not Work Unless You Have A External Hardware",
       
