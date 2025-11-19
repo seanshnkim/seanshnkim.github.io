@@ -9,7 +9,7 @@ categories: TIL
 
 ## Acknowledgements
 
-I was googling, I came across this lecture slide: [<The Clock of STM32F4>](https://www.dmi.unict.it/santoro/teaching/lsm/slides/ClockSTM32.pdf)[^1][^3] by Professor Corrado Santoro (Universitaà di Catania). It basically covers all the necessary topics for understanding STM32 clock.
+I was googling, I came across this lecture slide: [The Clock of STM32F4](https://www.dmi.unict.it/santoro/teaching/lsm/slides/ClockSTM32.pdf)[^1][^3] by Professor Corrado Santoro (Universitaà di Catania). It basically covers all the necessary topics for understanding STM32 clock.
 
 ## Clock Sources and Types in Diagram
 
