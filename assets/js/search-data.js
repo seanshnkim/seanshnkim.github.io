@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-fork-vs-clone-what-is-the-difference",
+        },{id: "post-basic-keywords-for-developing-a-linux-device-driver",
+      
+        title: "Basic Keywords for Developing a Linux Device Driver",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2025/TIL-Basic-Keywords-Device-Driver/";
+        
+      },
+    },{id: "post-fork-vs-clone-what-is-the-difference",
       
         title: "fork() vs. clone(): What is the difference?",
       
