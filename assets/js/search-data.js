@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-basic-keywords-for-developing-a-linux-device-driver",
+        },{id: "post-dual-bank-bootloader-intro",
+      
+        title: "Dual Bank Bootloader Intro",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-Intro/";
+        
+      },
+    },{id: "post-basic-keywords-for-developing-a-linux-device-driver",
       
         title: "Basic Keywords for Developing a Linux Device Driver",
       
