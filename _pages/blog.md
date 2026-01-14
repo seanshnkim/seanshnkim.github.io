@@ -21,59 +21,81 @@ pagination:
 {% assign blog_name_size = site.blog_name | size %}
 {% assign blog_description_size = site.blog_description | size %}
 
-<!-- In fact, I don't need a title for blog. -->
-<!-- {% if blog_name_size > 0 or blog_description_size > 0 %}
+<!-- Full-width layout with hover sidebar -->
+<div class="blog-container">
+  <div class="blog-main-content">
 
-  <div class="header-bar">
-    <h1>{{ site.blog_name }}</h1>
-    <h2>{{ site.blog_description }}</h2>
-  </div>
-  {% endif %} -->
+    <!-- Featured section: 1 large card + 3 small cards -->
+    {% assign recent_posts = site.posts | slice: 0, 4 %}
+    {% if recent_posts.size > 0 %}
+    <div class="featured-grid">
+      <!-- Large featured card (first post) -->
+      {% assign featured_post = recent_posts[0] %}
+      <div class="featured-large-card">
+        <a href="{{ featured_post.url | relative_url }}" class="featured-card-link">
+          {% if featured_post.thumbnail %}
+          <div class="featured-large-img-container">
+            <img src="{{ featured_post.thumbnail | relative_url }}" alt="{{ featured_post.title }}" class="featured-large-img">
+          </div>
+          {% endif %}
+          <div class="featured-large-content">
+            <h2 class="featured-large-title">{{ featured_post.title }}</h2>
+            <p class="featured-large-excerpt">
+              {% if featured_post.description and featured_post.description != "" %}
+                {{ featured_post.description | strip_html | truncatewords: 30 }}
+              {% else %}
+                {{ featured_post.content | strip_html | truncatewords: 30 }}
+              {% endif %}
+            </p>
+            <div class="featured-card-meta">
+              <span class="featured-card-date">{{ featured_post.date | date: '%B %d, %Y' }}</span>
+              {% if featured_post.categories.size > 0 %}
+                <span class="featured-meta-separator">&middot;</span>
+                <span class="featured-card-category">{{ featured_post.categories | first }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </a>
+      </div>
 
-{% assign featured_posts = site.posts | where: "featured", "true" %}
-{% if featured_posts.size > 0 %}
-<br>
-
-<div class="container featured-posts">
-{% assign is_even = featured_posts.size | modulo: 2 %}
-<div class="row row-cols-{% if featured_posts.size <= 2 or is_even == 0 %}2{% else %}3{% endif %}">
-{% for post in featured_posts %}
-<div class="col mb-4">
-<a href="{{ post.url | relative_url }}">
-<div class="card hoverable">
-<div class="row g-0">
-<div class="col-md-12">
-<div class="card-body">
-<div class="float-right">
-<i class="fa-solid fa-thumbtack fa-xs"></i>
-</div>
-<h3 class="card-title text-lowercase">{{ post.title }}</h3>
-<p class="card-text">{{ post.description }}</p>
-
-                    {% if post.external_source == blank %}
-                      {% assign read_time = post.content | number_of_words | divided_by: 180 | plus: 1 %}
+      <!-- Small featured cards (next 3 posts) -->
+      <div class="featured-small-cards">
+        {% for i in (1..3) %}
+          {% assign small_post = recent_posts[i] %}
+          {% if small_post %}
+          <div class="featured-small-card">
+            <a href="{{ small_post.url | relative_url }}" class="featured-card-link">
+              <div class="featured-small-content">
+                <div class="featured-small-text">
+                  <h3 class="featured-small-title">{{ small_post.title }}</h3>
+                  <p class="featured-small-excerpt">
+                    {% if small_post.description and small_post.description != "" %}
+                      {{ small_post.description | strip_html | truncatewords: 20 }}
                     {% else %}
-                      {% assign read_time = post.feed_content | strip_html | number_of_words | divided_by: 180 | plus: 1 %}
+                      {{ small_post.content | strip_html | truncatewords: 20 }}
                     {% endif %}
-                    {% assign year = post.date | date: "%Y" %}
-
-                    <p class="post-meta">
-                      {{ read_time }} min read &nbsp; &middot; &nbsp;
-                      <a href="{{ year | prepend: '/blog/' | prepend: site.baseurl}}">
-                        <i class="fa-solid fa-calendar fa-sm"></i> {{ year }} </a>
-                    </p>
+                  </p>
+                  <div class="featured-card-meta">
+                    <span class="featured-card-date">{{ small_post.date | date: '%b %d, %Y' }}</span>
+                    {% if small_post.categories.size > 0 %}
+                      <span class="featured-meta-separator">&middot;</span>
+                      <span class="featured-card-category">{{ small_post.categories | first }}</span>
+                    {% endif %}
                   </div>
                 </div>
+                {% if small_post.thumbnail %}
+                <div class="featured-small-img-container">
+                  <img src="{{ small_post.thumbnail | relative_url }}" alt="{{ small_post.title }}" class="featured-small-img">
+                </div>
+                {% endif %}
               </div>
-            </div>
-          </a>
-        </div>
-      {% endfor %}
+            </a>
+          </div>
+          {% endif %}
+        {% endfor %}
       </div>
     </div>
-    <hr>
-
-{% endif %}
+    {% endif %}
 
   <ul class="post-list">
 
@@ -153,26 +175,37 @@ pagination:
 {% include pagination.liquid %}
 {% endif %}
 
-<!-- Right-hand category sidebar: sticky on desktop, hidden on small screens -->
-<div class="category-sidebar" aria-label="Categories">
-  <h3 class="category-sidebar-title">Categories</h3>
-  {% assign open_after = site.sidebar_open_categories | default: 0 %}
-  {% for category in site.display_categories %}
-    {% assign idx = forloop.index0 %}
-    {% if idx < open_after %}
-      <details class="category-item" open>
-    {% else %}
-      <details class="category-item">
-    {% endif %}
-      <summary>{{ category }}</summary>
-      <ul>
-        {% assign posts_in_cat = site.posts | where_exp: "post", "post.categories contains category" %}
-        {% for p in posts_in_cat %}
-          <li><a href="{{ p.url | relative_url }}">{{ p.title }}</a></li>
-        {% endfor %}
-      </ul>
-    </details>
-  {% endfor %}
+  </div><!-- End blog-main-content -->
+
+</div><!-- End blog-container -->
+
+<!-- Hover-activated sidebar -->
+<div class="category-sidebar-hover" aria-label="Categories">
+  <div class="sidebar-tab">
+    <span class="sidebar-tab-icon">☰</span>
+    <span class="sidebar-tab-text">Categories</span>
+  </div>
+  <div class="sidebar-content">
+    <h3 class="category-sidebar-title">Categories</h3>
+    {% assign open_after = site.sidebar_open_categories | default: 0 %}
+    {% for category in site.display_categories %}
+      {% assign idx = forloop.index0 %}
+      {% assign posts_in_cat = site.posts | where_exp: "post", "post.categories contains category" %}
+      {% assign post_count = posts_in_cat | size %}
+      {% if idx < open_after %}
+        <details class="category-item" open>
+      {% else %}
+        <details class="category-item">
+      {% endif %}
+        <summary data-count="{{ post_count }}">{{ category }}</summary>
+        <ul>
+          {% for p in posts_in_cat %}
+            <li><a href="{{ p.url | relative_url }}">{{ p.title }}</a></li>
+          {% endfor %}
+        </ul>
+      </details>
+    {% endfor %}
+  </div>
 </div>
 
-</div>
+</div><!-- End post -->

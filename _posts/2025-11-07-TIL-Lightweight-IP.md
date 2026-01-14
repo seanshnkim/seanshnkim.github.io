@@ -18,7 +18,7 @@ Lighweight IP stack ("**lwIP**"[^1]) is a small independent implementation of th
 <div class="image-row" markdown="1">
   {% include figure.liquid
      loading="eager"
-     path="assets/post-attachments/2025-11-07-img1.png"
+     path="/assets/post-attachments/2025-11-07-img1.png"
      class="img-fluid rounded z-depth-1"
      figure_class="figure-lines"
      figure_style="--figure-lines:8"
@@ -27,7 +27,7 @@ Lighweight IP stack ("**lwIP**"[^1]) is a small independent implementation of th
 
 {% include figure.liquid
      loading="eager"
-     path="assets/post-attachments/2025-11-07-img2.png"
+     path="/assets/post-attachments/2025-11-07-img2.png"
      class="img-fluid rounded z-depth-1"
      figure_class="figure-lines"
      figure_style="--figure-lines:8"

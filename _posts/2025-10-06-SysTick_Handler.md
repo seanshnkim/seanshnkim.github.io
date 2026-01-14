@@ -67,7 +67,7 @@ while (1) {
 As seen, `HAL_Delay()` is everywhere.
 And if you debug it, you can see in the call stack:
 
-{% include figure.liquid loading="eager" path="assets/post-attachments/2025-10-06/stm32f4xx_it call stack.png" class="img-fluid rounded z-depth-1" width="300px" %}
+{% include figure.liquid loading="eager" path="/assets/post-attachments/2025-10-06/stm32f4xx_it call stack.png" class="img-fluid rounded z-depth-1" width="300px" %}
 
 that somehow `SysTick_Handler` is invoked by `HAL_Delay`.
 

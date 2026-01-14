@@ -145,10 +145,10 @@ SEGGER_SYSVIEW_Start();
 
 <div class="image-row">
   <figure class="mt-3">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/tick_1.png" class="img-fluid rounded z-depth-1" width="150px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/Scheduler/tick_1.png" class="img-fluid rounded z-depth-1" width="150px" %}
   </figure>
   <figure class="mt-3">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/Scheduler/tick_2.png" class="img-fluid rounded z-depth-1" width="500px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/Scheduler/tick_2.png" class="img-fluid rounded z-depth-1" width="500px" %}
   </figure>
 </div>
 

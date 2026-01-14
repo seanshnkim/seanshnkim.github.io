@@ -1,7 +1,34 @@
-# Building My First Firmware Project with Claude
+---
+layout: post
+title: Building My First Firmware Project with Claude
+date: 2026-01-12 19:43:16
+categories: Firmware
+thumbnail: assets/post-attachments/2025-11-07-img1.png
+---
 
 When I asked Claude: "I am a grad student who is interested in firmware engineering. What projects would be good to start with?", Claude suggested seven options.
 Among them, building a custom bootloader was my choice. First, there were plenty of documents and open-source projects to reference. More importantly, bootloader development touches on concepts that are fundamental in embedded systems: memory management, hardware initialization, communication protocols, and safety-critical design.
+
+<div class="image-row" markdown="1">
+  {% include figure.liquid
+     loading="eager"
+     path="/assets/post-attachments/2025-11-07-img1.png"
+     class="img-fluid rounded z-depth-1"
+     figure_class="figure-lines"
+     figure_style="--figure-lines:8"
+     caption="LAN8742A-CZ-TR"
+  %}
+
+{% include figure.liquid
+     loading="eager"
+     path="/assets/post-attachments/2025-11-07-img2.png"
+     class="img-fluid rounded z-depth-1"
+     figure_class="figure-lines"
+     figure_style="--figure-lines:8"
+     caption="RJ45 connector (example)"
+  %}
+
+</div>
 
 ## What Is a Bootloader? And Why Should You Care?
 

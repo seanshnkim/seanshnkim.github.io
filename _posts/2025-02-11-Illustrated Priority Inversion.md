@@ -47,13 +47,13 @@ Before we continue, keep in mind:
 1. Only one person can stay in the house at a time. This is because the processor core (in embedded systems) cannot handle more than one task simultaneously.
 
 <figure class="mt-5">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/single_thread1.png" class="img-fluid rounded z-depth-1 center-image" width="350px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/single_thread1.png" class="img-fluid rounded z-depth-1 center-image" width="350px" %}
 </figure>
 
 2. Once someone starts using the pot (critical section), they cannot be interrupted until they are done, even by a higher priority task.
 
 <figure class="mt-5">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/critical_section1.png" class="img-fluid rounded z-depth-1 center-image" width="600px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/critical_section1.png" class="img-fluid rounded z-depth-1 center-image" width="600px" %}
 </figure>
 
 ### Scenario 1. LP Task starts first
@@ -62,10 +62,10 @@ Let's start with Larry. Larry enters the house and begins cooking breakfast for 
 
 <div class="image-row">
   <figure class="mt-3">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/d1.png" class="img-fluid rounded z-depth-1" width="300px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/d1.png" class="img-fluid rounded z-depth-1" width="300px" %}
   </figure>
   <figure class="mt-3">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/d2.png" class="img-fluid rounded z-depth-1" width="150px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/d2.png" class="img-fluid rounded z-depth-1" width="150px" %}
   </figure>
 </div>
 
@@ -74,7 +74,7 @@ Let's start with Larry. Larry enters the house and begins cooking breakfast for 
 While Larry is cooking her food, Harry arrives home. Remember, Harry cannot enter home instantly. He would have to wait in front of the door.
 
 <figure class="mt-5">
-{% include figure.liquid loading="eager" path="assets/post-attachments/d3.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
+{% include figure.liquid loading="eager" path="/assets/post-attachments/d3.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
 </figure>
 
 ### 3. HP Task is blocked
@@ -82,7 +82,7 @@ While Larry is cooking her food, Harry arrives home. Remember, Harry cannot ente
 Harry needs to cook pasta for lunch before class, but can't use the pot. Obviously Harry's task has a higher priority, but he cannot do anything. That's why Harry has to wait in front of the house, unable to start cooking ("**blocked**" state).
 
 <figure class="mt-5">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/d4.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/d4.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
 </figure>
 
 ### 4. MP Task preempts LP Task
@@ -91,10 +91,10 @@ Afterwards, Mary arrives to clean the house for an evening guest. Her task has h
 
 <div class="image-row">
   <figure class="mt-3">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/d5.png" class="img-fluid rounded z-depth-1" width="250px"%}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/d5.png" class="img-fluid rounded z-depth-1" width="250px"%}
   </figure>
   <figure class="mt-3">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/d6.png" class="img-fluid rounded z-depth-1" width="300px"%}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/d6.png" class="img-fluid rounded z-depth-1" width="300px"%}
   </figure>
 </div>
 
@@ -102,7 +102,7 @@ How would Harry feel then? He must be baffled and frustrated!
 His task is delayed even though it was the most urgent, while a medium-priority task is being executed now.
 
 <figure class="mt-5">
-{% include figure.liquid loading="eager" path="assets/post-attachments/task_table.png" class="img-fluid rounded z-depth-1 center-image" width="700px" %}
+{% include figure.liquid loading="eager" path="/assets/post-attachments/task_table.png" class="img-fluid rounded z-depth-1 center-image" width="700px" %}
 </figure>
 
 ## Why Priority Inversion Matters in RTOS

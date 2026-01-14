@@ -29,7 +29,7 @@ FreeRTOS version was upgraded from V10 (V10.6.2) to V11 (V11.0.0) on December 20
 
 If you are using a different version of FreeRTOS, the file structure may be different as well.
 
-## Before RTOS, there is CMSIS
+## RTOS vs. CMSIS
 
 ### What is CMSIS?
 

@@ -65,7 +65,7 @@ The second solution always maintains the size of priority queue to three, making
 But I wasn't still satisfied. It still gives 7 ms of runtime. In Leetcode, well-optimized C++ code submission usually returns 0 ms.
 
 <figure class="mt-5">
-    {% include figure.liquid loading="eager" path="assets/post-attachments/2025-02-10_09-25-24.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
+    {% include figure.liquid loading="eager" path="/assets/post-attachments/2025-02-10_09-25-24.png" class="img-fluid rounded z-depth-1 center-image" width="300px" %}
 </figure>
 
 How can we make even faster?
