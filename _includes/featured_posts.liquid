@@ -1,0 +1,63 @@
+<div class="featured-grid">
+  {% assign featured_posts = site.posts %}
+  {% assign large_post = featured_posts[0] %}
+
+  <!-- Large featured card (first post) -->
+  <div class="featured-large-card">
+    <a href="{{ large_post.url | relative_url }}" class="featured-card-link">
+      {% if large_post.thumbnail %}
+        <div class="featured-large-img-container">
+          <img src="{{ large_post.thumbnail | relative_url }}" alt="{{ large_post.title }}" class="featured-large-img">
+        </div>
+        {% assign excerpt_words = 30 %}
+      {% else %}
+        <!-- No image, increase excerpt length to fill space -->
+        {% assign excerpt_words = 80 %}
+      {% endif %}
+
+      <div class="featured-large-content">
+        <h2 class="featured-large-title">{{ large_post.title }}</h2>
+        <p class="featured-large-excerpt">
+          {{ large_post.excerpt | strip_html | truncatewords: excerpt_words }}
+        </p>
+        <div class="featured-card-meta">
+          <span class="featured-card-date">{{ large_post.date | date: '%B %d, %Y' }}</span>
+          {% if large_post.categories.size > 0 %}
+            <span class="featured-meta-separator">·</span>
+            <span class="featured-card-category">{{ large_post.categories[0] }}</span>
+          {% endif %}
+        </div>
+      </div>
+    </a>
+  </div>
+
+  <!-- Small featured cards (next 3 posts) -->
+  <div class="featured-small-cards">
+    {% for post in featured_posts limit: 3 offset: 1 %}
+      <div class="featured-small-card">
+        <a href="{{ post.url | relative_url }}" class="featured-card-link">
+          <div class="featured-small-content">
+            <div class="featured-small-text">
+              <h3 class="featured-small-title">{{ post.title }}</h3>
+              <p class="featured-small-excerpt">
+                {{ post.excerpt | strip_html | truncatewords: 20 }}
+              </p>
+              <div class="featured-card-meta">
+                <span class="featured-card-date">{{ post.date | date: '%b %d, %Y' }}</span>
+                {% if post.categories.size > 0 %}
+                  <span class="featured-meta-separator">·</span>
+                  <span class="featured-card-category">{{ post.categories[0] }}</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if post.thumbnail %}
+              <div class="featured-small-img-container">
+                <img src="{{ post.thumbnail | relative_url }}" alt="{{ post.title }}" class="featured-small-img">
+              </div>
+            {% endif %}
+          </div>
+        </a>
+      </div>
+    {% endfor %}
+  </div>
+</div>

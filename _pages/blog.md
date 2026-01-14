@@ -1,7 +1,7 @@
 ---
 layout: default
 permalink: /
-title: post
+title: Post
 nav: true
 nav_order: 1
 pagination:
@@ -26,76 +26,7 @@ pagination:
   <div class="blog-main-content">
 
     <!-- Featured section: 1 large card + 3 small cards -->
-    {% assign recent_posts = site.posts | slice: 0, 4 %}
-    {% if recent_posts.size > 0 %}
-    <div class="featured-grid">
-      <!-- Large featured card (first post) -->
-      {% assign featured_post = recent_posts[0] %}
-      <div class="featured-large-card">
-        <a href="{{ featured_post.url | relative_url }}" class="featured-card-link">
-          {% if featured_post.thumbnail %}
-          <div class="featured-large-img-container">
-            <img src="{{ featured_post.thumbnail | relative_url }}" alt="{{ featured_post.title }}" class="featured-large-img">
-          </div>
-          {% endif %}
-          <div class="featured-large-content">
-            <h2 class="featured-large-title">{{ featured_post.title }}</h2>
-            <p class="featured-large-excerpt">
-              {% if featured_post.description and featured_post.description != "" %}
-                {{ featured_post.description | strip_html | truncatewords: 30 }}
-              {% else %}
-                {{ featured_post.content | strip_html | truncatewords: 30 }}
-              {% endif %}
-            </p>
-            <div class="featured-card-meta">
-              <span class="featured-card-date">{{ featured_post.date | date: '%B %d, %Y' }}</span>
-              {% if featured_post.categories.size > 0 %}
-                <span class="featured-meta-separator">&middot;</span>
-                <span class="featured-card-category">{{ featured_post.categories | first }}</span>
-              {% endif %}
-            </div>
-          </div>
-        </a>
-      </div>
-
-      <!-- Small featured cards (next 3 posts) -->
-      <div class="featured-small-cards">
-        {% for i in (1..3) %}
-          {% assign small_post = recent_posts[i] %}
-          {% if small_post %}
-          <div class="featured-small-card">
-            <a href="{{ small_post.url | relative_url }}" class="featured-card-link">
-              <div class="featured-small-content">
-                <div class="featured-small-text">
-                  <h3 class="featured-small-title">{{ small_post.title }}</h3>
-                  <p class="featured-small-excerpt">
-                    {% if small_post.description and small_post.description != "" %}
-                      {{ small_post.description | strip_html | truncatewords: 20 }}
-                    {% else %}
-                      {{ small_post.content | strip_html | truncatewords: 20 }}
-                    {% endif %}
-                  </p>
-                  <div class="featured-card-meta">
-                    <span class="featured-card-date">{{ small_post.date | date: '%b %d, %Y' }}</span>
-                    {% if small_post.categories.size > 0 %}
-                      <span class="featured-meta-separator">&middot;</span>
-                      <span class="featured-card-category">{{ small_post.categories | first }}</span>
-                    {% endif %}
-                  </div>
-                </div>
-                {% if small_post.thumbnail %}
-                <div class="featured-small-img-container">
-                  <img src="{{ small_post.thumbnail | relative_url }}" alt="{{ small_post.title }}" class="featured-small-img">
-                </div>
-                {% endif %}
-              </div>
-            </a>
-          </div>
-          {% endif %}
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
+    {% include featured_posts.liquid %}
 
   <ul class="post-list">
 
