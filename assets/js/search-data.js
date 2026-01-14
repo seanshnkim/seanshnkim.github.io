@@ -23,9 +23,9 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-dual-bank-bootloader-intro",
+        },{id: "post-building-my-first-firmware-project-with-claude",
       
-        title: "Dual Bank Bootloader Intro",
+        title: "Building My First Firmware Project with Claude",
       
       description: "",
       section: "Posts",
