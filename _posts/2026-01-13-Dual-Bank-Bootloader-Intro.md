@@ -3,7 +3,6 @@ layout: post
 title: Building My First Firmware Project with Claude
 date: 2026-01-12 19:43:16
 categories: Firmware
-thumbnail: assets/post-attachments/2025-11-07-img1.png
 ---
 
 When I asked Claude: "I am a grad student who is interested in firmware engineering. What projects would be good to start with?", Claude suggested seven options.
