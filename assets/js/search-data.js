@@ -10,7 +10,7 @@ ninja.data = [{
       window.location.href = "/";
     },
   },{id: "nav-post",
-          title: "post",
+          title: "Post",
           description: "",
           section: "Navigation",
           handler: () => {
@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-building-my-first-firmware-project-with-claude",
+        },{id: "post-dual-bank-bootloader-phase-1-flash-operations",
+      
+        title: "Dual-Bank Bootloader Phase 1: Flash Operations",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Dual-Bank_Bootloader-Phase1/";
+        
+      },
+    },{id: "post-building-my-first-firmware-project-with-claude",
       
         title: "Building My First Firmware Project with Claude",
       
