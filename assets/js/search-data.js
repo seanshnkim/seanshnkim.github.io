@@ -23,15 +23,26 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-dual-bank-bootloader-phase-1-flash-operations",
+        },{id: "post-bootloader-with-ota-phase-2-minimal-bootloader",
       
-        title: "Dual-Bank Bootloader Phase 1: Flash Operations",
+        title: "Bootloader with OTA Phase 2: Minimal Bootloader",
       
       description: "",
       section: "Posts",
       handler: () => {
         
-          window.location.href = "/blog/2026/Dual-Bank_Bootloader-Phase1/";
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase2/";
+        
+      },
+    },{id: "post-bootloader-with-ota-phase-1-flash-operations",
+      
+        title: "Bootloader with OTA Phase 1: Flash Operations",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase1/";
         
       },
     },{id: "post-building-my-first-firmware-project-with-claude",
