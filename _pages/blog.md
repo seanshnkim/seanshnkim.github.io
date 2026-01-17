@@ -31,9 +31,13 @@ pagination:
   <ul class="post-list">
 
     {% if page.pagination.enabled %}
-      {% assign postlist = paginator.posts %}
+      {% if paginator.page == 1 %}
+        {% assign postlist = paginator.posts | slice: 4, 100 %}
+      {% else %}
+        {% assign postlist = paginator.posts %}
+      {% endif %}
     {% else %}
-      {% assign postlist = site.posts %}
+      {% assign postlist = site.posts | slice: 4, 100 %}
     {% endif %}
 
     {% for post in postlist %}

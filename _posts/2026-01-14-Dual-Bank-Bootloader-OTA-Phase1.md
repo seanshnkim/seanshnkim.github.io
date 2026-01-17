@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Dual-Bank Bootloader Phase 1: Flash Operations"
+title: "Bootloader with OTA Phase 1: Flash Operations"
 date: 2026-01-14 07:18:44
 categories: Firmware
 ---
@@ -45,7 +45,7 @@ Now, there are three separate projects to achieve:
 2. **Application** - Actual firmware (will be duplicated in Bank A & B)
 3. **OTA Updater** - Code within the application that downloads new firmware
 
-To implement bootloader OTA update system, we need to store bootloader's persistent state somewhere and be able to update it. Literally, bootloader state needs to be restored from "booting (power reset)". But writing data to flash is quite different from just assigning values to variables, or using pointers. That's why we're about to write a simple program that manipulates the STM32F429's internal flash memory for Phase 1.
+To implement bootloader OTA update system, we need to store bootloader's persistent state somewhere and be able to update it. Literally, bootloader state needs to be restored from "booting (power reset)". But writing data to flash is quite different from just assigning values to variables or using pointers. That's why we're about to write a simple program that manipulates the STM32F429's internal flash memory for Phase 1.
 
 ## First Task: Read Flash
 
@@ -112,45 +112,41 @@ Which looks like **string data or constants** from a previous program.
 
 My first answer was "because deferencing returns the value at the memory address".
 
-Claude added more detail onto the explanation:
+Claude added more detail to the explanation:
 
-> The CPU puts the address on the **address bus**, and flash memory responds with data on the **data bus**.
+> The CPU puts the address on the address bus, and flash memory responds with data on the data bus.
 
-In assembly, this will happen under the hood:
+In assembly, this happens under the hood:
 
 ```assembly
 LDR r0, [r1] ; Load Register: read from address in r1, put result in r0
 ```
 
-To wrap it up, read operation was fairly easy. It just requires 1) a target address to read, and 2) pointer dereferencing. And if the flash sector was empty, it should return `0xFFFFFFFF`. Keep in mind that we are using `uint32_t` pointer to read memory, and each digit in hexadecimal number contains 4 bits -> `4 bit * 8 = 32bit`.
-
----
+To wrap it up, the read operation is fairly easy. It just requires 1) a target address to read, and 2) pointer dereferencing. And if the flash sector was empty, it should return 0xFFFFFFFF. Keep in mind that we are using a uint32_t pointer to read memory, and each digit in a hexadecimal number contains 4 bits → 4 bits \* 8 = 32 bits.
 
 ## Second Task: Erase
 
-Erase is more complex than read. Before jumping into properties of erase operation, think about:
+Erase is more complex than read. Before jumping into properties of erase operations, think about:
 
-- How do we prevent accidentally erasing our running program?
-- What could go wrong during an erase operation? How do we know if the erase succeeded?
-- Why do you think flash memory requires erasing entire sectors rather than just overwriting individual bytes like RAM?
+How do we prevent accidentally erasing our running program?
+What could go wrong during an erase operation? How do we know if the erase succeeded?
+Why do you think flash memory requires erasing entire sectors rather than just overwriting individual bytes like RAM?
 
-### Q1. How do we prevent accidentally erasing our running program?
-
-That is why we always have a safety measure. In reality, engineers must:
+Q1. How do we prevent accidentally erasing our running program?
+That's why we always have safety measures. In reality, engineers must:
 
 - Know your memory map (which sectors your code occupies)
 - Add safety checks before erasing
 - Use linker script symbols to get code boundaries
 
-### Q2. What could go wrong during an erase operation?
+Q2. What could go wrong during an erase operation?
+Power can be lost during erase, or users might try to erase while flash is locked. Or they might even try to erase an invalid sector. For these cases, the STM32 provides status flags to check:
 
-Power can be lost during erase, or users might try to erase while flash is locked. Or they might even try to erase an invalid sector. For these cases, the STM32 provides **status flags** to check:
+- FLASH_SR_BSY - Flash is busy
+- FLASH_SR_WRPERR - Write protection error
+- FLASH_SR_PGAERR - Programming alignment error
 
-- `FLASH_SR_BSY` - Flash is busy
-- `FLASH_SR_WRPERR` - Write protection error
-- `FLASH_SR_PGAERR` - Programming alignment error
-
-We need to check these flags to know if erase succeeded.
+We need to check these flags to know if the erase succeeded.
 
 ### Q3. Flash Erase Mechanism
 
@@ -161,12 +157,12 @@ Flash memory stores data by trapping electrons in a floating gate transistor:
 - **Writing (Programming):** Inject electrons INTO the gate → bit becomes `0`
 - **Erasing:** Remove electrons FROM the gate → bit becomes `1`
 
-I know this goes down deep in physics level, but 이게 firmware engineering의 묘미이기도 하다. 메모리 연산 뒤에 숨은 원리를 이해하다 보면 물리 현상까지 마주하게 되니 얼마나 흥미로운가.
+I know this goes deep into the physics level, but this is also the beauty of firmware engineering. As you understand the principles behind memory operations, you encounter physical phenomena—how fascinating is that?
 
 - Going from `1` → `0` can be done on individual bits (low voltage) = WRITE
 - Going from `0` → `1` requires HIGH voltage that affects a large area (entire sector) = ERASE
 
-That's why we can **write** individual bytes, but **erase** operation requires clearing a whole sector. In other words, it's due to a hardware (and circuit physics) limitation of flash technology.
+That's why we can **write** individual bytes, but **erase** operations require clearing a whole sector. In other words, it's due to a hardware (and circuit physics) limitation of flash technology.
 
 To summarize:
 
@@ -243,6 +239,8 @@ After erasing, if I read from any address in Sector 11, I'll see `0xFFFFFFFF`.
 
 ### Erase Code Output
 
+Before erase, the flash contained some leftover data:
+
 ```
 Hello from STM32F429!
 === Flash Erase Test ===
@@ -261,7 +259,11 @@ AFTER erase - Reading from 0x080E0000:
 Flash erase test complete!
 ```
 
----
+Perfect! After erase, all values are `0xFFFFFFFF` (erased state). This confirms that:
+
+1. The erase operation succeeded
+2. Erased flash always reads as all `1`s
+3. We can now safely write new data to this sector
 
 ## Final Step: Write to Flash
 
@@ -278,7 +280,7 @@ Looking at the HAL documentation, flash writes must be:
 
 **Why do you think the hardware has these restrictions?**
 
-**Question 2:** We just erased Sector 11, so all bits are `1` (0xFFFFFFFF). If we want to write `0xDEADBEEF` to address `0x080E0000`, what happens at the bit level? In other words,
+**Question 2:** We just erased Sector 11, so all bits are `1` (0xFFFFFFFF). If we want to write `0xDEADBEEF` to address `0x080E0000`, what happens at the bit level? In other words,
 
 - Which bits need to change from `1` to `0`?
 - Can we change bits from `0` to `1` without erasing?
@@ -435,8 +437,6 @@ Step 3: Reading back and verifying...
 === Flash Write Test Complete ===
 ```
 
----
-
 ## Debugging: The Word Alignment Problem
 
 Here's the boot state struct I wanted to write to flash:
@@ -451,8 +451,7 @@ typedef struct {
 } boot_state_t;  // Total: 11 bytes
 ```
 
-This looks fine, and it even looks efficient because it's using the minimum memory possible.
-However, this causes the problem when the compiler added padding to align the `crc32` field. As a result, it becomes 12 byte struct. But worse, when I tried to write it word-by-word, I was writing **partial words** and the STM32 HAL rejected it.
+This looks fine, and it even looks efficient because it's using the minimum memory possible. However, this causes a problem when the compiler adds padding to align the `crc32` field. As a result, it becomes a 12-byte struct. But worse, when I tried to write it word-by-word, I was writing **partial words**, and the STM32 HAL rejected it.
 
 **The error:** `HAL_FLASH_Program()` would return `HAL_ERROR`, and my writes silently failed.
 
@@ -542,8 +541,6 @@ static int write_to_flash_unified(uint32_t address, const void *data, uint16_t s
 ```
 
 **Lesson learned:** STM32 flash programming requires word alignment. Always design persistent structures as multiples of 4 bytes, or handle partial words explicitly.
-
----
 
 ## Key Takeaways from Phase 1
 

@@ -73,8 +73,8 @@ table.table a {
 blockquote {
   background: var(--global-bg-color);
   border-left: 5px solid var(--global-theme-color);
-  margin: 1.5em 0;
-  padding: 1em;
+  margin: 1em 0;
+  padding: 0 1rem 0 1rem;
   font-size: 1rem;
 
   p {
@@ -1340,8 +1340,9 @@ div[role="main"].mt-5 {
   }
 }
 
-Rouge Color Customization figure.highlight {
-  margin: 0 0 1rem;
+// Rouge Color Customization
+pre.highlight {
+  margin: 2rem 0;
 }
 
 pre {
@@ -1380,7 +1381,7 @@ html.transition *:after {
 // Extra Markdown style (post Customization)
 .post {
   display: flex; /* Use Flexbox to align content and sidebar */
-  gap: 2rem; /* Gap between the border line and the sidebar */
+  gap: 0 2rem; /* Gap between the border line and the sidebar */
   flex-wrap: wrap;
   position: relative;
 
@@ -1397,8 +1398,8 @@ html.transition *:after {
   .post-tags {
     color: var(--global-text-color-light);
     font-size: 0.875rem;
-    padding-top: 0.25rem;
-    padding-bottom: 1rem;
+    padding: 0.25rem 0;
+    margin-bottom: 0.5rem;
 
     a {
       color: var(--global-text-color-light);
@@ -1415,6 +1416,11 @@ html.transition *:after {
   > .post-content {
     width: 100%;
   }
+
+  > article p {
+    margin-top: 1rem;
+    margin-bottom: 1rem; /* Increased from default for more spacing */
+  }
 }
 
 /* Adjustments: make post page title more prominent and subheadings slightly smaller
@@ -1429,19 +1435,19 @@ html.transition *:after {
 /* Reduce sizes of in-post headings to improve hierarchy relative to the H1 post title */
 .post h2 {
   font-size: 1.6rem;
-  margin-top: 1.25rem;
+  margin-top: 3rem;
   margin-bottom: 0.5rem;
 }
 
 .post h3 {
   font-size: 1.25rem;
-  margin-top: 1rem;
+  margin-top: 3rem;
   margin-bottom: 0.45rem;
 }
 
 .post h4 {
   font-size: 1.1rem;
-  margin-top: 0.9rem;
+  margin-top: 1.5rem;
   margin-bottom: 0.4rem;
 }
 
@@ -1648,8 +1654,6 @@ nav[data-toggle="toc"] {
   .post-meta {
     color: var(--global-text-color-light);
     font-size: 0.875rem;
-    margin-bottom: 0;
-    padding-top: 0.5rem;
   }
 }
 
