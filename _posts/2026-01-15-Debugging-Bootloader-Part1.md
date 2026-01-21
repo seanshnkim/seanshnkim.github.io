@@ -1,13 +1,13 @@
 ---
 layout: post
-title: Debugging Bootloader Part 1
+title: Debugging Bootloader: Part 1
 date: 2026-01-15 01:21:27
 categories: Firmware
 ---
 
 In this post, I'll share the debugging process I went through in Phase 2. Looking at just the conclusion, the cause was really simple. But as with all debugging, you have no choice but to find the cause through trial and error. I think it's worth recording how I solved it.
 
-## What's Wrong with the Code?
+## What's Wrong with the Code?
 
 Given the bootloader and the application code, I flashed both files. However, it hung forever when jumping to the application.
 
