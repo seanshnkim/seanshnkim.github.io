@@ -23,7 +23,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-bootloader-with-ota-phase-2-minimal-bootloader",
+        },{id: "post-debugging-bootloader-part-1",
+      
+        title: "Debugging Bootloader Part 1",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Debugging-Bootloader-Part1/";
+        
+      },
+    },{id: "post-bootloader-with-ota-phase-2-minimal-bootloader",
       
         title: "Bootloader with OTA Phase 2: Minimal Bootloader",
       
