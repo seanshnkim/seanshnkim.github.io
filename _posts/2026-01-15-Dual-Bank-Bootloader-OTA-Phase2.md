@@ -7,11 +7,11 @@ categories: Firmware
 
 ## Roadmap
 
-- Phase 2A: Create a bootloader project. The goal is to create a simple bootloader program running at 0x08000000, blinking an LED, and staying in an infinite loop.
-- Phase 2B: Create a separate project for the application. It will also blink an LED but with a different interval. The application runs at 0x08010000 and we will modify the **linker script** to achieve this.
+- Phase 2A: Create a bootloader project. The goal is to create a simple bootloader program running at `0x08000000`, blinking an LED, and staying in an infinite loop.
+- Phase 2B: Create a separate project for the application. It will also blink an LED but with a different interval. The application runs at `0x08010000` and we will modify the **linker script** to achieve this.
 - Phase 2C: We will make a `jump_to_application` function inside the bootloader to transfer control from the bootloader to the application.
 
-## Phase 2A: Create a Simple Bootloader Project
+## Phase 2A: Create a Simple
 
 Let's create a simple program that blinks an LED using HAL methods. Open `Core/Src/main.c` and modify the main function:
 
@@ -53,7 +53,7 @@ int main(void)
 There are checkpoint questions from Claude:
 
 - Do you see these files?: `Debug/Bootloader.elf` (executable with debug symbols) and `Debug/Bootloader.bin` (raw binary)
-- When you run the bootloader, what address do you see printed for `&main`? Is it close to 0x08000000?
+- When you run the bootloader, what address do you see printed for `&main`? Is it close to `0x08000000`?
 - When we create the application project, what will be different compared to the bootloader project?
 
 ### Q1. Where Is the `.bin` File and Why Is It Needed?
@@ -110,13 +110,13 @@ Before `main()` runs,
 3. Startup code calls **SystemInit()**, initializes clocks, RAM, etc.
 4. And then, finally, it calls **`main()`**
 
-That's why the `main()` function address is quite close to `0x08000000`, but not exactly `0x08000000`. At this point, it was getting overwhelming as unfamiliar terms were pouring out. But these concepts will continue to appear in Phase 2 and beyond, so I'll explain them in sufficient detail.
+That's why the `main()` function address is quite close to `0x08000000`, but not exactly `0x08000000`. At this point, it was getting overwhelming as unfamiliar terms were pouring out. But these concepts will continue to appear in Phase 2 and beyond, so I'll explain them soon in sufficient detail.
 
 ### Q3. When Writing the Application, What Is Different Compared to the Bootloader Project?
 
 This is a key question for Phase 2.
 
-The answer is **memory address**. The bootloader starts at 0x08000000, while the application starts at 0x08010000. And this will require **linker script** modification, which we will handle in the next step.
+The answer is **memory address**. The bootloader starts at `0x08000000`, while the application starts at `0x08010000`. And this will require **linker script** modification, which we will handle in the next step.
 
 Some people might raise a fundamental question here. Why does the application project need to have a separate, different memory address from the bootloader? It might seem obvious, but it was difficult to give a specific answer right away.
 
@@ -131,7 +131,7 @@ What about placing the application in a contiguous memory address to the bootloa
 
 ## Phase 2B: Create an Application Project and Modify the Linker Script
 
-To make the application run at 0x08010000 instead of 0x08000000, we must first find the linker script. This is the linker script: **`STM32F429ZITX_FLASH.ld`**
+To make the application run at `0x08010000` instead of `0x08000000`, we must first find the linker script. This is the linker script: **`STM32F429ZITX_FLASH.ld`**
 
 ```
 Application/
@@ -176,7 +176,7 @@ to:
 #define VECT_TAB_OFFSET 0x00010000U /* Application starts at 0x08010000 */
 ```
 
-The application needs to tell the Cortex-M where its **interrupt vector table** is located. By default, it assumes 0x08000000, but our application is at 0x08010000 (offset by 0x10000 bytes = 64KB).
+The application needs to tell the Cortex-M where its **interrupt vector table** is located. By default, it assumes `0x08000000`, but our application is at `0x08010000` (offset by 0x10000 bytes = 64KB).
 
 Without this change, if an interrupt fires while the application is running, the CPU will look for the handler at the wrong address (and that's why my initial try didn't work).
 
@@ -220,6 +220,8 @@ int main(void)
 ```
 
 ## Phase 2C:`jump_to_application` Function
+
+Here is the code that jumps to the application from the bootloader. I'll explain each line of code one by one.
 
 ```c
 void jump_to_application(uint32_t app_address)
@@ -299,7 +301,135 @@ void jump_to_application(uint32_t app_address)
 }
 ```
 
-And add this to the main function of booloader:
+### Line 8-9: Application's Stack Pointer and Entry Point
+
+```c
+    uint32_t app_stack_pointer = *((__IO uint32_t*)app_address);
+    uint32_t app_entry_point = *((__IO uint32_t*)(app_address + 4));
+```
+
+This is the code that reads the first two entries from the application's **vector table**.
+
+1. The first is the **initial stack pointer**, or main stack pointer (MSP). It means "where the app wants its stack".
+2. The second is the **reset handler address**, or `main()` entry point. It means "where the app code starts".
+
+Or we can put it in a different way: "We set the variable `app_address` as a pointer to the vector table".
+
+If we flashed the application correctly, we should have the following output:
+
+```
+  App Stack Pointer: 0x08010000
+  App Entry Point:   0x08010004
+```
+
+### Wait... So What Is a Vector Table?
+
+From the explanation above, we now know that there are pointer or address values stored in a vector table. Then what exactly is a vector table?
+
+It is a **lookup table of memory address** that tells the processor where to jump when specific events occur.
+
+Claude provided a brilliant analogy to explain the concept:
+
+> Think of it like an emergency contact list.
+>
+> - "If there's a fire, call 911"
+> - "If the power goes out, call the electrician at 555-1234"
+> - "If someone breaks in, call security at 555-5678"
+>   The vector table says:
+> - If the chip resets, jump to address `0x080101C5`
+> - If a HardFault occurs, jump to address `0x080101E9`
+> - If UART1 receives data, jump to address `0x08010245`
+
+To put it in other terms, a vector table can be thought of as an "array", an array where each entry is 32-bit address stored in flash memory.
+
+The ARM Cortex-M vector table always has:
+
+- Entry 0: Initial value for the stack pointer (not an address!)
+- Entry 1: Addresses of exception/interrupt handler functions
+
+While studying the concept of the vector table, I came up with a question: So does every application have one vector table assigned? If there are multiple application programs loaded to memory, does each of the programs have a separate vector table?
+
+And the short answer is YES. Every application has its own vector table embedded in its binary. But only one can be active at a time, pointed to by VTOR (Vector Table Offset Register). To be specific, only one program can execute at any given moment. That means you can have multiple programs in flash, each with their own vector table, but there can be only one vector table that is active (or pointed to by VTOR).
+
+### Line 26: Disable Interrupts
+
+```c
+__disable_irq();
+```
+
+An Interrupt Request (IRQ) is a signal from hardware (like a mouse or keyboard) telling the CPU to pause its current task to handle an important event, while disabling an IRQ means telling the system to temporarily ignore signals from a specific device, often to resolve conflicts or manage system resources, though it can increase latency if done excessively.
+
+Why do we need to disable interrupt requests (IRQ)?
+
+The bootloader itself has configured interrupts (UART, timers, etc.), so if an interrupt fires after we jump to the app, it would call the bootloader's interrupt handler. But by then we're no longer in bootloader memory, so it will crash.
+
+### Line 29-44: Disable Peripheral Clocks
+
+```c
+__HAL_RCC_GPIOA_CLK_DISABLE();
+__HAL_RCC_USART1_CLK_DISABLE();
+// etc...
+```
+
+For similar reasons, the bootloader needs to "clean up" the peripheral states before jumping to the application. The bootloader enabled clocks for UART, GPIO, USB, etc., but the application will also configure its own peripherals in its own way. If we leave peripherals running before jumping to the application, it can cause conflicts—the application tries to reconfigure a running peripheral, or the application's initialization might not work correctly.
+
+### Line 47-54: HAL and SysTick
+
+```c
+HAL_DeInit();
+// ...
+SysTick->CTRL = 0; // SysTick Control and Status Register
+SysTick->LOAD = 0; // Reload Value Register
+SysTick->VAL = 0;  // Current Value Register
+```
+
+HAL maintains internal state, such as whether peripherals are initialized or tick counters. The application will call `HAL_Init()` too and expects everything to be in a reset state.
+
+Disabling SysTick is another critical step. SysTick is the timer that drives `HAL_Delay()` and `HAL_GetTick()` (which caused me a lot of trouble during debugging). The bootloader configured it to tick at 1ms intervals, and if left running, it would interrupt the application using the **bootloader's** SysTick handler.
+
+- SysTick->CTRL = 0 (disable), LOAD (reload value), and VAL (current value) to fully reset it.
+
+### Line 57-60: Clear All Interrupt Pending Flags
+
+```c
+for (int i = 0; i < 8; i++)
+{
+    NVIC->ICPR[i] = 0xFFFFFFFF;
+}
+```
+
+**NVIC** (Nested Vectored Interrupt Controller) is a type of specialized hardware that manages all interrupts on ARM Cortex-M.
+
+Then why do we "erase" or clear all the states (set ICPR = Interrupt Clear Pending Register to "erase") in NVIC? It's because some interrupt might have triggered but not been serviced yet (it's "pending"). In other words, we write `0xFFFFFFFF` to clear ALL pending interrupts. There are 8 registers because STM32F4 has up to 256 possible interrupt sources (8 × 32 bits). Without this, a pending bootloader interrupt could fire in the application using the wrong handler address.
+
+### Line 63: Relocate the Vector Table
+
+```c
+SCB->VTOR = app_address;
+```
+
+- **SCB** stands for **System Control Block**, which is the core ARM Cortex-M configuration.
+- **VTOR** stands for Vector Table Offset Register.
+
+By default, VTOR is `0x08000000` (bootloader's vector table). But when an interrupt occurs, the processor looks at `VTOR + interrupt_number × 4` to find the handler. We change VTOR to `0x08010000` so interrupts use the **application's** handlers. Without this, all interrupts would still jump to bootloader handlers even though we're running application code, leading to an instant crash.
+
+### Line 66: Set the Stack Pointer
+
+```c
+__set_MSP(app_stack_pointer);
+```
+
+The stack is where local variables, function return addresses, and interrupt contexts are stored. The bootloader's stack is in one area of RAM. The application expects its stack to be at a different location, defined when it was compiled. Therefore, we **must** switch to the app's stack before jumping to its code.
+
+Without this, the application would use the bootloader's stack, likely causing a stack overflow or corruption.
+
+### Line 69: Set Control Register
+
+```c
+__set_CONTROL(0);
+```
+
+The control register determines which stack pointer is active (MSP vs PSP) and the privilege level (privileged vs unprivileged). Setting it to 0 ensures MSP (Main Stack Pointer) is active and thread mode is privileged. This matches the reset state the application expects.
 
 ```c
 int main(void)
@@ -357,15 +487,11 @@ int main(void)
 }
 ```
 
-## How to "Flash" Binary File Using STM32CubeProgrammer
+### Line 72-73: Jump to Application
 
-"Flashing" means uploading a binary file to flash memory. So far, I've used STM32CubeIDE to edit, build, and run the code. When I click Run or Debug in STM32CubeIDE, it automatically flashes the project's binary file to the default flash memory address (`0x08000000`).
+```c
+void (*app_reset_handler)(void) = (void (*)(void))app_entry_point;
+app_reset_handler();
+```
 
-But from now on, when flashing binary files, I'll be using a separate program called **"STM32CubeProgrammer"**. Why should we care about this program if we already have an IDE that automatically flashes the program?
-
-It's because we have two separate projects that are flashed to different addresses. Remember, the bootloader project is flashed to `0x08000000` and the application project must be flashed to `0x08010000`. In STM32CubeIDE, we select the Bootloader project and run it (which automatically flashes it). And then we select the Application project and run it to flash it. The modified linker script will make the application be flashed to its own address, but STM32CubeIDE might erase the entire flash before programming. This would erase the bootloader that was flashed just before flashing the application.
-
-Although I didn't verify if this is true because I never tried using STM32CubeIDE to flash both programs, there are still advantages to using STM32CubeProgrammer.
-
-1. **Check what values are stored at specific memory addresses.** Not only can you check whether flashing succeeded, but you can also directly verify what values are stored at specific memory addresses. This allows you to debug whether the target value was correctly stored at the target memory address.
-2. **Easy to erase specific target memory addresses.** When flashing, you often need to erase an entire sector. In that case, you can use STM32CubeProgrammer to erase only the desired sector.
+Finally, we create a function pointer `app_reset_handler` that points to the application's Reset_Handler. We cast `app_entry_point`, which is just a number like `0x08010195`, to a function pointer type.
