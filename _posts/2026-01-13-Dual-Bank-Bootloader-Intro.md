@@ -5,29 +5,14 @@ date: 2026-01-12 19:43:16
 categories: Firmware
 ---
 
-When I asked Claude: "I am a grad student who is interested in firmware engineering. What projects would be good to start with?", Claude suggested seven options.
-Among them, building a custom bootloader was my choice. First, there were plenty of documents and open-source projects to reference. More importantly, bootloader development touches on concepts that are fundamental in embedded systems: memory management, hardware initialization, communication protocols, and safety-critical design.
+If you're a student interested in firmware engineering, you've probably wondered what project to start with. Of course, being interested in firmware engineering at all is already a rare thing.
 
-<div class="image-row" markdown="1">
-  {% include figure.liquid
-     loading="eager"
-     path="/assets/post-attachments/2025-11-07-img1.png"
-     class="img-fluid rounded z-depth-1"
-     figure_class="figure-lines"
-     figure_style="--figure-lines:8"
-     caption="LAN8742A-CZ-TR"
-  %}
+The more I learn about firmware, the more I realize how specialized this field is. Universities don't teach firmware engineering. There are no such hackathons or contests in firmware. Online resources aren't nearly as abundant as they are for machine learning or app development. Even more, it's demanding and has a high barrier to entry, because it requires both low-level software programming skills and a solid grasp of hardware fundamentals.
 
-{% include figure.liquid
-     loading="eager"
-     path="/assets/post-attachments/2025-11-07-img2.png"
-     class="img-fluid rounded z-depth-1"
-     figure_class="figure-lines"
-     figure_style="--figure-lines:8"
-     caption="RJ45 connector (example)"
-  %}
+That's why if it were five years ago, I wouldn't have even dreamed of becoming a firmware engineer. But now, we have AI tools.
+While I was working on this project with Claude AI, I felt like there is a senior firmware developer sitting next to me and coaching me in real time. It helped me choose topics, answer questions, and debug issues made this possible. AI is not perfect yet, but for a student working alone like me, it is truly a powerful source of motivation.
 
-</div>
+After careful consideration with Claude, I decided to build a custom bootloader as my first project. First, there were relatively plenty of documents and open-source projects to reference. Of course, part of me wanted to jump straight into something more challenging, but I thought it would be better to build confidence with a successful first project before moving on to more complex ones. More importantly, bootloader development touches on concepts that are fundamental to embedded systems: memory management, hardware initialization, communication protocols, and safety-critical design.
 
 ## What Is a Bootloader? And Why Should You Care?
 
