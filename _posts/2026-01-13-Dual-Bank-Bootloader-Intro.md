@@ -38,6 +38,11 @@ Similarly, a microcontroller hardware has nothing configured yet before pressing
 
 Bootloaders are everywhere in modern electronics, but we rarely see them because they're not a type of software we can directly interact with. For example, every STM32 microcontroller ships with a built-in bootloader in ROM that lets you flash firmware over USB or UART. Arduino boards use a bootloader to accept sketches over USB without needing a dedicated programmer. Wireless earbuds or car's dashboard all have bootloaders that enable firmware updates without replacing the hardware.
 
+### Meaning of “Application” in This Discussion
+
+To clarify one more thing: **the "application" referred to here means firmware**. I'm using "application" as a term that contrasts with "bootloader," so you shouldn't think of it as a typical user-application.
+In other words, within the firmware category, there's "bootloader firmware" and "non-bootloader firmware." To distinguish from the bootloader, I'll simply refer to regular firmware as "application" from now on.
+
 ## Core Project Goals
 
 I focused on three specific challenges that represent key bootloader functionality:

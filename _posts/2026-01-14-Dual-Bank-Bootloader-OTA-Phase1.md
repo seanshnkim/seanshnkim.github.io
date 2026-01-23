@@ -39,6 +39,12 @@ The STM32F429 has 2MB of internal flash memory organized into **sectors** of var
 
 For reference, details are in RM0090 Reference Manual - 3.4 Embedded flash memory in STM32F42xxx and STM32F43xxx (p.77/1757).
 
+{% include figure.liquid
+   loading="eager"
+   path="/assets/post-attachments/2026-01-14/STM32F42xxx_Flash-Module.png"
+   class="img-fluid rounded z-depth-1 figure-lines"
+   %}<br>
+
 Now, there are three separate projects to achieve:
 
 1. **Bootloader** - Decides which bank to boot, handles rollback

@@ -11,9 +11,9 @@ categories: Firmware
 - Phase 2B: Create a separate project for the application. It will also blink an LED but with a different interval. The application runs at `0x08010000` and we will modify the **linker script** to achieve this.
 - Phase 2C: We will make a `jump_to_application` function inside the bootloader to transfer control from the bootloader to the application.
 
-## Phase 2A: Create a Simple
+## Phase 2A: Create a Bootloader Project
 
-Let's create a simple program that blinks an LED using HAL methods. Open `Core/Src/main.c` and modify the main function:
+Let's create a simple program that blinks an LED using HAL methods. Although now lack of bootloading features, later on this will serve as the bootloader. Open `Core/Src/main.c` and modify the main function:
 
 ```c
 int main(void)
@@ -221,7 +221,7 @@ int main(void)
 
 ## Phase 2C:`jump_to_application` Function
 
-Here is the code that jumps to the application from the bootloader. I'll explain each line of code one by one.
+Now this is the core feature of the bootloader: jump to the application. I'll explain each line of code one by one.
 
 ```c
 void jump_to_application(uint32_t app_address)
