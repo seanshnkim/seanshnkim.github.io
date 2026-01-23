@@ -23,15 +23,37 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-debugging-bootloader-part-1",
+        },{id: "post-",
       
-        title: "Debugging Bootloader Part 1",
+        title: "",
       
       description: "",
       section: "Posts",
       handler: () => {
         
-          window.location.href = "/blog/2026/Debugging-Bootloader-Part1/";
+          window.location.href = "/blog/2026/2026-01-15-Debugging-Bootloader-Part2/";
+        
+      },
+    },{id: "post-",
+      
+        title: "",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/2026-01-15-Debugging-Bootloader-Part1/";
+        
+      },
+    },{id: "post-bootloader-with-ota-phase-3-dual-bank-selection",
+      
+        title: "Bootloader with OTA Phase 3: Dual Bank Selection",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase3/";
         
       },
     },{id: "post-bootloader-with-ota-phase-2-minimal-bootloader",

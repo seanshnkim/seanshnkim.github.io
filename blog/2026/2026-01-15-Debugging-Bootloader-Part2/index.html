@@ -1,0 +1,2209 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN" "http://www.w3.org/TR/REC-html40/loose.dtd"> <html><body> <h2 id="part-1-summary">Part 1 Summary</h2> <p>In the post Part 1, I introduced the problem where the application code wouldn’t execute at all after calling <code class="language-plaintext highlighter-rouge">jump_to_application</code> from the bootloader.</p> <p>As a first measure to address this problem, I verified the vector table offset and memory address in the linker script, and checked whether the application code was successfully flashed. Finally I confirmed whether the application program itself worked normally. However, when jumped from the bootloader, it kept hanging somewhere.</p> <p>Second, o check if the UART protocol was the problem, I removed UART and commented out other peripheral initialization code, then tested again.</p> <p>Third, to check if <code class="language-plaintext highlighter-rouge">HAL_Delay</code> was the problem, I wrote a very simple version of the application without it and tested. As a result, the application program successfully worked after jumping from the bootloader to the application.</p> <p>Fourth, Claude explained that <code class="language-plaintext highlighter-rouge">HAL_Delay()</code> depends on the <strong>SysTick</strong> timer, and to re-enable the interrupt that SysTick calls every 1ms, I needed to add <code class="language-plaintext highlighter-rouge">__enable_irq()</code> to the application code.</p> <p>In Part 1, I confirmed that there was a problem with <code class="language-plaintext highlighter-rouge">HAL_Delay</code>, specifically the SysTick timer. Now let’s take a closer look at Part 2 to see why SysTick wasn’t working.</p> <h2 id="debugging-5-reinit-systick-manually">Debugging 5: Reinit SysTick Manually</h2> <p>Claude determined that there was a problem with the SysTick initialization process.</p> <blockquote> <p>Looking at your uploaded main.c, I see you added <code class="language-plaintext highlighter-rouge">__enable_irq()</code> but <strong>HAL_Delay still hangs</strong>. This means interrupts are enabled, but <strong>SysTick interrupt is not firing</strong>. The problem was that the bootloader is not properly re-initializing SysTick before jumping.</p> </blockquote> <p>Let’s trace what happens:</p> <p><strong>In Bootloader:</strong></p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td> <td class="rouge-code"><pre><span class="n">HAL_Init</span><span class="p">();</span>  <span class="c1">// Sets up SysTick with HCLK as clock source</span>
+<span class="c1">// ...</span>
+<span class="c1">// Before jump:</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">CTRL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">// Disables SysTick completely</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p><strong>In Application:</strong></p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+</pre></td> <td class="rouge-code"><pre><span class="n">HAL_Init</span><span class="p">();</span>  <span class="c1">// Tries to set up SysTick again</span>
+<span class="n">__enable_irq</span><span class="p">();</span>  <span class="c1">// Enables global interrupts</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p><strong>The issue:</strong> <code class="language-plaintext highlighter-rouge">HAL_Init()</code> in the application assumes it’s running after a clean reset, but the hardware state is NOT clean - it’s been modified by the bootloader.</p> <p>Claude’s solution was to explicitly reinitialize SysTick in Application. Add this code before <code class="language-plaintext highlighter-rouge">__enable_irq()</code>:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td> <td class="rouge-code"><pre><span class="c1">// 3. CRITICAL: Explicitly reinitialize SysTick with correct clock</span>
+<span class="c1">//    HAL_Init() already configured it, but let's make sure it's using the right clock source</span>
+<span class="n">HAL_SYSTICK_Config</span><span class="p">(</span><span class="n">SystemCoreClock</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">);</span>  <span class="c1">// 1ms tick</span>
+<span class="n">HAL_SYSTICK_CLKSourceConfig</span><span class="p">(</span><span class="n">SYSTICK_CLKSOURCE_HCLK</span><span class="p">);</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>At the same time, Claude also provided an alternative. In the bootloader’s <code class="language-plaintext highlighter-rouge">jump_to_application()</code> function,</p> <p><strong>Current code:</strong></p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td> <td class="rouge-code"><pre><span class="c1">// 6. Disable SysTick</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">CTRL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">LOAD</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">VAL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>It should be fixed to:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td> <td class="rouge-code"><pre><span class="c1">// 6. Disable SysTick but keep it in a known state</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">CTRL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">// Disable</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">LOAD</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>  <span class="c1">// Clear reload value</span>
+<span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">VAL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>   <span class="c1">// Clear current value</span>
+
+<span class="c1">// 6a. Make sure SysTick interrupt priority is reset</span>
+<span class="n">HAL_NVIC_SetPriority</span><span class="p">(</span><span class="n">SysTick_IRQn</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>Then Claude pointed out that <code class="language-plaintext highlighter-rouge">SystemCoreClock</code> is a global variable that stores the current system clock frequency, and it needs to be updated after <code class="language-plaintext highlighter-rouge">SystemClock_Config()</code>.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td> <td class="rouge-code"><pre><span class="c1">// Check if `SystemClock_Config()` calls `SystemCoreClockUpdate()` at the end</span>
+
+<span class="kt">void</span> <span class="nf">SystemClock_Config</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// ... all your clock configuration ...</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_RCC_ClockConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RCC_ClkInitStruct</span><span class="p">,</span> <span class="n">FLASH_LATENCY_0</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="c1">// ADD THIS if it's not there:</span>
+  <span class="n">SystemCoreClockUpdate</span><span class="p">();</span>  <span class="c1">// Update SystemCoreClock variable</span>
+<span class="p">}</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>This should ensure that <code class="language-plaintext highlighter-rouge">SystemCoreClock</code> has the correct value when calling <code class="language-plaintext highlighter-rouge">HAL_SYSTICK_Config(SystemCoreClock / 1000)</code>.</p> <p>Unfortunately, this modification didn’t work, and I decided to use a different approach.</p> <h2 id="debugging-6-starting-over-again">DEBUGGING 6: Starting Over Again</h2> <p>When nothing works while debugging, you naturally feel an urge to start over from the beginning. And this somehow makes sense. Embedded software programs have a lot to do with hardware initialization and configuration, and I was suspecting that I had accidentally removed or added something after creating the project.</p> <p>STM32CubeIDE sets up default peripheral initialization when creating a new project. If you click “Yes” to Board Project Options “Initialize all peripherals with their default mode?”, and look into the project workspace, you’ll see many different header files, source code, and init functions inside <code class="language-plaintext highlighter-rouge">main.c</code>.</p> <p>I created a whole new project in STM32CubeIDE, and then restarted the same test in the new project space. This time, I only worked on the bootloader. <strong>And I found out that the newest version worked, while the old version did not work!</strong> I had clearly only copied part of the code from the old version project and brought it to the new version project source code.</p> <p>Except for the source code <code class="language-plaintext highlighter-rouge">main.c</code>, everything else was the same (project configurations, etc.). However, <code class="language-plaintext highlighter-rouge">main_Bootloader_old.c</code> hangs on HAL_Delay() infinitely while <code class="language-plaintext highlighter-rouge">main_Bootloader_new.c</code> works fine. What was the problem?</p> <p>So this time I gave Claude both the old project (bootloader) <code class="language-plaintext highlighter-rouge">main.c</code> and the new project (again, only bootloader) <code class="language-plaintext highlighter-rouge">main.c</code> simultaneously and asked it to identify what the problem was.</p> <p>The code is a bit long, but let me attach both the old version <code class="language-plaintext highlighter-rouge">main.c</code> and new version <code class="language-plaintext highlighter-rouge">main.c</code> here so we can compare them.</p> <h3 id="old-version-bootloader">OLD Version Bootloader</h3> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+</pre></td> <td class="rouge-code"><pre><span class="c1">// This one does NOT work</span>
+
+<span class="cp">#include</span> <span class="cpf">"main.h"</span><span class="cp">
+#include</span> <span class="cpf">"usb_host.h"</span><span class="cp">
+#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span>
+<span class="n">UART_HandleTypeDef</span> <span class="n">huart1</span><span class="p">;</span>
+<span class="n">DMA2D_HandleTypeDef</span> <span class="n">hdma2d</span><span class="p">;</span>
+<span class="n">LTDC_HandleTypeDef</span> <span class="n">hltdc</span><span class="p">;</span>
+<span class="n">TIM_HandleTypeDef</span> <span class="n">htim1</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">SystemClock_Config</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_GPIO_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_USART1_UART_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_TIM1_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">_write</span><span class="p">(</span><span class="kt">int</span> <span class="n">file</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">HAL_UART_Transmit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">huart1</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">ptr</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="mi">1000</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">jump_to_application</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">app_address</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Preparing to jump to application at 0x%08lX...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">app_address</span><span class="p">);</span>
+
+    <span class="c1">// 1. Read the application's vector table</span>
+    <span class="c1">//    First entry: Initial Stack Pointer</span>
+    <span class="c1">//    Second entry: Reset Handler (entry point)</span>
+    <span class="kt">uint32_t</span> <span class="n">app_stack_pointer</span> <span class="o">=</span> <span class="o">*</span><span class="p">((</span><span class="n">__IO</span> <span class="kt">uint32_t</span><span class="o">*</span><span class="p">)</span><span class="n">app_address</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">app_entry_point</span> <span class="o">=</span> <span class="o">*</span><span class="p">((</span><span class="n">__IO</span> <span class="kt">uint32_t</span><span class="o">*</span><span class="p">)(</span><span class="n">app_address</span> <span class="o">+</span> <span class="mi">4</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  App Stack Pointer: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">app_stack_pointer</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  App Entry Point:   0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">app_entry_point</span><span class="p">);</span>
+
+    <span class="c1">// 2. Sanity check: Is the stack pointer valid?</span>
+    <span class="c1">//    It should point to RAM (0x20000000 - 0x20030000 for STM32F429)</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">app_stack_pointer</span> <span class="o">&lt;</span> <span class="mh">0x20000000</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">app_stack_pointer</span> <span class="o">&gt;</span> <span class="mh">0x20030000</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Invalid stack pointer! Application may not be valid.</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>  <span class="c1">// Don't jump to invalid application</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Jumping to application NOW!</span><span class="se">\r\n\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>  <span class="c1">// Give UART time to send the message</span>
+
+    <span class="c1">// 3. Disable interrupts</span>
+    <span class="n">__disable_irq</span><span class="p">();</span>
+
+    <span class="c1">// 4. Disable all peripheral clocks (important!)</span>
+	<span class="n">__HAL_RCC_GPIOA_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOB_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOC_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOD_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOE_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOF_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOG_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOH_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_USART1_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_USB_OTG_FS_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_DMA2D_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_LTDC_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_FMC_CLK_DISABLE</span><span class="p">();</span>
+
+	<span class="c1">// 5. Deinitialize HAL</span>
+	<span class="n">HAL_DeInit</span><span class="p">();</span>
+
+    <span class="c1">// 6. Disable SysTick</span>
+    <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">CTRL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">LOAD</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">VAL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// 7. Clear all interrupt pending flags</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">NVIC</span><span class="o">-&gt;</span><span class="n">ICPR</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xFFFFFFFF</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 8. Set the vector table address to the application's vector table</span>
+	<span class="n">SCB</span><span class="o">-&gt;</span><span class="n">VTOR</span> <span class="o">=</span> <span class="n">app_address</span><span class="p">;</span>
+
+    <span class="c1">// 9. Set the stack pointer to the application's initial stack pointer</span>
+    <span class="n">__set_MSP</span><span class="p">(</span><span class="n">app_stack_pointer</span><span class="p">);</span>
+
+    <span class="c1">// 10. Set control register</span>
+    <span class="n">__set_CONTROL</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+    <span class="c1">// 11. Jump to the application's reset handler</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">app_reset_handler</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span><span class="n">app_entry_point</span><span class="p">;</span>
+    <span class="n">app_reset_handler</span><span class="p">();</span>
+
+    <span class="c1">// Should never reach here</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="cm">/* Reset of all peripherals, Initializes the Flash interface and the Systick. */</span>
+  <span class="n">HAL_Init</span><span class="p">();</span>
+  <span class="n">SystemClock_Config</span><span class="p">();</span>
+
+  <span class="n">MX_GPIO_Init</span><span class="p">();</span>
+  <span class="n">MX_USART1_UART_Init</span><span class="p">();</span>
+  <span class="n">MX_TIM1_Init</span><span class="p">();</span>
+  <span class="cm">/* USER CODE BEGIN 2 */</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"========================================</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"    BOOTLOADER v1.0                    </span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"========================================</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Running at address: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint32_t</span><span class="p">)</span><span class="o">&amp;</span><span class="n">main</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Bootloader running...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+<span class="c1">//  printf("TIM1 added");</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+  <span class="c1">// Blink LED a few times to show bootloader is running</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Bootloader running... (LED blinks 3 times)</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+	<span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">,</span> <span class="n">GPIO_PIN_SET</span><span class="p">);</span>
+	<span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+	<span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+	<span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Attempting to jump to application...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">500</span><span class="p">);</span>  <span class="c1">// Brief pause</span>
+
+  <span class="c1">// Jump to application!</span>
+  <span class="n">jump_to_application</span><span class="p">(</span><span class="mh">0x08010000</span><span class="p">);</span>
+
+  <span class="c1">// If we reach here, jump failed</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Failed to jump to application!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Staying in bootloader mode.</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+  <span class="p">{</span>
+	  <span class="c1">// Slow blink indicates bootloader fallback mode</span>
+	  <span class="n">HAL_GPIO_TogglePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">);</span>
+	  <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">500</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">SystemClock_Config</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">RCC_OscInitTypeDef</span> <span class="n">RCC_OscInitStruct</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+  <span class="n">RCC_ClkInitTypeDef</span> <span class="n">RCC_ClkInitStruct</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+
+  <span class="n">__HAL_RCC_PWR_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_PWR_VOLTAGESCALING_CONFIG</span><span class="p">(</span><span class="n">PWR_REGULATOR_VOLTAGE_SCALE3</span><span class="p">);</span>
+
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">OscillatorType</span> <span class="o">=</span> <span class="n">RCC_OSCILLATORTYPE_HSI</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">HSIState</span> <span class="o">=</span> <span class="n">RCC_HSI_ON</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">HSICalibrationValue</span> <span class="o">=</span> <span class="n">RCC_HSICALIBRATION_DEFAULT</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLState</span> <span class="o">=</span> <span class="n">RCC_PLL_ON</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLSource</span> <span class="o">=</span> <span class="n">RCC_PLLSOURCE_HSI</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLM</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLN</span> <span class="o">=</span> <span class="mi">72</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLP</span> <span class="o">=</span> <span class="n">RCC_PLLP_DIV2</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLQ</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_RCC_OscConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RCC_OscInitStruct</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">ClockType</span> <span class="o">=</span> <span class="n">RCC_CLOCKTYPE_HCLK</span><span class="o">|</span><span class="n">RCC_CLOCKTYPE_SYSCLK</span>
+                              <span class="o">|</span><span class="n">RCC_CLOCKTYPE_PCLK1</span><span class="o">|</span><span class="n">RCC_CLOCKTYPE_PCLK2</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">SYSCLKSource</span> <span class="o">=</span> <span class="n">RCC_SYSCLKSOURCE_PLLCLK</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">AHBCLKDivider</span> <span class="o">=</span> <span class="n">RCC_SYSCLK_DIV1</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">APB1CLKDivider</span> <span class="o">=</span> <span class="n">RCC_HCLK_DIV2</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">APB2CLKDivider</span> <span class="o">=</span> <span class="n">RCC_HCLK_DIV1</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_RCC_ClockConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RCC_ClkInitStruct</span><span class="p">,</span> <span class="n">FLASH_LATENCY_2</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">SystemCoreClockUpdate</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_USART1_UART_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">USART1</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">BaudRate</span> <span class="o">=</span> <span class="mi">115200</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">WordLength</span> <span class="o">=</span> <span class="n">UART_WORDLENGTH_8B</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">StopBits</span> <span class="o">=</span> <span class="n">UART_STOPBITS_1</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Parity</span> <span class="o">=</span> <span class="n">UART_PARITY_NONE</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">UART_MODE_TX_RX</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">HwFlowCtl</span> <span class="o">=</span> <span class="n">UART_HWCONTROL_NONE</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">OverSampling</span> <span class="o">=</span> <span class="n">UART_OVERSAMPLING_16</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_UART_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">huart1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_GPIO_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">GPIO_InitTypeDef</span> <span class="n">GPIO_InitStruct</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="cm">/* USER CODE BEGIN MX_GPIO_Init_1 */</span>
+<span class="cm">/* USER CODE END MX_GPIO_Init_1 */</span>
+
+  <span class="cm">/* GPIO Ports Clock Enable */</span>
+  <span class="n">__HAL_RCC_GPIOC_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOF_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOH_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOA_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOB_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOG_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOE_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOD_CLK_ENABLE</span><span class="p">();</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOC</span><span class="p">,</span> <span class="n">NCS_MEMS_SPI_Pin</span><span class="o">|</span><span class="n">CSX_Pin</span><span class="o">|</span><span class="n">OTG_FS_PSO_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">ACP_RST_GPIO_Port</span><span class="p">,</span> <span class="n">ACP_RST_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOD</span><span class="p">,</span> <span class="n">RDX_Pin</span><span class="o">|</span><span class="n">WRX_DCX_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">LD3_Pin</span><span class="o">|</span><span class="n">LD4_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : NCS_MEMS_SPI_Pin CSX_Pin OTG_FS_PSO_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">NCS_MEMS_SPI_Pin</span><span class="o">|</span><span class="n">CSX_Pin</span><span class="o">|</span><span class="n">OTG_FS_PSO_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOC</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : B1_Pin MEMS_INT1_Pin MEMS_INT2_Pin TP_INT1_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">B1_Pin</span><span class="o">|</span><span class="n">MEMS_INT1_Pin</span><span class="o">|</span><span class="n">MEMS_INT2_Pin</span><span class="o">|</span><span class="n">TP_INT1_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_EVT_RISING</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOA</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : ACP_RST_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">ACP_RST_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">ACP_RST_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : OTG_FS_OC_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">OTG_FS_OC_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_EVT_RISING</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">OTG_FS_OC_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : BOOT1_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">BOOT1_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_INPUT</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">BOOT1_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : TE_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">TE_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_INPUT</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">TE_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : RDX_Pin WRX_DCX_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">RDX_Pin</span><span class="o">|</span><span class="n">WRX_DCX_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : LD3_Pin LD4_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">LD3_Pin</span><span class="o">|</span><span class="n">LD4_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_TIM1_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">TIM_ClockConfigTypeDef</span> <span class="n">sClockSourceConfig</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+  <span class="n">TIM_MasterConfigTypeDef</span> <span class="n">sMasterConfig</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">TIM1</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Prescaler</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CounterMode</span> <span class="o">=</span> <span class="n">TIM_COUNTERMODE_UP</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Period</span> <span class="o">=</span> <span class="mi">65535</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ClockDivision</span> <span class="o">=</span> <span class="n">TIM_CLOCKDIVISION_DIV1</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">RepetitionCounter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AutoReloadPreload</span> <span class="o">=</span> <span class="n">TIM_AUTORELOAD_PRELOAD_DISABLE</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_TIM_Base_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">sClockSourceConfig</span><span class="p">.</span><span class="n">ClockSource</span> <span class="o">=</span> <span class="n">TIM_CLOCKSOURCE_INTERNAL</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_TIM_ConfigClockSource</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sClockSourceConfig</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">sMasterConfig</span><span class="p">.</span><span class="n">MasterOutputTrigger</span> <span class="o">=</span> <span class="n">TIM_TRGO_RESET</span><span class="p">;</span>
+  <span class="n">sMasterConfig</span><span class="p">.</span><span class="n">MasterSlaveMode</span> <span class="o">=</span> <span class="n">TIM_MASTERSLAVEMODE_DISABLE</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_TIMEx_MasterConfigSynchronization</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sMasterConfig</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">Error_Handler</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="cm">/* USER CODE BEGIN Error_Handler_Debug */</span>
+  <span class="cm">/* User can add his own implementation to report the HAL error return state */</span>
+  <span class="n">__disable_irq</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+  <span class="p">{</span>
+  <span class="p">}</span>
+  <span class="cm">/* USER CODE END Error_Handler_Debug */</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">assert_failed</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">line</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="p">}</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <h3 id="new-version-bootloader">NEW Version Bootloader</h3> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+184
+185
+186
+187
+188
+189
+190
+191
+192
+193
+194
+195
+196
+197
+198
+199
+200
+201
+202
+203
+204
+205
+206
+207
+208
+209
+210
+211
+212
+213
+214
+215
+216
+217
+218
+219
+220
+221
+222
+223
+224
+225
+226
+227
+228
+229
+230
+231
+232
+233
+234
+235
+236
+237
+238
+239
+240
+241
+242
+243
+244
+245
+246
+247
+248
+249
+250
+251
+252
+253
+254
+255
+256
+257
+258
+259
+260
+261
+262
+263
+264
+265
+266
+267
+268
+269
+270
+271
+272
+273
+274
+275
+276
+277
+278
+279
+280
+281
+282
+283
+284
+285
+286
+287
+288
+289
+290
+291
+292
+293
+294
+295
+296
+297
+298
+299
+300
+301
+302
+303
+304
+305
+306
+307
+308
+309
+310
+311
+312
+313
+314
+315
+316
+317
+318
+319
+320
+321
+322
+323
+324
+325
+326
+327
+328
+329
+330
+331
+332
+333
+334
+335
+336
+337
+338
+339
+340
+341
+342
+343
+344
+345
+346
+347
+348
+349
+350
+351
+352
+353
+354
+355
+356
+357
+358
+359
+360
+361
+362
+363
+364
+365
+366
+367
+368
+369
+370
+371
+372
+373
+374
+375
+376
+377
+378
+379
+380
+381
+382
+383
+384
+385
+386
+387
+388
+389
+390
+391
+392
+393
+394
+395
+396
+397
+398
+399
+400
+401
+402
+403
+404
+405
+406
+407
+408
+409
+410
+411
+412
+413
+414
+415
+416
+417
+418
+419
+420
+421
+422
+423
+424
+425
+426
+427
+428
+429
+430
+431
+432
+433
+434
+435
+436
+437
+438
+439
+440
+441
+442
+443
+444
+445
+446
+447
+448
+449
+450
+451
+452
+453
+454
+455
+456
+457
+458
+459
+460
+461
+462
+463
+464
+465
+466
+467
+468
+469
+470
+471
+472
+473
+474
+475
+476
+477
+478
+479
+480
+481
+482
+483
+484
+485
+486
+487
+488
+489
+490
+491
+492
+493
+494
+495
+496
+497
+498
+499
+500
+501
+502
+503
+504
+505
+</pre></td> <td class="rouge-code"><pre><span class="cm">/* NEW VERSION main.c
+This one WORKS! */</span>
+
+<span class="cp">#include</span> <span class="cpf">"main.h"</span><span class="cp">
+#include</span> <span class="cpf">"usb_host.h"</span><span class="cp">
+#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp">
+</span>
+<span class="n">CRC_HandleTypeDef</span> <span class="n">hcrc</span><span class="p">;</span>
+<span class="n">DMA2D_HandleTypeDef</span> <span class="n">hdma2d</span><span class="p">;</span>
+<span class="n">I2C_HandleTypeDef</span> <span class="n">hi2c3</span><span class="p">;</span>
+<span class="n">LTDC_HandleTypeDef</span> <span class="n">hltdc</span><span class="p">;</span>
+<span class="n">SPI_HandleTypeDef</span> <span class="n">hspi5</span><span class="p">;</span>
+<span class="n">TIM_HandleTypeDef</span> <span class="n">htim1</span><span class="p">;</span>
+<span class="n">UART_HandleTypeDef</span> <span class="n">huart1</span><span class="p">;</span>
+<span class="n">SDRAM_HandleTypeDef</span> <span class="n">hsdram1</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">SystemClock_Config</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_GPIO_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_CRC_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_DMA2D_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_FMC_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_I2C3_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_LTDC_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_SPI5_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_TIM1_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_USART1_UART_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">MX_USB_HOST_Process</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+
+<span class="kt">int</span> <span class="nf">_write</span><span class="p">(</span><span class="kt">int</span> <span class="n">file</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="kt">int</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">HAL_UART_Transmit</span><span class="p">(</span><span class="o">&amp;</span><span class="n">huart1</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint8_t</span><span class="o">*</span><span class="p">)</span><span class="n">ptr</span><span class="p">,</span> <span class="n">len</span><span class="p">,</span> <span class="n">HAL_MAX_DELAY</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">len</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">jump_to_application</span><span class="p">(</span><span class="kt">uint32_t</span> <span class="n">app_address</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Preparing to jump to application at 0x%08lX...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">app_address</span><span class="p">);</span>
+
+    <span class="c1">// 1. Read the application's vector table</span>
+    <span class="c1">//    First entry: Initial Stack Pointer</span>
+    <span class="c1">//    Second entry: Reset Handler (entry point)</span>
+    <span class="kt">uint32_t</span> <span class="n">app_stack_pointer</span> <span class="o">=</span> <span class="o">*</span><span class="p">((</span><span class="n">__IO</span> <span class="kt">uint32_t</span><span class="o">*</span><span class="p">)</span><span class="n">app_address</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">app_entry_point</span> <span class="o">=</span> <span class="o">*</span><span class="p">((</span><span class="n">__IO</span> <span class="kt">uint32_t</span><span class="o">*</span><span class="p">)(</span><span class="n">app_address</span> <span class="o">+</span> <span class="mi">4</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  App Stack Pointer: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">app_stack_pointer</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  App Entry Point:   0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">app_entry_point</span><span class="p">);</span>
+
+    <span class="c1">// 2. Sanity check: Is the stack pointer valid?</span>
+    <span class="c1">//    It should point to RAM (0x20000000 - 0x20030000 for STM32F429)</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">app_stack_pointer</span> <span class="o">&lt;</span> <span class="mh">0x20000000</span><span class="p">)</span> <span class="o">||</span> <span class="p">(</span><span class="n">app_stack_pointer</span> <span class="o">&gt;</span> <span class="mh">0x20030000</span><span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Invalid stack pointer! Application may not be valid.</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span><span class="p">;</span>  <span class="c1">// Don't jump to invalid application</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Jumping to application NOW!</span><span class="se">\r\n\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">100</span><span class="p">);</span>  <span class="c1">// Give UART time to send the message</span>
+
+    <span class="c1">// 3. Disable interrupts</span>
+    <span class="n">__disable_irq</span><span class="p">();</span>
+
+    <span class="c1">// 4. Disable all peripheral clocks (important!)</span>
+	<span class="n">__HAL_RCC_GPIOA_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOB_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOC_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOD_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOE_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOF_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOG_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_GPIOH_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_USART1_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_USB_OTG_FS_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_DMA2D_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_LTDC_CLK_DISABLE</span><span class="p">();</span>
+	<span class="n">__HAL_RCC_FMC_CLK_DISABLE</span><span class="p">();</span>
+
+	<span class="c1">// 5. Deinitialize HAL</span>
+	<span class="n">HAL_DeInit</span><span class="p">();</span>
+
+    <span class="c1">// 6. Disable SysTick</span>
+    <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">CTRL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">LOAD</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">VAL</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// 7. Clear all interrupt pending flags</span>
+	<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">8</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+	<span class="p">{</span>
+		<span class="n">NVIC</span><span class="o">-&gt;</span><span class="n">ICPR</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mh">0xFFFFFFFF</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="c1">// 8. Set the vector table address to the application's vector table</span>
+	<span class="n">SCB</span><span class="o">-&gt;</span><span class="n">VTOR</span> <span class="o">=</span> <span class="n">app_address</span><span class="p">;</span>
+
+    <span class="c1">// 9. Set the stack pointer to the application's initial stack pointer</span>
+    <span class="n">__set_MSP</span><span class="p">(</span><span class="n">app_stack_pointer</span><span class="p">);</span>
+
+    <span class="c1">// 10. Set control register</span>
+    <span class="n">__set_CONTROL</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+
+    <span class="c1">// 11. Jump to the application's reset handler</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">app_reset_handler</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span><span class="n">app_entry_point</span><span class="p">;</span>
+    <span class="n">app_reset_handler</span><span class="p">();</span>
+
+    <span class="c1">// Should never reach here</span>
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="cm">/* USER CODE END 0 */</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+
+  <span class="n">HAL_Init</span><span class="p">();</span>
+  <span class="n">SystemClock_Config</span><span class="p">();</span>
+  <span class="n">MX_GPIO_Init</span><span class="p">();</span>
+  <span class="n">MX_CRC_Init</span><span class="p">();</span>
+  <span class="n">MX_DMA2D_Init</span><span class="p">();</span>
+  <span class="n">MX_FMC_Init</span><span class="p">();</span>
+  <span class="n">MX_I2C3_Init</span><span class="p">();</span>
+  <span class="n">MX_LTDC_Init</span><span class="p">();</span>
+  <span class="n">MX_SPI5_Init</span><span class="p">();</span>
+  <span class="n">MX_TIM1_Init</span><span class="p">();</span>
+  <span class="n">MX_USART1_UART_Init</span><span class="p">();</span>
+  <span class="n">MX_USB_HOST_Init</span><span class="p">();</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"========================================</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"    BOOTLOADER NEW                    </span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"========================================</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Running at address: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="p">(</span><span class="kt">uint32_t</span><span class="p">)</span><span class="o">&amp;</span><span class="n">main</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Bootloader running...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+  <span class="c1">// Blink LED a few times to show bootloader is running</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Bootloader running... (LED blinks 3 times)</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+  <span class="p">{</span>
+	<span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">,</span> <span class="n">GPIO_PIN_SET</span><span class="p">);</span>
+	<span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+	<span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+	<span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Attempting to jump to application...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">500</span><span class="p">);</span>  <span class="c1">// Brief pause</span>
+
+  <span class="c1">// Jump to application!</span>
+  <span class="n">jump_to_application</span><span class="p">(</span><span class="mh">0x08010000</span><span class="p">);</span>
+
+  <span class="c1">// If we reach here, jump failed</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Failed to jump to application!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+  <span class="n">printf</span><span class="p">(</span><span class="s">"Staying in bootloader mode.</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">MX_USB_HOST_Process</span><span class="p">();</span>
+
+	  <span class="c1">// Slow blink indicates bootloader fallback mode</span>
+	  <span class="n">HAL_GPIO_TogglePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">);</span>
+	  <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">500</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">SystemClock_Config</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">RCC_OscInitTypeDef</span> <span class="n">RCC_OscInitStruct</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+  <span class="n">RCC_ClkInitTypeDef</span> <span class="n">RCC_ClkInitStruct</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+
+  <span class="n">__HAL_RCC_PWR_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_PWR_VOLTAGESCALING_CONFIG</span><span class="p">(</span><span class="n">PWR_REGULATOR_VOLTAGE_SCALE3</span><span class="p">);</span>
+
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">OscillatorType</span> <span class="o">=</span> <span class="n">RCC_OSCILLATORTYPE_HSI</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">HSIState</span> <span class="o">=</span> <span class="n">RCC_HSI_ON</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">HSICalibrationValue</span> <span class="o">=</span> <span class="n">RCC_HSICALIBRATION_DEFAULT</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLState</span> <span class="o">=</span> <span class="n">RCC_PLL_ON</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLSource</span> <span class="o">=</span> <span class="n">RCC_PLLSOURCE_HSI</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLM</span> <span class="o">=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLN</span> <span class="o">=</span> <span class="mi">72</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLP</span> <span class="o">=</span> <span class="n">RCC_PLLP_DIV2</span><span class="p">;</span>
+  <span class="n">RCC_OscInitStruct</span><span class="p">.</span><span class="n">PLL</span><span class="p">.</span><span class="n">PLLQ</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_RCC_OscConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RCC_OscInitStruct</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">ClockType</span> <span class="o">=</span> <span class="n">RCC_CLOCKTYPE_HCLK</span><span class="o">|</span><span class="n">RCC_CLOCKTYPE_SYSCLK</span>
+                              <span class="o">|</span><span class="n">RCC_CLOCKTYPE_PCLK1</span><span class="o">|</span><span class="n">RCC_CLOCKTYPE_PCLK2</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">SYSCLKSource</span> <span class="o">=</span> <span class="n">RCC_SYSCLKSOURCE_PLLCLK</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">AHBCLKDivider</span> <span class="o">=</span> <span class="n">RCC_SYSCLK_DIV1</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">APB1CLKDivider</span> <span class="o">=</span> <span class="n">RCC_HCLK_DIV2</span><span class="p">;</span>
+  <span class="n">RCC_ClkInitStruct</span><span class="p">.</span><span class="n">APB2CLKDivider</span> <span class="o">=</span> <span class="n">RCC_HCLK_DIV1</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_RCC_ClockConfig</span><span class="p">(</span><span class="o">&amp;</span><span class="n">RCC_ClkInitStruct</span><span class="p">,</span> <span class="n">FLASH_LATENCY_2</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">SystemCoreClockUpdate</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_CRC_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">hcrc</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">CRC</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_CRC_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hcrc</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_DMA2D_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">DMA2D</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">DMA2D_M2M</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ColorMode</span> <span class="o">=</span> <span class="n">DMA2D_OUTPUT_ARGB8888</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">OutputOffset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">LayerCfg</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">InputOffset</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">LayerCfg</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">InputColorMode</span> <span class="o">=</span> <span class="n">DMA2D_INPUT_ARGB8888</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">LayerCfg</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">AlphaMode</span> <span class="o">=</span> <span class="n">DMA2D_NO_MODIF_ALPHA</span><span class="p">;</span>
+  <span class="n">hdma2d</span><span class="p">.</span><span class="n">LayerCfg</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">InputAlpha</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_DMA2D_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hdma2d</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_DMA2D_ConfigLayer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hdma2d</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_I2C3_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">I2C3</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ClockSpeed</span> <span class="o">=</span> <span class="mi">100000</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">DutyCycle</span> <span class="o">=</span> <span class="n">I2C_DUTYCYCLE_2</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">OwnAddress1</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AddressingMode</span> <span class="o">=</span> <span class="n">I2C_ADDRESSINGMODE_7BIT</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">DualAddressMode</span> <span class="o">=</span> <span class="n">I2C_DUALADDRESS_DISABLE</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">OwnAddress2</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">GeneralCallMode</span> <span class="o">=</span> <span class="n">I2C_GENERALCALL_DISABLE</span><span class="p">;</span>
+  <span class="n">hi2c3</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">NoStretchMode</span> <span class="o">=</span> <span class="n">I2C_NOSTRETCH_DISABLE</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_I2C_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hi2c3</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_I2CEx_ConfigAnalogFilter</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hi2c3</span><span class="p">,</span> <span class="n">I2C_ANALOGFILTER_ENABLE</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_I2CEx_ConfigDigitalFilter</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hi2c3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_LTDC_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">LTDC_LayerCfgTypeDef</span> <span class="n">pLayerCfg</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">LTDC</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">HSPolarity</span> <span class="o">=</span> <span class="n">LTDC_HSPOLARITY_AL</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">VSPolarity</span> <span class="o">=</span> <span class="n">LTDC_VSPOLARITY_AL</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">DEPolarity</span> <span class="o">=</span> <span class="n">LTDC_DEPOLARITY_AL</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">PCPolarity</span> <span class="o">=</span> <span class="n">LTDC_PCPOLARITY_IPC</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">HorizontalSync</span> <span class="o">=</span> <span class="mi">9</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">VerticalSync</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AccumulatedHBP</span> <span class="o">=</span> <span class="mi">29</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AccumulatedVBP</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AccumulatedActiveW</span> <span class="o">=</span> <span class="mi">269</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AccumulatedActiveH</span> <span class="o">=</span> <span class="mi">323</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">TotalWidth</span> <span class="o">=</span> <span class="mi">279</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">TotalHeigh</span> <span class="o">=</span> <span class="mi">327</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Backcolor</span><span class="p">.</span><span class="n">Blue</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Backcolor</span><span class="p">.</span><span class="n">Green</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">hltdc</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Backcolor</span><span class="p">.</span><span class="n">Red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_LTDC_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hltdc</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">WindowX0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">WindowX1</span> <span class="o">=</span> <span class="mi">240</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">WindowY0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">WindowY1</span> <span class="o">=</span> <span class="mi">320</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">PixelFormat</span> <span class="o">=</span> <span class="n">LTDC_PIXEL_FORMAT_RGB565</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">Alpha</span> <span class="o">=</span> <span class="mi">255</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">Alpha0</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">BlendingFactor1</span> <span class="o">=</span> <span class="n">LTDC_BLENDING_FACTOR1_PAxCA</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">BlendingFactor2</span> <span class="o">=</span> <span class="n">LTDC_BLENDING_FACTOR2_PAxCA</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">FBStartAdress</span> <span class="o">=</span> <span class="mh">0xD0000000</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">ImageWidth</span> <span class="o">=</span> <span class="mi">240</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">ImageHeight</span> <span class="o">=</span> <span class="mi">320</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">Backcolor</span><span class="p">.</span><span class="n">Blue</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">Backcolor</span><span class="p">.</span><span class="n">Green</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">pLayerCfg</span><span class="p">.</span><span class="n">Backcolor</span><span class="p">.</span><span class="n">Red</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_LTDC_ConfigLayer</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hltdc</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">pLayerCfg</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_SPI5_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">SPI5</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">SPI_MODE_MASTER</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Direction</span> <span class="o">=</span> <span class="n">SPI_DIRECTION_2LINES</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">DataSize</span> <span class="o">=</span> <span class="n">SPI_DATASIZE_8BIT</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CLKPolarity</span> <span class="o">=</span> <span class="n">SPI_POLARITY_LOW</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CLKPhase</span> <span class="o">=</span> <span class="n">SPI_PHASE_1EDGE</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">NSS</span> <span class="o">=</span> <span class="n">SPI_NSS_SOFT</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">BaudRatePrescaler</span> <span class="o">=</span> <span class="n">SPI_BAUDRATEPRESCALER_16</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">FirstBit</span> <span class="o">=</span> <span class="n">SPI_FIRSTBIT_MSB</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">TIMode</span> <span class="o">=</span> <span class="n">SPI_TIMODE_DISABLE</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CRCCalculation</span> <span class="o">=</span> <span class="n">SPI_CRCCALCULATION_DISABLE</span><span class="p">;</span>
+  <span class="n">hspi5</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CRCPolynomial</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_SPI_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hspi5</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_TIM1_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">TIM_ClockConfigTypeDef</span> <span class="n">sClockSourceConfig</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+  <span class="n">TIM_MasterConfigTypeDef</span> <span class="n">sMasterConfig</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">TIM1</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Prescaler</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CounterMode</span> <span class="o">=</span> <span class="n">TIM_COUNTERMODE_UP</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Period</span> <span class="o">=</span> <span class="mi">65535</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ClockDivision</span> <span class="o">=</span> <span class="n">TIM_CLOCKDIVISION_DIV1</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">RepetitionCounter</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+  <span class="n">htim1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">AutoReloadPreload</span> <span class="o">=</span> <span class="n">TIM_AUTORELOAD_PRELOAD_DISABLE</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_TIM_Base_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">sClockSourceConfig</span><span class="p">.</span><span class="n">ClockSource</span> <span class="o">=</span> <span class="n">TIM_CLOCKSOURCE_INTERNAL</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_TIM_ConfigClockSource</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sClockSourceConfig</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">sMasterConfig</span><span class="p">.</span><span class="n">MasterOutputTrigger</span> <span class="o">=</span> <span class="n">TIM_TRGO_RESET</span><span class="p">;</span>
+  <span class="n">sMasterConfig</span><span class="p">.</span><span class="n">MasterSlaveMode</span> <span class="o">=</span> <span class="n">TIM_MASTERSLAVEMODE_DISABLE</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_TIMEx_MasterConfigSynchronization</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">sMasterConfig</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_USART1_UART_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">USART1</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">BaudRate</span> <span class="o">=</span> <span class="mi">115200</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">WordLength</span> <span class="o">=</span> <span class="n">UART_WORDLENGTH_8B</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">StopBits</span> <span class="o">=</span> <span class="n">UART_STOPBITS_1</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Parity</span> <span class="o">=</span> <span class="n">UART_PARITY_NONE</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">UART_MODE_TX_RX</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">HwFlowCtl</span> <span class="o">=</span> <span class="n">UART_HWCONTROL_NONE</span><span class="p">;</span>
+  <span class="n">huart1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">OverSampling</span> <span class="o">=</span> <span class="n">UART_OVERSAMPLING_16</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_UART_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">huart1</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="cm">/* FMC initialization function */</span>
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_FMC_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">FMC_SDRAM_TimingTypeDef</span> <span class="n">SdramTiming</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Instance</span> <span class="o">=</span> <span class="n">FMC_SDRAM_DEVICE</span><span class="p">;</span>
+  <span class="cm">/* hsdram1.Init */</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">SDBank</span> <span class="o">=</span> <span class="n">FMC_SDRAM_BANK2</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ColumnBitsNumber</span> <span class="o">=</span> <span class="n">FMC_SDRAM_COLUMN_BITS_NUM_8</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">RowBitsNumber</span> <span class="o">=</span> <span class="n">FMC_SDRAM_ROW_BITS_NUM_12</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">MemoryDataWidth</span> <span class="o">=</span> <span class="n">FMC_SDRAM_MEM_BUS_WIDTH_16</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">InternalBankNumber</span> <span class="o">=</span> <span class="n">FMC_SDRAM_INTERN_BANKS_NUM_4</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">CASLatency</span> <span class="o">=</span> <span class="n">FMC_SDRAM_CAS_LATENCY_3</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">WriteProtection</span> <span class="o">=</span> <span class="n">FMC_SDRAM_WRITE_PROTECTION_DISABLE</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">SDClockPeriod</span> <span class="o">=</span> <span class="n">FMC_SDRAM_CLOCK_PERIOD_2</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ReadBurst</span> <span class="o">=</span> <span class="n">FMC_SDRAM_RBURST_DISABLE</span><span class="p">;</span>
+  <span class="n">hsdram1</span><span class="p">.</span><span class="n">Init</span><span class="p">.</span><span class="n">ReadPipeDelay</span> <span class="o">=</span> <span class="n">FMC_SDRAM_RPIPE_DELAY_1</span><span class="p">;</span>
+  <span class="cm">/* SdramTiming */</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">LoadToActiveDelay</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">ExitSelfRefreshDelay</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">SelfRefreshTime</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">RowCycleDelay</span> <span class="o">=</span> <span class="mi">7</span><span class="p">;</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">WriteRecoveryTime</span> <span class="o">=</span> <span class="mi">3</span><span class="p">;</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">RPDelay</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+  <span class="n">SdramTiming</span><span class="p">.</span><span class="n">RCDDelay</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">HAL_SDRAM_Init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">hsdram1</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">SdramTiming</span><span class="p">)</span> <span class="o">!=</span> <span class="n">HAL_OK</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">Error_Handler</span><span class="p">(</span> <span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="k">static</span> <span class="kt">void</span> <span class="nf">MX_GPIO_Init</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">GPIO_InitTypeDef</span> <span class="n">GPIO_InitStruct</span> <span class="o">=</span> <span class="p">{</span><span class="mi">0</span><span class="p">};</span>
+<span class="cm">/* USER CODE BEGIN MX_GPIO_Init_1 */</span>
+<span class="cm">/* USER CODE END MX_GPIO_Init_1 */</span>
+
+  <span class="cm">/* GPIO Ports Clock Enable */</span>
+  <span class="n">__HAL_RCC_GPIOC_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOF_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOH_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOA_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOB_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOG_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOE_CLK_ENABLE</span><span class="p">();</span>
+  <span class="n">__HAL_RCC_GPIOD_CLK_ENABLE</span><span class="p">();</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOC</span><span class="p">,</span> <span class="n">NCS_MEMS_SPI_Pin</span><span class="o">|</span><span class="n">CSX_Pin</span><span class="o">|</span><span class="n">OTG_FS_PSO_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">ACP_RST_GPIO_Port</span><span class="p">,</span> <span class="n">ACP_RST_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOD</span><span class="p">,</span> <span class="n">RDX_Pin</span><span class="o">|</span><span class="n">WRX_DCX_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin Output Level */</span>
+  <span class="n">HAL_GPIO_WritePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">LD3_Pin</span><span class="o">|</span><span class="n">LD4_Pin</span><span class="p">,</span> <span class="n">GPIO_PIN_RESET</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : NCS_MEMS_SPI_Pin CSX_Pin OTG_FS_PSO_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">NCS_MEMS_SPI_Pin</span><span class="o">|</span><span class="n">CSX_Pin</span><span class="o">|</span><span class="n">OTG_FS_PSO_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOC</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : B1_Pin MEMS_INT1_Pin MEMS_INT2_Pin TP_INT1_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">B1_Pin</span><span class="o">|</span><span class="n">MEMS_INT1_Pin</span><span class="o">|</span><span class="n">MEMS_INT2_Pin</span><span class="o">|</span><span class="n">TP_INT1_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_EVT_RISING</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOA</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : ACP_RST_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">ACP_RST_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">ACP_RST_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : OTG_FS_OC_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">OTG_FS_OC_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_EVT_RISING</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">OTG_FS_OC_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : BOOT1_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">BOOT1_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_INPUT</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">BOOT1_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pin : TE_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">TE_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_INPUT</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">TE_GPIO_Port</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : RDX_Pin WRX_DCX_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">RDX_Pin</span><span class="o">|</span><span class="n">WRX_DCX_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOD</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+
+  <span class="cm">/*Configure GPIO pins : LD3_Pin LD4_Pin */</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pin</span> <span class="o">=</span> <span class="n">LD3_Pin</span><span class="o">|</span><span class="n">LD4_Pin</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Mode</span> <span class="o">=</span> <span class="n">GPIO_MODE_OUTPUT_PP</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Pull</span> <span class="o">=</span> <span class="n">GPIO_NOPULL</span><span class="p">;</span>
+  <span class="n">GPIO_InitStruct</span><span class="p">.</span><span class="n">Speed</span> <span class="o">=</span> <span class="n">GPIO_SPEED_FREQ_LOW</span><span class="p">;</span>
+  <span class="n">HAL_GPIO_Init</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">GPIO_InitStruct</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">HAL_TIM_PeriodElapsedCallback</span><span class="p">(</span><span class="n">TIM_HandleTypeDef</span> <span class="o">*</span><span class="n">htim</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span> <span class="o">==</span> <span class="n">TIM6</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">HAL_IncTick</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">Error_Handler</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">__disable_irq</span><span class="p">();</span>
+  <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+  <span class="p">{</span>
+  <span class="p">}</span>
+  <span class="cm">/* USER CODE END Error_Handler_Debug */</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">assert_failed</span><span class="p">(</span><span class="kt">uint8_t</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">line</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="cm">/* USER CODE BEGIN 6 */</span>
+  <span class="cm">/* User can add his own implementation to report the file name and line number,
+     ex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */</span>
+  <span class="cm">/* USER CODE END 6 */</span>
+<span class="p">}</span>
+<span class="cp">#endif </span><span class="cm">/* USE_FULL_ASSERT */</span><span class="cp">
+</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <h3 id="what-was-claudes-answer">What Was Claude’s Answer?</h3> <p>Instead of answering immediately, Claude asked me to clarify my question:</p> <p>“<strong>First, a key question:</strong> In <code class="language-plaintext highlighter-rouge">main_Bootloader_old.c</code>, where exactly does it hang? Is it:</p> <ol> <li>During the initial LED blinks (the <code class="language-plaintext highlighter-rouge">for</code> loop with 3 blinks)?</li> <li>During the <code class="language-plaintext highlighter-rouge">HAL_Delay(500)</code> right before jumping?</li> <li>Or somewhere else?</li> </ol> <p><strong>Now, here’s what I want you to investigate:</strong></p> <p>Look at the <code class="language-plaintext highlighter-rouge">MX_TIM1_Init()</code> function in old version. Do you see that TIM1 is initialized but <strong>never started</strong>?</p> <p>Compare this with what you likely have in new version - I suspect new one either:</p> <ul> <li>Doesn’t initialize TIM1 at all, OR</li> <li>Actually starts TIM1 with <code class="language-plaintext highlighter-rouge">HAL_TIM_Base_Start(&amp;htim1)</code> </li> </ul> <p><strong>Why does this matter for HAL_Delay()?</strong></p> <p>Think about how <code class="language-plaintext highlighter-rouge">HAL_Delay()</code> works in STM32 HAL. What timer does it typically rely on for its timebase?</p> <p>Hint: Look at your <code class="language-plaintext highlighter-rouge">SystemClock_Config()</code> - do you see any SysTick configuration there? The HAL library needs a functioning timebase to make <code class="language-plaintext highlighter-rouge">HAL_Delay()</code> work.</p> <p><strong>Here’s what I think is happening:</strong></p> <p>The TIM1 initialization in the old version might be interfering with the SysTick timer that HAL normally uses for its timebase. Can you check:</p> <ol> <li>Is TIM1 actually needed for your bootloader functionality?</li> <li>What happens if you comment out <code class="language-plaintext highlighter-rouge">MX_TIM1_Init()</code> in the old one?</li> </ol> <p>Try that and let me know what you find!”</p> <p>But commenting out <code class="language-plaintext highlighter-rouge">MX_TIM1_Init()</code> didn’t fix anything. Then Claude suggested debug code to see if the SysTick registers had correct values.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+</pre></td> <td class="rouge-code"><pre><span class="c1">// Add this debug code RIGHT BEFORE first HAL_Delay()</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">"SysTick CTRL: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">CTRL</span><span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">"SysTick LOAD: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">SysTick</span><span class="o">-&gt;</span><span class="n">LOAD</span><span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">"About to call HAL_Delay...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+<span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">200</span><span class="p">);</span>
+<span class="n">printf</span><span class="p">(</span><span class="s">"HAL_Delay completed!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>With this, Claude asked:</p> <blockquote> <p>In your STM32CubeIDE project settings for v1, go to:</p> <ul> <li>Project → Properties → C/C++ Build → Settings → MCU/MPU Settings</li> <li>What is the “Timebase Source” set to? Look at the <code class="language-plaintext highlighter-rouge">stm32f4xx_it.c</code> file. Search for the function <code class="language-plaintext highlighter-rouge">SysTick_Handler()</code>. Is it there?</li> <li>Does it call <code class="language-plaintext highlighter-rouge">HAL_IncTick()</code>?</li> </ul> </blockquote> <p>According to my finding, 1) Both projects had timebase source to TIM1 and 2) <code class="language-plaintext highlighter-rouge">SysTick_Handler()</code> was in stm32f4xx_it.c, calling <code class="language-plaintext highlighter-rouge">HAL_IncTick</code>. There seemed to be nothing different.</p> <p>My output was:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td> <td class="rouge-code"><pre>========================================
+    BOOTLOADER v1.0
+========================================
+Running at address: 0x08000735
+
+SysTick CTRL: 0x00000000
+SysTick LOAD: 0x00000000
+About to call HAL_Delay...
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>From this output, we can notice that:</p> <ol> <li>The program still hangs in <code class="language-plaintext highlighter-rouge">HAL_Delay</code> </li> <li>SysTick is completely disabled as the CTRL and LOAD register values are fixed to 0</li> </ol> <h2 id="debugging-8-why-is-systick-disabled">Debugging 8: Why Is SysTick Disabled?</h2> <p>Now we were getting closer. For some reason <code class="language-plaintext highlighter-rouge">HAL_Delay()</code> still wasn’t working, and we found out it was related to SysTick initialization. We confirmed that SysTick was disabled by checking the register values.</p> <p>Let’s go back to Claude’s explanation:</p> <blockquote> <p>This tells us that <strong>SysTick is completely disabled</strong> - it’s not running at all. That’s why <code class="language-plaintext highlighter-rouge">HAL_Delay()</code> hangs forever - it’s waiting for a tick that will never come.</p> <p><strong>Now here’s the critical insight:</strong></p> <p>You have <code class="language-plaintext highlighter-rouge">stm32f4xx_hal_timebase_tim.c</code> in your project, which means your project is configured to use <strong>TIM1 as the HAL timebase</strong> instead of SysTick. But your <code class="language-plaintext highlighter-rouge">SysTick_Handler()</code> is empty (which is correct for TIM-based timebase), so the question is:</p> <p><strong>Where is <code class="language-plaintext highlighter-rouge">TIM1_UP_TIM10_IRQHandler()</code> and does it call <code class="language-plaintext highlighter-rouge">HAL_IncTick()</code>?</strong></p> <p>Check your <code class="language-plaintext highlighter-rouge">stm32f4xx_it.c</code> file - search for this function. It should look something like:</p> </blockquote> <p>I immediately searched if <code class="language-plaintext highlighter-rouge">TIM1_UP_TIM10_IRQHandler</code> was working properly and found out three facts:</p> <ol> <li>First, there is no <code class="language-plaintext highlighter-rouge">TIM1_UP_TIM10_IRQHandler()</code> inside the <code class="language-plaintext highlighter-rouge">stm32f4xx_it.c</code> file.</li> <li>Both the old and the new version have the same timebase source: TIM6.</li> <li>I put the same debug message in the new version (which works fine!) and it seems like it’s NOT using SysTick for its timebase source. Let’s look at the code below.</li> </ol> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td> <td class="rouge-code"><pre>========================================
+    BOOTLOADER NEW
+========================================
+Running at address: 0x08000735
+SysTick CTRL: 0x00000000
+SysTick LOAD: 0x00000000
+About to call HAL_Delay...
+HAL_Delay completed!
+Bootloader running... (LED blinks 3 times)
+Attempting to jump to application...
+Preparing to jump to application at 0x08010000...
+  App Stack Pointer: 0x20030000
+  App Entry Point:   0x08011611
+Jumping to application NOW!
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>To summarize, both the old and the new version:</p> <ul> <li>Use <strong>TIM6</strong> as the HAL timebase (not SysTick)</li> <li>Have <code class="language-plaintext highlighter-rouge">TIM6_DAC_IRQHandler()</code> in the interrupt file</li> <li>Show SysTick disabled (0x00000000)</li> </ul> <p>This means the issue is that <strong>TIM6 is not properly initialized or started in the old version</strong>.</p> <h2 id="final-solution">Final Solution</h2> <p>I started to look for any code that was related to the timebase source, <code class="language-plaintext highlighter-rouge">TIM6</code> or <code class="language-plaintext highlighter-rouge">SysTick</code>. And as I carefully looked into both codes and compared them, I found the suspect. There was one method missing in the old version, the one I had been overlooking for so long:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+</pre></td> <td class="rouge-code"><pre><span class="cm">/**
+* @brief  Period elapsed callback in non blocking mode
+* @note   This function is called  when TIM6 interrupt took place, inside
+* HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+* a global variable "uwTick" used as application time base.
+* @param  htim : TIM handle
+* @retval None
+*/</span>
+<span class="kt">void</span> <span class="nf">HAL_TIM_PeriodElapsedCallback</span><span class="p">(</span><span class="n">TIM_HandleTypeDef</span> <span class="o">*</span><span class="n">htim</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span> <span class="o">==</span> <span class="n">TIM6</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">HAL_IncTick</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p>Now when I put this function back in the old one, it worked like magic.</p> <p>But we shouldn’t stop here. The virtue of a good programmer is not just frantically fixing errors, but understanding the concepts and principles behind them to thoroughly prevent similar bugs from happening.</p> <h2 id="last-question-what-happened-so-far-why-does-hal_tim_periodelapsedcallback-mattter">Last Question: What Happened So Far? Why Does <code class="language-plaintext highlighter-rouge">HAL_TIM_PeriodElapsedCallback</code> Mattter?</h2> <p>TIM6 overflows every 1ms, and <code class="language-plaintext highlighter-rouge">TIM6_DAC_IRQHandler()</code> is called. This IRQ handler calls a function <code class="language-plaintext highlighter-rouge">HAL_TIM_IRQHandler</code>.</p> <p>Let’s look at the <code class="language-plaintext highlighter-rouge">stm32f4xx_it.c</code> file and you’ll see it calls <code class="language-plaintext highlighter-rouge">HAL_TIM_IRQHandler(&amp;htim6)</code>.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+</pre></td> <td class="rouge-code"><pre><span class="c1">// Core/Src/stm32f4xx_it.c</span>
+<span class="c1">// ...</span>
+<span class="kt">void</span> <span class="nf">TIM6_DAC_IRQHandler</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="cm">/* USER CODE BEGIN TIM6_DAC_IRQn 0 */</span>
+
+  <span class="cm">/* USER CODE END TIM6_DAC_IRQn 0 */</span>
+  <span class="n">HAL_TIM_IRQHandler</span><span class="p">(</span><span class="o">&amp;</span><span class="n">htim6</span><span class="p">);</span>
+  <span class="cm">/* USER CODE BEGIN TIM6_DAC_IRQn 1 */</span>
+
+  <span class="cm">/* USER CODE END TIM6_DAC_IRQn 1 */</span>
+<span class="p">}</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">HAL_TIM_IRQHandler()</code> handles the timer interrupt, but how does it notify the rest of the HAL library that a “tick” has occurred? Or in other words, how does it increment <code class="language-plaintext highlighter-rouge">uwTick</code>?</p> <p>This <code class="language-plaintext highlighter-rouge">uwTick</code> variable is used for <code class="language-plaintext highlighter-rouge">HAL_Delay</code>. If <code class="language-plaintext highlighter-rouge">HAL_Delay(200)</code> is waiting for <code class="language-plaintext highlighter-rouge">uwTick</code> to increase by 200, but <code class="language-plaintext highlighter-rouge">uwTick</code> never increments, then it will hang forever like what happened in my old version code.</p> <p><code class="language-plaintext highlighter-rouge">HAL_TIM_IRQHandler()</code> doesn’t directly call <code class="language-plaintext highlighter-rouge">HAL_IncTick()</code>. Instead, it calls a <strong>callback function</strong> - which is <code class="language-plaintext highlighter-rouge">HAL_TIM_PeriodElapsedCallback()</code>.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>
+<td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128
+129
+130
+131
+132
+133
+134
+135
+136
+137
+138
+139
+140
+141
+142
+143
+144
+145
+146
+147
+148
+149
+150
+151
+152
+153
+154
+155
+156
+157
+158
+159
+160
+161
+162
+163
+164
+165
+166
+167
+168
+169
+170
+171
+172
+173
+174
+175
+176
+177
+178
+179
+180
+181
+182
+183
+</pre></td> <td class="rouge-code"><pre><span class="c1">// Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c</span>
+
+<span class="kt">void</span> <span class="nf">HAL_TIM_IRQHandler</span><span class="p">(</span><span class="n">TIM_HandleTypeDef</span> <span class="o">*</span><span class="n">htim</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="kt">uint32_t</span> <span class="n">itsource</span> <span class="o">=</span> <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span><span class="o">-&gt;</span><span class="n">DIER</span><span class="p">;</span>
+  <span class="kt">uint32_t</span> <span class="n">itflag</span>   <span class="o">=</span> <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span><span class="o">-&gt;</span><span class="n">SR</span><span class="p">;</span>
+
+  <span class="cm">/* Capture compare 1 event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_CC1</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_CC1</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_CC1</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_CC1</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="p">{</span>
+        <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_CC1</span><span class="p">);</span>
+        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_1</span><span class="p">;</span>
+
+        <span class="cm">/* Input capture event */</span>
+        <span class="k">if</span> <span class="p">((</span><span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span><span class="o">-&gt;</span><span class="n">CCMR1</span> <span class="o">&amp;</span> <span class="n">TIM_CCMR1_CC1S</span><span class="p">)</span> <span class="o">!=</span> <span class="mh">0x00U</span><span class="p">)</span>
+        <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>          <span class="n">htim</span><span class="o">-&gt;</span><span class="n">IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>          <span class="n">HAL_TIM_IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>        <span class="p">}</span>
+        <span class="cm">/* Output compare event */</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>          <span class="n">htim</span><span class="o">-&gt;</span><span class="n">OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+          <span class="n">htim</span><span class="o">-&gt;</span><span class="n">PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>          <span class="n">HAL_TIM_OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+          <span class="n">HAL_TIM_PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>        <span class="p">}</span>
+        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_CLEARED</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* Capture compare 2 event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_CC2</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_CC2</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_CC2</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_CC2</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_CC2</span><span class="p">);</span>
+      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_2</span><span class="p">;</span>
+      <span class="cm">/* Input capture event */</span>
+      <span class="k">if</span> <span class="p">((</span><span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span><span class="o">-&gt;</span><span class="n">CCMR1</span> <span class="o">&amp;</span> <span class="n">TIM_CCMR1_CC2S</span><span class="p">)</span> <span class="o">!=</span> <span class="mh">0x00U</span><span class="p">)</span>
+      <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">HAL_TIM_IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>      <span class="p">}</span>
+      <span class="cm">/* Output compare event */</span>
+      <span class="k">else</span>
+      <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">HAL_TIM_OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+        <span class="n">HAL_TIM_PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>      <span class="p">}</span>
+      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_CLEARED</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* Capture compare 3 event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_CC3</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_CC3</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_CC3</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_CC3</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_CC3</span><span class="p">);</span>
+      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_3</span><span class="p">;</span>
+      <span class="cm">/* Input capture event */</span>
+      <span class="k">if</span> <span class="p">((</span><span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span><span class="o">-&gt;</span><span class="n">CCMR2</span> <span class="o">&amp;</span> <span class="n">TIM_CCMR2_CC3S</span><span class="p">)</span> <span class="o">!=</span> <span class="mh">0x00U</span><span class="p">)</span>
+      <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">HAL_TIM_IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>      <span class="p">}</span>
+      <span class="cm">/* Output compare event */</span>
+      <span class="k">else</span>
+      <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">HAL_TIM_OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+        <span class="n">HAL_TIM_PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>      <span class="p">}</span>
+      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_CLEARED</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* Capture compare 4 event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_CC4</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_CC4</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_CC4</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_CC4</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_CC4</span><span class="p">);</span>
+      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_4</span><span class="p">;</span>
+      <span class="cm">/* Input capture event */</span>
+      <span class="k">if</span> <span class="p">((</span><span class="n">htim</span><span class="o">-&gt;</span><span class="n">Instance</span><span class="o">-&gt;</span><span class="n">CCMR2</span> <span class="o">&amp;</span> <span class="n">TIM_CCMR2_CC4S</span><span class="p">)</span> <span class="o">!=</span> <span class="mh">0x00U</span><span class="p">)</span>
+      <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">HAL_TIM_IC_CaptureCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>      <span class="p">}</span>
+      <span class="cm">/* Output compare event */</span>
+      <span class="k">else</span>
+      <span class="p">{</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+        <span class="n">htim</span><span class="o">-&gt;</span><span class="n">PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>        <span class="n">HAL_TIM_OC_DelayElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+        <span class="n">HAL_TIM_PWM_PulseFinishedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>      <span class="p">}</span>
+      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">Channel</span> <span class="o">=</span> <span class="n">HAL_TIM_ACTIVE_CHANNEL_CLEARED</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* TIM Update event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_UPDATE</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_UPDATE</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_UPDATE</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_UPDATE</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_UPDATE</span><span class="p">);</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">PeriodElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>      <span class="n">HAL_TIM_PeriodElapsedCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* TIM Break input event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_BREAK</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_BREAK</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_BREAK</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_BREAK</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_BREAK</span><span class="p">);</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">BreakCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>      <span class="n">HAL_TIMEx_BreakCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* TIM Trigger detection event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_TRIGGER</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_TRIGGER</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_TRIGGER</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_TRIGGER</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_TRIGGER</span><span class="p">);</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">TriggerCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>      <span class="n">HAL_TIM_TriggerCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="cm">/* TIM commutation event */</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">itflag</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_FLAG_COM</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_FLAG_COM</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">((</span><span class="n">itsource</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">TIM_IT_COM</span><span class="p">))</span> <span class="o">==</span> <span class="p">(</span><span class="n">TIM_IT_COM</span><span class="p">))</span>
+    <span class="p">{</span>
+      <span class="n">__HAL_TIM_CLEAR_FLAG</span><span class="p">(</span><span class="n">htim</span><span class="p">,</span> <span class="n">TIM_FLAG_COM</span><span class="p">);</span>
+<span class="cp">#if (USE_HAL_TIM_REGISTER_CALLBACKS == 1)
+</span>      <span class="n">htim</span><span class="o">-&gt;</span><span class="n">CommutationCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#else
+</span>      <span class="n">HAL_TIMEx_CommutCallback</span><span class="p">(</span><span class="n">htim</span><span class="p">);</span>
+<span class="cp">#endif </span><span class="cm">/* USE_HAL_TIM_REGISTER_CALLBACKS */</span><span class="cp">
+</span>    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></td> </tr></tbody></table></code></pre></div></div> <h2 id="tim1-vs-tim6-how-did-the-program-choose-to-init-tim6-automatically">TIM1 vs. TIM6: How did the program choose to init TIM6 automatically?</h2> <p>In fact, the TIM6 initialization for the HAL timebase doesn’t happen in <code class="language-plaintext highlighter-rouge">main.c</code> at all.</p> <ul> <li> <code class="language-plaintext highlighter-rouge">HAL_Init()</code> is called first in <code class="language-plaintext highlighter-rouge">main()</code> </li> <li>Inside <code class="language-plaintext highlighter-rouge">HAL_Init()</code>, it needs to set up the timebase</li> <li> <code class="language-plaintext highlighter-rouge">HAL_Init()</code> calls <code class="language-plaintext highlighter-rouge">HAL_InitTick()</code> </li> <li> <code class="language-plaintext highlighter-rouge">HAL_InitTick()</code> is defined in <code class="language-plaintext highlighter-rouge">stm32f4xx_hal_timebase_tim.c</code> (not in the standard HAL library)</li> <li>This custom <code class="language-plaintext highlighter-rouge">HAL_InitTick()</code> initializes and starts TIM6 as the timebase</li> </ul> <p>TIM6 gets initialized <strong>automatically</strong> when I call <code class="language-plaintext highlighter-rouge">HAL_Init()</code>, because the custom <code class="language-plaintext highlighter-rouge">stm32f4xx_hal_timebase_tim.c</code> file overrides the default timebase initialization.</p> <p>And even though I initialized TIM1 in <code class="language-plaintext highlighter-rouge">main.c</code>, it was initialized separately for <strong>some other application-specific purpose</strong> (not for HAL timebase).</p> <h2 id="conclusion">Conclusion</h2> <p>Although the cause was really simple, it took far too long to find it. I learned several lessons in the process.</p> <h3 id="lesson-1-use-just-fix-it-requests-only-once-at-the-beginning">Lesson 1. Use “Just Fix It” Requests Only Once at the Beginning</h3> <p>Continuously asking Claude vague questions in short form like “This is not working. Please help me debug the code.” is not appropriate. While you might get lucky and find the cause immediately if the code is simple, Claude always provides generic answers. Especially if you repeat this question, it can lead to even more irrelevant answers.</p> <h3 id="lesson-2-if-you-cant-find-the-cause-no-matter-how-hard-you-look-define-candidates-and-eliminate-them-one-by-one">Lesson 2. If You Can’t Find the Cause No Matter How Hard You Look, Define Candidates and Eliminate Them One by One</h3> <p>It’s best to first ask Claude to narrow down several bug cause candidates, then persistently and deeply dig into each cause to identify them one by one through elimination. Since Claude is far faster than humans at writing debugging code, leverage this advantage to use a strategy of quick debugging → eliminate likely candidates.</p> <p>To rephrase this, initially write specifically about 1) where the problem occurred (error message? infinite while loop? no output? etc.) and 2) what intention you had when writing the code, and ask Claude about it.</p> <p>“I’m having trouble running this code. The program hangs somewhere here, and the output is like this. This is the <code class="language-plaintext highlighter-rouge">main.c</code>. Find and narrow down as many candidates as possible that could be causing this bug.”</p> <p>And then ask:</p> <p>“If A is a potential cause, how can I verify if it’s a problem? Present a series of checkpoint items and write code for testing.”</p> <h3 id="lesson-3-keep-debugging-logs">Lesson 3. Keep Debugging Logs</h3> <p>Every time you modify code, you must record what parts you modified and what you were thinking when you modified them. I made the mistake of constantly overwriting code because I was thinking I needed to solve the problem quickly, but this makes it difficult to review what problems I encountered and how I solved them later.</p> <p>One thing is certain: Claude’s conversation history alone is insufficient for debugging. You must commit versions to git while simultaneously keeping logs.</p> </body></html>
