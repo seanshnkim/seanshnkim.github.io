@@ -23,26 +23,37 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-",
+        },{id: "post-bootloader-with-ota-phase-5-part-2-ota-handler-implementation",
       
-        title: "",
+        title: "Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation",
       
       description: "",
       section: "Posts",
       handler: () => {
         
-          window.location.href = "/blog/2026/2026-01-15-Debugging-Bootloader-Part2/";
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2/";
         
       },
-    },{id: "post-",
+    },{id: "post-bootloader-with-ota-phase-5-ota-protocol-implementation-part-1",
       
-        title: "",
+        title: "Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1",
       
       description: "",
       section: "Posts",
       handler: () => {
         
-          window.location.href = "/blog/2026/2026-01-15-Debugging-Bootloader-Part1/";
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1/";
+        
+      },
+    },{id: "post-bootloader-with-ota-phase-4-implementing-persistent-boot-state",
+      
+        title: "Bootloader with OTA Phase 4: Implementing Persistent Boot State",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase4/";
         
       },
     },{id: "post-bootloader-with-ota-phase-3-dual-bank-selection",
@@ -54,6 +65,28 @@ ninja.data = [{
       handler: () => {
         
           window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase3/";
+        
+      },
+    },{id: "post-debugging-bootloader-part-2",
+      
+        title: "Debugging Bootloader: Part 2",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Debugging-Bootloader-Part2/";
+        
+      },
+    },{id: "post-debugging-bootloader-part-1",
+      
+        title: "Debugging Bootloader: Part 1",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Debugging-Bootloader-Part1/";
         
       },
     },{id: "post-bootloader-with-ota-phase-2-minimal-bootloader",
