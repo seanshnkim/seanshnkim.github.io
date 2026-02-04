@@ -9,9 +9,13 @@ categories: Firmware
 
 In Phase 1 and 2, we discussed flash operations and created a minimal bootloader and application (= main firmware.[^1]) to run basic tests. But we haven't tackled the core concept yet: **dual bank selection**. We will store the application in two separate regions (banks) of memory.
 
-(Ignore this. I will take care of this later. There should be a simple diagram that describes the relationship between bootloader and dual, two banks of the main application. Or a picture that has a bootloader impersonated as, maybe, a robot, and the "bootloader robot" choosing between two banks in the flash memory map)
-
 The reason for setting up dual banks is simple: by dividing flash memory into two "banks", the bootloader can roll back to the previous working version (Bank A) if the new firmware (in Bank B) is broken. This backup memory architecture provides **fail-safe updates**.
+
+{% include figure.liquid
+   loading="eager"
+   path="/assets/post-attachments/2026-01-17/thumbnail_diagram.png"
+   class="img-fluid rounded z-depth-1 figure-lines"
+   %}<br>
 
 To design a dual bank system, we need to answer these questions:
 
@@ -58,20 +62,11 @@ Now that we know where the two banks are located in flash memory, it's time to l
 
 The decision flow:
 
-1. Read boot state from flash
-2. Is magic_number valid?
-   - NO → Initialize boot_state with defaults, try Bank A first
-   - YES → Continue
-3. Check active_bank field:
-   - BANK_A → Validate Bank A
-     - Valid? → Boot Bank A
-     - Invalid? → Mark Bank A as CORRUPTED, try Bank B
-   - BANK_B → Validate Bank B
-     - Valid? → Boot Bank B
-     - Invalid? → Mark Bank B as CORRUPTED, try Bank A
-4. Fallback Strategy (if selected bank fails):
-   - Try the OTHER bank
-   - If that also fails → Enter error/recovery mode
+{% include figure.liquid
+   loading="eager"
+   path="/assets/post-attachments/2026-01-17/decision_flow.png"
+   class="img-fluid rounded z-depth-1 figure-lines"
+   %}<br>
 
 This logic ensures that the bootloader always attempts to boot something. The worst-case scenario is that both banks are invalid. In this case, the bootloader will enter a safe recovery mode (more on this in Phase 6).
 
@@ -124,6 +119,12 @@ Which bank should the bootloader attempt to boot from? `active_bank` field answe
 Why do we need this field? You might think the status fields are sufficient—just boot whichever bank is marked VALID. But the `active_bank` field explicitly records the _last known good choice_. This is important for fallback logic: if Bank B (the active bank) fails validation at boot time, the bootloader knows to try Bank A instead. It also makes the boot state easier to debug: you can see at a glance which bank was supposed to be running.
 
 ### Magic Number
+
+{% include figure.liquid
+   loading="eager"
+   path="/assets/post-attachments/2026-01-17/magic-number_CRC.png"
+   class="img-fluid rounded z-depth-1 figure-lines"
+   %}<br>
 
 The magic number, or magic debug value[^2] is a specific constant value (like `0xDEADBEEF`) for checking if the data in memory is corrupted. It is written at the beginning of the boot state structure. When the bootloader reads the boot state from flash, the first thing it checks is whether this magic number is equal to the expected value (`0xDEADBEEF`).
 

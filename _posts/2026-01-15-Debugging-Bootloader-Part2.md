@@ -1,6 +1,6 @@
 ---
 layout: post
-title: Debugging Bootloader: Part 2
+title: "Debugging Bootloader: Part 2"
 date: 2026-01-16 01:45:05
 categories: Firmware
 ---
