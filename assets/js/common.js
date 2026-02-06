@@ -29,6 +29,18 @@ $(document).ready(function () {
     $("body").scrollspy({
       target: navSelector,
     });
+
+    // Use replaceState for TOC links so back button returns to the previous page
+    // instead of cycling through every anchor clicked
+    $("#toc-sidebar, #table-of-contents").on("click", "a[href^='#']", function (e) {
+      e.preventDefault();
+      var target = $(this).attr("href");
+      var el = document.querySelector(target);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth" });
+        history.replaceState(null, null, target);
+      }
+    });
   }
 
   // add css to jupyter notebooks
