@@ -5,7 +5,7 @@ permalink: /projects/
 description: A collection of side projects.
 nav: true
 nav_order: 3
-display_categories: [RTOS, Embedded Systems]
+display_categories: [Dual-Bank Bootloader with OTA Update]
 horizontal: false
 ---
 

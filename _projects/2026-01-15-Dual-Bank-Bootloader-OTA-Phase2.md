@@ -1,9 +1,8 @@
 ---
-layout: post
+layout: page
 title: "Bootloader with OTA Phase 2: Minimal Bootloader"
-description: What does it look like?
 date: 2026-01-14 20:05:18
-categories: Firmware
+category: Dual-Bank Bootloader with OTA Update
 toc:
    beginning: true
    sidebar: left

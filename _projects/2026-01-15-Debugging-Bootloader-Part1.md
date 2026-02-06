@@ -1,8 +1,8 @@
 ---
-layout: post
+layout: page
 title: "Debugging Bootloader: Part 1"
 date: 2026-01-15 01:21:27
-categories: Firmware
+category: Dual-Bank Bootloader with OTA Update
 toc:
    beginning: true
    sidebar: left

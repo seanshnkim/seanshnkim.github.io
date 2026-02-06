@@ -1,8 +1,8 @@
 ---
-layout: post
+layout: page
 title: "Bootloader with OTA Phase 4.1: Debugging the CRC Mismatch"
 date: 2026-01-26 19:40:10
-categories: Firmware
+category: Dual-Bank Bootloader with OTA Update
 toc:
    beginning: true
    sidebar: left

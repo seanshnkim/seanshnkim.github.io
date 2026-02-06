@@ -1,8 +1,8 @@
 ---
-layout: post
+layout: page
 title: "Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1"
 dat: 2026-01-27 21:14:50
-categories: Firmware
+category: Dual-Bank Bootloader with OTA Update
 toc:
    beginning: true
    sidebar: left

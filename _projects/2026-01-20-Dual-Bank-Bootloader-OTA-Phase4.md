@@ -1,8 +1,8 @@
 ---
-layout: post
+layout: page
 title: "Bootloader with OTA Phase 4: Implementing Persistent Boot State"
 date: 2026-01-20 14:48:37
-categories: Firmware
+category: Dual-Bank Bootloader with OTA Update
 toc:
    beginning: true
    sidebar: left

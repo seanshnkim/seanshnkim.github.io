@@ -1,8 +1,8 @@
 ---
-layout: post
+layout: page
 title: "Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation"
 date: 2026-01-29 22:10:21
-categories: Firmware
+category: Dual-Bank Bootloader with OTA Update
 toc:
    beginning: true
    sidebar: left
