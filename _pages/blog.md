@@ -25,8 +25,10 @@ pagination:
 <div class="blog-container">
   <div class="blog-main-content">
 
-    <!-- Featured section: 1 large card + 3 small cards -->
-    {% include featured_posts.liquid %}
+    <!-- Featured section: 1 large card + 3 small cards (first page only) -->
+    {% if paginator.page == 1 or paginator.page == nil %}
+      {% include featured_posts.liquid %}
+    {% endif %}
 
   <ul class="post-list">
 
