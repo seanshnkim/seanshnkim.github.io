@@ -35,7 +35,7 @@ $(document).ready(function () {
     $("#toc-sidebar, #table-of-contents").on("click", "a[href^='#']", function (e) {
       e.preventDefault();
       var target = $(this).attr("href");
-      var el = document.querySelector(target);
+      var el = document.getElementById(target.substring(1));
       if (el) {
         el.scrollIntoView({ behavior: "smooth" });
         history.replaceState(null, null, target);
