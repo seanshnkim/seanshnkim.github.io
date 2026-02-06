@@ -45,6 +45,17 @@ ninja.data = [{
           window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1/";
         
       },
+    },{id: "post-bootloader-with-ota-phase-4-1-debugging-the-crc-mismatch",
+      
+        title: "Bootloader with OTA Phase 4.1: Debugging the CRC Mismatch",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/Dual-Bank-Bootloader-OTA-Phase4.1/";
+        
+      },
     },{id: "post-bootloader-with-ota-phase-4-implementing-persistent-boot-state",
       
         title: "Bootloader with OTA Phase 4: Implementing Persistent Boot State",
@@ -93,7 +104,7 @@ ninja.data = [{
       
         title: "Bootloader with OTA Phase 2: Minimal Bootloader",
       
-      description: "",
+      description: "What does it look like?",
       section: "Posts",
       handler: () => {
         
@@ -320,7 +331,57 @@ ninja.data = [{
           window.location.href = "/blog/2025/Third-Maximum-Number/";
         
       },
-    },{
+    },{id: "projects-building-my-first-firmware-project-with-claude",
+          title: 'Building My First Firmware Project with Claude',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-Intro/";
+            },},{id: "projects-bootloader-with-ota-phase-1-flash-operations",
+          title: 'Bootloader with OTA Phase 1: Flash Operations',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase1/";
+            },},{id: "projects-bootloader-with-ota-phase-2-minimal-bootloader",
+          title: 'Bootloader with OTA Phase 2: Minimal Bootloader',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase2/";
+            },},{id: "projects-debugging-bootloader-part-1",
+          title: 'Debugging Bootloader: Part 1',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Debugging-Bootloader-Part1/";
+            },},{id: "projects-debugging-bootloader-part-2",
+          title: 'Debugging Bootloader: Part 2',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Debugging-Bootloader-Part2/";
+            },},{id: "projects-bootloader-with-ota-phase-3-dual-bank-selection",
+          title: 'Bootloader with OTA Phase 3: Dual Bank Selection',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase3/";
+            },},{id: "projects-bootloader-with-ota-phase-4-implementing-persistent-boot-state",
+          title: 'Bootloader with OTA Phase 4: Implementing Persistent Boot State',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase4/";
+            },},{id: "projects-bootloader-with-ota-phase-4-1-debugging-the-crc-mismatch",
+          title: 'Bootloader with OTA Phase 4.1: Debugging the CRC Mismatch',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase4.1/";
+            },},{id: "projects-bootloader-with-ota-phase-5-ota-protocol-implementation-part-1",
+          title: 'Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase5-Part1/";
+            },},{id: "projects-bootloader-with-ota-phase-5-part-2-ota-handler-implementation",
+          title: 'Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation',
+          description: "",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase5-Part2/";
+            },},{
         id: 'social-email',
         title: 'email',
         section: 'Socials',

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://seanshnkim.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://seanshnkim.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2026-02-04T05:22:34+00:00</updated><id>https://seanshnkim.github.io/feed.xml</id><title type="html">Sean Kim’s Blog</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation"/><published>2026-01-29T22:10:21+00:00</published><updated>2026-01-29T22:10:21+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2/"><![CDATA[<h2 id="phase-5-overview">Phase 5 Overview</h2> <ul> <li>Design complete OTA protocol (START, DATA, END packets)</li> <li>Implement OTA state machine</li> <li>Application can receive firmware via UART simulation</li> <li>Write firmware to inactive bank</li> <li>Verify firmware with CRC32</li> <li>Update boot state after successful OTA</li> <li>Create test simulation</li> </ul> <h2 id="ota-download-logic">OTA Download Logic</h2> <p><strong>The goal:</strong> Your application (running from Bank A) will receive a new firmware binary and write it to Bank B.</p> <p><strong>Before we start coding, let’s think through the architecture:</strong></p> <h3 id="key-questions">Key Questions:</h3> <p><strong>Question 1: How will the application receive firmware?</strong></p> <ul> <li>Via UART (simulating OTA)</li> <li>What protocol? Raw binary? With headers? With checksums?</li> </ul> <p><strong>Question 2: How big can firmware be?</strong></p> <ul> <li>You allocated 256KB per bank</li> <li>Current application is ~30KB</li> <li>Should we receive it all at once or in chunks?</li> </ul> <p><strong>Question 3: Where does the application store incoming data?</strong></p> <ul> <li>Option A: Directly write to Bank B flash as data arrives</li> <li>Option B: Buffer in RAM, then write to flash</li> <li>Which is safer and why?</li> </ul> <p><strong>Question 4: What information should accompany the firmware?</strong></p> <ul> <li>Just raw binary?</li> <li>Or: size, version, CRC/hash, metadata?</li> </ul> <p><strong>Here’s my recommended approach for Phase 5:</strong></p> <h3 id="step-1-design-the-firmware-package-format">Step 1: Design the Firmware Package Format</h3> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.3.4">Jekyll</generator><link href="https://seanshnkim.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://seanshnkim.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2026-02-06T03:36:32+00:00</updated><id>https://seanshnkim.github.io/feed.xml</id><title type="html">Sean Kim’s Blog</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation"/><published>2026-01-29T22:10:21+00:00</published><updated>2026-01-29T22:10:21+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part2/"><![CDATA[<h2 id="phase-5-overview">Phase 5 Overview</h2> <ul> <li>Design complete OTA protocol (START, DATA, END packets)</li> <li>Implement OTA state machine</li> <li>Application can receive firmware via UART simulation</li> <li>Write firmware to inactive bank</li> <li>Verify firmware with CRC32</li> <li>Update boot state after successful OTA</li> <li>Create test simulation</li> </ul> <h2 id="ota-download-logic">OTA Download Logic</h2> <p><strong>The goal:</strong> Your application (running from Bank A) will receive a new firmware binary and write it to Bank B.</p> <p><strong>Before we start coding, let’s think through the architecture:</strong></p> <h3 id="key-questions">Key Questions:</h3> <p><strong>Question 1: How will the application receive firmware?</strong></p> <ul> <li>Via UART (simulating OTA)</li> <li>What protocol? Raw binary? With headers? With checksums?</li> </ul> <p><strong>Question 2: How big can firmware be?</strong></p> <ul> <li>You allocated 256KB per bank</li> <li>Current application is ~30KB</li> <li>Should we receive it all at once or in chunks?</li> </ul> <p><strong>Question 3: Where does the application store incoming data?</strong></p> <ul> <li>Option A: Directly write to Bank B flash as data arrives</li> <li>Option B: Buffer in RAM, then write to flash</li> <li>Which is safer and why?</li> </ul> <p><strong>Question 4: What information should accompany the firmware?</strong></p> <ul> <li>Just raw binary?</li> <li>Or: size, version, CRC/hash, metadata?</li> </ul> <p><strong>Here’s my recommended approach for Phase 5:</strong></p> <h3 id="step-1-design-the-firmware-package-format">Step 1: Design the Firmware Package Format</h3> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -816,7 +816,7 @@ State:      0x08080000 - 0x0809FFFF (Sector 8, 128KB)
         <span class="n">ctx</span><span class="o">-&gt;</span><span class="n">state</span> <span class="o">=</span> <span class="n">OTA_STATE_VERIFYING</span><span class="p">;</span>
     <span class="p">}</span>
 <span class="p">}</span>
-</pre></td></tr></tbody></table></code></pre></div></div> <p>First task is chunk size validation: what should be the valid range for <code class="language-plaintext highlighter-rouge">chunk_size</code>? Second task is to write chunk to flash. You need to write<code class="language-plaintext highlighter-rouge">pkt-&gt;data</code> (array of bytes) to flash. Remember from earlier - flash is written in WORDS (4 bytes at a time).</p> <p><strong>Question:</strong> How would you implement <code class="language-plaintext highlighter-rouge">ota_write_to_flash()</code>? <strong>Hints:</strong></p> <ol> <li>How many full words can you write? <code class="language-plaintext highlighter-rouge">num_words = size / 4</code></li> <li>Are there remaining bytes? <code class="language-plaintext highlighter-rouge">remaining = size % 4</code></li> <li>For remaining bytes, create a word padded with 0xFF (erased flash value)</li> </ol> <p>This was my code:</p> <p>My implementation of otat_write_to_flash is very straightforward (used array):</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <p>First task is chunk size validation: what should be the valid range for <code class="language-plaintext highlighter-rouge">chunk_size</code>? Second task is to write chunk to flash. You need to write<code class="language-plaintext highlighter-rouge">pkt-&gt;data</code> (array of bytes) to flash. Remember from earlier - flash is written in WORDS (4 bytes at a time).</p> <p><strong>Question:</strong> How would you implement <code class="language-plaintext highlighter-rouge">ota_write_to_flash()</code>? <strong>Hints:</strong></p> <ol> <li>How many full words can you write? <code class="language-plaintext highlighter-rouge">num_words = size / 4</code></li> <li>Are there remaining bytes? <code class="language-plaintext highlighter-rouge">remaining = size % 4</code></li> <li>For remaining bytes, create a word padded with 0xFF (erased flash value)</li> </ol> <p>This was my code:</p> <p>My implementation of <code class="language-plaintext highlighter-rouge">ota_write_to_flash</code> is very straightforward (used array):</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -2160,7 +2160,7 @@ Boot state updated:
   Bank B status: VALID
 
 ✓ OTA SIMULATION TEST COMPLETE!
-</pre></td></tr></tbody></table></code></pre></div></div> <p>We still need to implement…</p> <ul> <li>Real UART communication with host PC</li> <li>Python script to send actual firmware files</li> </ul> <p>And we haven’t started:</p> <ul> <li>Phase 6: Verification &amp; Rollback</li> <li>Phase 7: Polish and implement real OTA</li> </ul>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[Phase 5 Overview]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1"/><published>2026-01-27T00:00:00+00:00</published><updated>2026-01-27T00:00:00+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1/"><![CDATA[<h2 id="before-we-dive-in">Before We Dive In</h2> <p>Phase 5 was particularly challenging to organize as a blog post. The code implementation was overwhelming, and I spent a few days thinking about how to convey my project’s core features without getting bogged down in code details. Should I explain the code line by line? I could do that. But that would make this section so long I’d need 4-5 additional posts just for Phase 5. And it wouldn’t be very fun to read all those articles.</p> <p>So here’s my approach: I’ll split Phase 5 into two parts. The first part explains high-level concepts using illustrations (although it doesn’t mean that it is without any code). The second part dives into the code, but I’ll focus only on the essence of it.</p> <h2 id="phase-5-overview">Phase 5 Overview</h2> <p>In Phase 5, we will actually build the code that transfers new firmware to our device. For this, we will explore a somewhat complex yet interesting packet-based protocol. We’ll also learn new concepts, such as file chunking, per-chunk CRC verification, flash writes during transfer, and retransmission logic.</p> <p>Phase 5’s new header/ source code files:</p> <ul> <li><code class="language-plaintext highlighter-rouge">ota_protocol.h</code>: Defines the OTA packet structure and protocol constants. Specifies packet types (START, DATA, END, ACK/NACK), magic numbers for validation, error codes, and the exact binary layout of each packet.</li> <li><code class="language-plaintext highlighter-rouge">ota_manager.h</code> / <code class="language-plaintext highlighter-rouge">ota_manager.c</code>: Implements the core OTA state machine and business logic. Maintains the transfer context (which chunk we’re on, how many bytes written, CRC values), processes incoming packets, performs CRC verification, writes data to flash, and manages state transitions.</li> <li><code class="language-plaintext highlighter-rouge">ota_uart.h</code>: Handles the low-level UART communication layer. For convenience, I first built and tested OTA protocol with UART. I will cover the OTA protocol development with BLE (Bluetooth) in a separate post.</li> </ul> <h2 id="packet-why-send-data-in-chunks">Packet: Why Send Data in Chunks?</h2> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/packet_simple-480.webp 480w,/assets/post-attachments/2026-01-27/packet_simple-800.webp 800w,/assets/post-attachments/2026-01-27/packet_simple-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/packet_simple.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <p>In OTA firmware update, host must send firmware data to the device. What’s the best way to transfer data? Should we send it as raw byte stream? Or blast the entire firmware file in one shot?</p> <p>Neither approach is practical. Here’s why:</p> <ul> <li>If it’s sent in a blast, the entire firmware might get ruined if even a single bit gets corrupted during transmission.</li> <li>There is no way to know where the error occurred. Plus, it must restart the entire transfer from scratch -&gt; very inefficient!</li> <li>The receiver has no way to track progress or detect if transmission stalled.</li> </ul> <p>That’s why we break the target file into fixed-size chunks called <strong>packets</strong>. Each packet is a self-contained unit that includes:</p> <ul> <li>Metadata: “Data about the data itself”. Packet number, size, target bank (which bank should it write to?)</li> <li>CRC Checksum: The receiver verifies if the current chunk is corrupted by calculating a special number called “checksum” (mentioned in Phase 3, <sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup>)</li> <li>Packet Type: Tells the receiver what kind of data this packet is (START / DATA / END)</li> </ul> <p><em>For those who majored in CS and took courses in computer networks or internet protocols, my explanation might sound unnecessarily long-winded. After all, the idea of “data chunks” repeatedly appears under different names - like a packet at the network layer, a frame at the data link layer, or a datagram at the transport layer.</em></p> <p>Anyways, packet sorts out all the problems. We only have to detect errors per chunk - and if it’s corrupt, retransmit only that packet, not the entire firmware. Progress tracking becomes available, flow control (ACK/NACK response), and even robustness of connection (we know exactly where to resume).</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/packet_explained-480.webp 480w,/assets/post-attachments/2026-01-27/packet_explained-800.webp 800w,/assets/post-attachments/2026-01-27/packet_explained-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/packet_explained.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <h2 id="what-information-does-a-packet-contain">What Information Does A Packet Contain?</h2> <p>Now that we understand why packets are necessary, let’s examine what information they should carry for OTA firmware updates.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/packet_type-480.webp 480w,/assets/post-attachments/2026-01-27/packet_type-800.webp 800w,/assets/post-attachments/2026-01-27/packet_type-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/packet_type.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <h3 id="1-start-packet">1. START Packet</h3> <p>Let’s begin with the START packet. Every packet must identify its type, and the START packet has additional responsiblity: it carries the overall metadata about the firmware being transferred.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/firmware_info-480.webp 480w,/assets/post-attachments/2026-01-27/firmware_info-800.webp 800w,/assets/post-attachments/2026-01-27/firmware_info-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/firmware_info.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <p><strong>Firmware size and chunk count</strong>: The device needs to know how large the incoming firmware is and how many chunks expect. The device can track progress (“I received 150 out of chunks now”), and detect when the transfer is complete.</p> <p><strong>Target bank</strong>: To which bank should the device write new firmware? The START packet specifies whether to write to Bank A or Bank B. It prevents accidental overwrites. And remember from Phase 3 that the key feature of our dual bank system is to <strong>keep the old firmware safe while updating the other bank</strong>.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/bank_type-480.webp 480w,/assets/post-attachments/2026-01-27/bank_type-800.webp 800w,/assets/post-attachments/2026-01-27/bank_type-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/bank_type.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <p><strong>Firmware version</strong>: The version helps with tracking and debugging. You want to make sure if your updating firmware to the right version before initiating transmission.</p> <p><strong>Magic number and CRC32</strong>: Both are for verification or integrity check. Each concept and difference have been already covered in Phase 3.</p> <p>All combined, the START packet is represented as a struct:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <p>We still need to implement…</p> <ul> <li>Real UART communication with host PC</li> <li>Python script to send actual firmware files</li> </ul> <p>And we haven’t started:</p> <ul> <li>Phase 6: Verification &amp; Rollback</li> <li>Phase 7: Polish and implement real OTA</li> </ul>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[Phase 5 Overview]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1"/><published>2026-01-27T00:00:00+00:00</published><updated>2026-01-27T00:00:00+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase5-Part1/"><![CDATA[<h2 id="before-we-dive-in">Before We Dive In</h2> <p>Phase 5 was particularly challenging to organize as a blog post. The code implementation was overwhelming, and I spent a few days thinking about how to convey my project’s core features without getting bogged down in code details. Should I explain the code line by line? I could do that. But that would make this section so long I’d need 4-5 additional posts just for Phase 5. And it wouldn’t be very fun to read all those articles.</p> <p>So here’s my approach: I’ll split Phase 5 into two parts. The first part explains high-level concepts using illustrations (although it doesn’t mean that it is without any code). The second part dives into the code, but I’ll focus only on the essence of it.</p> <h2 id="phase-5-overview">Phase 5 Overview</h2> <p>In Phase 5, we will actually build the code that transfers new firmware to our device. For this, we will explore a somewhat complex yet interesting packet-based protocol. We’ll also learn new concepts, such as file chunking, per-chunk CRC verification, flash writes during transfer, and retransmission logic.</p> <p>Phase 5’s new header/ source code files:</p> <ul> <li><code class="language-plaintext highlighter-rouge">ota_protocol.h</code>: Defines the OTA packet structure and protocol constants. Specifies packet types (START, DATA, END, ACK/NACK), magic numbers for validation, error codes, and the exact binary layout of each packet.</li> <li><code class="language-plaintext highlighter-rouge">ota_manager.h</code> / <code class="language-plaintext highlighter-rouge">ota_manager.c</code>: Implements the core OTA state machine and business logic. Maintains the transfer context (which chunk we’re on, how many bytes written, CRC values), processes incoming packets, performs CRC verification, writes data to flash, and manages state transitions.</li> <li><code class="language-plaintext highlighter-rouge">ota_uart.h</code>: Handles the low-level UART communication layer. For convenience, I first built and tested OTA protocol with UART. I will cover the OTA protocol development with BLE (Bluetooth) in a separate post.</li> </ul> <h2 id="packet-why-send-data-in-chunks">Packet: Why Send Data in Chunks?</h2> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/packet_simple-480.webp 480w,/assets/post-attachments/2026-01-27/packet_simple-800.webp 800w,/assets/post-attachments/2026-01-27/packet_simple-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/packet_simple.png" class="img-fluid rounded z-depth-1 figure-lines" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p>In OTA firmware update, host must send firmware data to the device. What’s the best way to transfer data? Should we send it as raw byte stream? Or blast the entire firmware file in one shot?</p> <p>Neither approach is practical. Here’s why:</p> <ul> <li>If it’s sent in a blast, the entire firmware might get ruined if even a single bit gets corrupted during transmission.</li> <li>There is no way to know where the error occurred. Plus, it must restart the entire transfer from scratch -&gt; very inefficient!</li> <li>The receiver has no way to track progress or detect if transmission stalled.</li> </ul> <p>That’s why we break the target file into fixed-size chunks called <strong>packets</strong>. Each packet is a self-contained unit that includes:</p> <ul> <li>Metadata: “Data about the data itself”. Packet number, size, target bank (which bank should it write to?)</li> <li>CRC Checksum: The receiver verifies if the current chunk is corrupted by calculating a special number called “checksum” (mentioned in Phase 3, <sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup>)</li> <li>Packet Type: Tells the receiver what kind of data this packet is (START / DATA / END)</li> </ul> <p><em>For those who majored in CS and took courses in computer networks or internet protocols, my explanation might sound unnecessarily long-winded. After all, the idea of “data chunks” repeatedly appears under different names - like a packet at the network layer, a frame at the data link layer, or a datagram at the transport layer.</em></p> <p>Anyways, packet sorts out all the problems. We only have to detect errors per chunk - and if it’s corrupt, retransmit only that packet, not the entire firmware. Progress tracking becomes available, flow control (ACK/NACK response), and even robustness of connection (we know exactly where to resume).</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/packet_explained-480.webp 480w,/assets/post-attachments/2026-01-27/packet_explained-800.webp 800w,/assets/post-attachments/2026-01-27/packet_explained-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/packet_explained.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <h2 id="what-information-does-a-packet-contain">What Information Does A Packet Contain?</h2> <p>Now that we understand why packets are necessary, let’s examine what information they should carry for OTA firmware updates.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/packet_type-480.webp 480w,/assets/post-attachments/2026-01-27/packet_type-800.webp 800w,/assets/post-attachments/2026-01-27/packet_type-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/packet_type.png" class="img-fluid rounded z-depth-1" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <h3 id="1-start-packet">1. START Packet</h3> <p>Let’s begin with the START packet. Every packet must identify its type, and the START packet has additional responsiblity: it carries the overall metadata about the firmware being transferred.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/firmware_info-480.webp 480w,/assets/post-attachments/2026-01-27/firmware_info-800.webp 800w,/assets/post-attachments/2026-01-27/firmware_info-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/firmware_info.png" class="img-fluid rounded z-depth-1" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><strong>Firmware size and chunk count</strong>: The device needs to know how large the incoming firmware is and how many chunks expect. The device can track progress (“I received 150 out of chunks now”), and detect when the transfer is complete.</p> <p><strong>Target bank</strong>: To which bank should the device write new firmware? The START packet specifies whether to write to Bank A or Bank B. It prevents accidental overwrites. And remember from Phase 3 that the key feature of our dual bank system is to <strong>keep the old firmware safe while updating the other bank</strong>.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/bank_type-480.webp 480w,/assets/post-attachments/2026-01-27/bank_type-800.webp 800w,/assets/post-attachments/2026-01-27/bank_type-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/bank_type.png" class="img-fluid rounded z-depth-1" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><strong>Firmware version</strong>: The version helps with tracking and debugging. You want to make sure if your updating firmware to the right version before initiating transmission.</p> <p><strong>Magic number and CRC32</strong>: Both are for verification or integrity check. Each concept and difference have been already covered in Phase 3.</p> <p>All combined, the START packet is represented as a struct:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -2208,7 +2208,7 @@ Boot state updated:
     <span class="kt">uint32_t</span> <span class="n">magic</span><span class="p">;</span>              <span class="c1">// OTA_MAGIC_START</span>
     <span class="kt">uint8_t</span> <span class="n">packet_type</span><span class="p">;</span>         <span class="c1">// OTA_PKT_END</span>
 <span class="p">}</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">packed</span><span class="p">))</span> <span class="n">ota_end_packet_t</span><span class="p">;</span>
-</pre></td></tr></tbody></table></code></pre></div></div> <p>Packet struct will be saved in a header file <code class="language-plaintext highlighter-rouge">ota_protocol.h</code>.</p> <h2 id="state-machine">State Machine</h2> <p><strong>State machines</strong> was invented to easily model systems that behave differently depending on their current “state” and to formalize the transitions between those states.</p> <p>To start with a question: how would the device know what to do with incoming data? If random bytes arrive over UART, should it interpret them as start of a new firmware transfer? or a data chunk to write to flash?</p> <p>That’s where the state machine comes in. It provides <strong>context</strong>, meaning it tells the device: “I’m currently in the “receiving data” state, so the next packet I receive should be a data packet containing firmware bytes.”</p> <p>Keep in mind that the states belong to device, not to host.</p> <h2 id="how-does-state-change">How Does State Change?</h2> <p>Here is a diagram that describes the five main states in the OTA update process:</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/five_different_states-480.webp 480w,/assets/post-attachments/2026-01-27/five_different_states-800.webp 800w,/assets/post-attachments/2026-01-27/five_different_states-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/five_different_states.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Packet struct will be saved in a header file <code class="language-plaintext highlighter-rouge">ota_protocol.h</code>.</p> <h2 id="state-machine">State Machine</h2> <p><strong>State machines</strong> was invented to easily model systems that behave differently depending on their current “state” and to formalize the transitions between those states.</p> <p>To start with a question: how would the device know what to do with incoming data? If random bytes arrive over UART, should it interpret them as start of a new firmware transfer? or a data chunk to write to flash?</p> <p>That’s where the state machine comes in. It provides <strong>context</strong>, meaning it tells the device: “I’m currently in the “receiving data” state, so the next packet I receive should be a data packet containing firmware bytes.”</p> <p>Keep in mind that the states belong to device, not to host.</p> <h2 id="how-does-state-change">How Does State Change?</h2> <p>Here is a diagram that describes the five main states in the OTA update process:</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/five_different_states-480.webp 480w,/assets/post-attachments/2026-01-27/five_different_states-800.webp 800w,/assets/post-attachments/2026-01-27/five_different_states-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/five_different_states.png" class="img-fluid rounded z-depth-1" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -2260,7 +2260,7 @@ Boot state updated:
 [ERROR]
   ↓ Send NACK with error code
   ↓ Return to IDLE (ready for retry)
-</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="1-idle---receiving_data">1. IDLE -&gt; RECEIVING_DATA</h3> <p>Before anything happens, the device sits in the <code class="language-plaintext highlighter-rouge">IDLE</code> state. If the host wants to initiate a firmware update, it sends a “START” packet to notify the device.</p> <p>Upon receiving the START packet, the device runs several validation checks:</p> <ul> <li>Is the firmware size reasonable? Not too large for the target bank?</li> <li>Is the target bank valid? (BANK_A or BANK_B, not some garbage value)</li> <li>Is the magic number correct?</li> </ul> <p>If validation passes, the device must <strong>erase the target bank</strong> before accepting any data. (Remember from Phase 4 that flash memory can only fully write after erase)</p> <ol> <li><strong>ACK</strong>: If successfully erased the bank, the device sends an <strong>ACK</strong> (acknowledgment) back to the host and transitions to <code class="language-plaintext highlighter-rouge">RECEIVING_DATA</code> state.</li> <li><strong>NACK</strong>: If anything goes wrong (invalid size, erase failure), the device sends a <strong>NACK</strong> (negative acknowledgment) with an error code and remains in <code class="language-plaintext highlighter-rouge">IDLE</code> state.</li> </ol> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/start_process-480.webp 480w,/assets/post-attachments/2026-01-27/start_process-800.webp 800w,/assets/post-attachments/2026-01-27/start_process-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/start_process.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <h3 id="2-receiving_data---verifying">2. RECEIVING_DATA -&gt; VERIFYING</h3> <p>Now the device actively receives firmware chunks.</p> <p>But again, there are several checks before moving on to actual data transfer - Yes, I know, it’s full of verification and checks!</p> <p>For each DATA packet received:</p> <ol> <li> <p>Check: chunk_number == expected_chunk_number → Detect missing or out-of-order packets</p> </li> <li> <p>Verify: Calculate CRC32 of data[], compare with chunk_crc32 → Detect corruption during transmission</p> </li> <li> <p>Write to flash at correct address → address = bank_start + (chunk_number × chunk_size)</p> </li> <li> <p>Send ACK (or NACK if any check fails) → Give host immediate feedback</p> </li> <li> <p>Increment expected_chunk_number → Prepare for next packet</p> </li> <li> <p>Repeat until chunks_received == total_chunks</p> </li> </ol> <p>Once the device has received and written all chunks, it transitions to the <code class="language-plaintext highlighter-rouge">VERIFYING</code> state for verifying the entire firmware data.</p> <h3 id="3-verifying---finalizing">3. VERIFYING -&gt; FINALIZING</h3> <p>Even though every individual chunk passed its CRC check, we perform one final integrity verification.</p> <ol> <li>Calculate CRC32 of entire firmware in Bank B. Read back what we actually wrote to flash.</li> <li>Compare 1) firmware_crc32 vs. 2) START packet. Does it match what the host sent?</li> <li>If match, then transition to FINALIZING. If mismatch, transition to ERROR</li> </ol> <p>Firmware update must guarantee robustness and integrity of data transfer. It’s a final “sanity check” before marking the firmware as valid.</p> <h3 id="4-finalizing---complete">4. FINALIZING -&gt; COMPLETE</h3> <p>In the <code class="language-plaintext highlighter-rouge">FINALIZING</code> state, the device updates the boot state structure:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <h3 id="1-idle---receiving_data">1. IDLE -&gt; RECEIVING_DATA</h3> <p>Before anything happens, the device sits in the <code class="language-plaintext highlighter-rouge">IDLE</code> state. If the host wants to initiate a firmware update, it sends a “START” packet to notify the device.</p> <p>Upon receiving the START packet, the device runs several validation checks:</p> <ul> <li>Is the firmware size reasonable? Not too large for the target bank?</li> <li>Is the target bank valid? (BANK_A or BANK_B, not some garbage value)</li> <li>Is the magic number correct?</li> </ul> <p>If validation passes, the device must <strong>erase the target bank</strong> before accepting any data. (Remember from Phase 4 that flash memory can only fully write after erase)</p> <ol> <li><strong>ACK</strong>: If successfully erased the bank, the device sends an <strong>ACK</strong> (acknowledgment) back to the host and transitions to <code class="language-plaintext highlighter-rouge">RECEIVING_DATA</code> state.</li> <li><strong>NACK</strong>: If anything goes wrong (invalid size, erase failure), the device sends a <strong>NACK</strong> (negative acknowledgment) with an error code and remains in <code class="language-plaintext highlighter-rouge">IDLE</code> state.</li> </ol> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-27/start_process-480.webp 480w,/assets/post-attachments/2026-01-27/start_process-800.webp 800w,/assets/post-attachments/2026-01-27/start_process-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-27/start_process.png" class="img-fluid rounded z-depth-1" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <h3 id="2-receiving_data---verifying">2. RECEIVING_DATA -&gt; VERIFYING</h3> <p>Now the device actively receives firmware chunks.</p> <p>But again, there are several checks before moving on to actual data transfer - Yes, I know, it’s full of verification and checks!</p> <p>For each DATA packet received:</p> <ol> <li> <p>Check: chunk_number == expected_chunk_number → Detect missing or out-of-order packets</p> </li> <li> <p>Verify: Calculate CRC32 of data[], compare with chunk_crc32 → Detect corruption during transmission</p> </li> <li> <p>Write to flash at correct address → address = bank_start + (chunk_number × chunk_size)</p> </li> <li> <p>Send ACK (or NACK if any check fails) → Give host immediate feedback</p> </li> <li> <p>Increment expected_chunk_number → Prepare for next packet</p> </li> <li> <p>Repeat until chunks_received == total_chunks</p> </li> </ol> <p>Once the device has received and written all chunks, it transitions to the <code class="language-plaintext highlighter-rouge">VERIFYING</code> state for verifying the entire firmware data.</p> <h3 id="3-verifying---finalizing">3. VERIFYING -&gt; FINALIZING</h3> <p>Even though every individual chunk passed its CRC check, we perform one final integrity verification.</p> <ol> <li>Calculate CRC32 of entire firmware in Bank B. Read back what we actually wrote to flash.</li> <li>Compare 1) firmware_crc32 vs. 2) START packet. Does it match what the host sent?</li> <li>If match, then transition to FINALIZING. If mismatch, transition to ERROR</li> </ol> <p>Firmware update must guarantee robustness and integrity of data transfer. It’s a final “sanity check” before marking the firmware as valid.</p> <h3 id="4-finalizing---complete">4. FINALIZING -&gt; COMPLETE</h3> <p>In the <code class="language-plaintext highlighter-rouge">FINALIZING</code> state, the device updates the boot state structure:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 </pre></td><td class="rouge-code"><pre><span class="n">boot_state</span><span class="p">.</span><span class="n">bank_b_status</span> <span class="o">=</span> <span class="n">BANK_STATUS_VALID</span><span class="p">;</span>
@@ -2324,7 +2324,617 @@ Boot state updated:
     <span class="kt">uint32_t</span> <span class="n">bytes_written</span><span class="p">;</span>
     <span class="kt">uint8_t</span> <span class="n">error_code</span><span class="p">;</span>
 <span class="p">}</span> <span class="n">ota_context_t</span><span class="p">;</span>
-</pre></td></tr></tbody></table></code></pre></div></div> <p>The context is passed to every function that processes packets, ensuring everyone has access to the current transfer state.</p> <div class="footnotes" role="doc-endnotes"> <ol> <li id="fn:1"> <p>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase3/, CRC32 (Cyclic Redundancy Check) <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> </ol> </div>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[Before We Dive In]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 4: Implementing Persistent Boot State</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 4: Implementing Persistent Boot State"/><published>2026-01-20T14:48:37+00:00</published><updated>2026-01-20T14:48:37+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4/"><![CDATA[<p>In Phase 3, we built a dual-bank system where Bank A and Bank B can each hold a complete firmware image. <strong>But when the device powers on, how does the bootloader know which bank to boot from?</strong> That’s where the “boot state” comes in. We store the boot state in persistent storage so that it can be retrieved across power cycles.</p> <p>To give its definition, the <strong>boot state</strong> is a small data structure stored in flash memory that tells the bootloader about 1) which bank is currently active 2) which bank contains valid firmware 3) which bank is being tested after an update.</p> <p>Phase 4 focuses on designing this boot state structure and implementing the read/write/erase functions to manage it in flash memory. We’ll also explore CRC32 integrity checks and how to handle structure alignment constraints.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-20/boot_state_structure-480.webp 480w,/assets/post-attachments/2026-01-20/boot_state_structure-800.webp 800w,/assets/post-attachments/2026-01-20/boot_state_structure-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-20/boot_state_structure.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p><br/></p> <h2 id="designing-boot_state-structure">Designing <code class="language-plaintext highlighter-rouge">boot_state</code> Structure</h2> <p>Here is the basic structure of <code class="language-plaintext highlighter-rouge">boot_state</code>:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <p>The context is passed to every function that processes packets, ensuring everyone has access to the current transfer state.</p> <div class="footnotes" role="doc-endnotes"> <ol> <li id="fn:1"> <p>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase3/, CRC32 (Cyclic Redundancy Check) <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> </ol> </div>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[Before We Dive In]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 4.1: Debugging the CRC Mismatch</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4.1/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 4.1: Debugging the CRC Mismatch"/><published>2026-01-26T19:40:10+00:00</published><updated>2026-01-26T19:40:10+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4.1</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4.1/"><![CDATA[<p>In Phase 4, I implemented the boot state structure with CRC32 integrity checking. The code looked correct, the logic made sense, and everything compiled without warnings.</p> <p>I wrote a simple test program to verify the boot state read/write functions:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+</pre></td><td class="rouge-code"><pre><span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">void</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// Test 1: Read boot state (should be invalid on first run)</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">--- Test 1: Reading boot state ---</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">boot_state_t</span> <span class="n">state</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">result</span> <span class="o">=</span> <span class="n">boot_state_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">state</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Boot state: Invalid/Erased (expected on first run)</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Boot state: CRC mismatch - CORRUPTED!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Boot state: Valid</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Magic: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">magic_number</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Active Bank: %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">active_bank</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Bank A Status: %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">bank_a_status</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Bank B Status: %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">bank_b_status</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Test 2: Write a new boot state</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">--- Test 2: Writing new boot state ---</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">boot_state_t</span> <span class="n">new_state</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">.</span><span class="n">magic_number</span> <span class="o">=</span> <span class="n">BOOT_STATE_MAGIC</span><span class="p">,</span>
+        <span class="p">.</span><span class="n">bank_a_status</span> <span class="o">=</span> <span class="n">BANK_STATUS_VALID</span><span class="p">,</span>
+        <span class="p">.</span><span class="n">bank_b_status</span> <span class="o">=</span> <span class="n">BANK_STATUS_INVALID</span><span class="p">,</span>
+        <span class="p">.</span><span class="n">active_bank</span> <span class="o">=</span> <span class="n">BANK_A</span><span class="p">,</span>
+        <span class="p">.</span><span class="n">crc32</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1">// Will be calculated</span>
+    <span class="p">};</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Erasing boot state sector...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">boot_state_erase</span><span class="p">()</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Erase failed!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Erase successful!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Writing boot state...</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">boot_state_write</span><span class="p">(</span><span class="o">&amp;</span><span class="n">new_state</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Write failed!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">while</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Write successful!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="c1">// Test 3: Read it back</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">--- Test 3: Reading back ---</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">boot_state_read</span><span class="p">(</span><span class="o">&amp;</span><span class="n">state</span><span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"Boot state: Valid!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Magic: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">magic_number</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Active Bank: %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">active_bank</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Bank A Status: %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">bank_a_status</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  Bank B Status: %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">bank_b_status</span><span class="p">);</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="p">.</span><span class="n">crc32</span><span class="p">);</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"ERROR: Read failed with code %d</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">result</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Test 4: Get bank address</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">--- Test 4: Bank addresses ---</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">addr_a</span> <span class="o">=</span> <span class="n">boot_state_get_bank_address</span><span class="p">(</span><span class="n">BANK_A</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">addr_b</span> <span class="o">=</span> <span class="n">boot_state_get_bank_address</span><span class="p">(</span><span class="n">BANK_B</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">addr_invalid</span> <span class="o">=</span> <span class="n">boot_state_get_bank_address</span><span class="p">(</span><span class="n">BANK_INVALID</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Bank A address: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">addr_a</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Bank B address: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">addr_b</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"Invalid bank address: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">addr_invalid</span><span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"</span><span class="se">\n</span><span class="s">========================================</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"All tests complete!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"========================================</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+
+    <span class="k">while</span> <span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">HAL_GPIO_TogglePin</span><span class="p">(</span><span class="n">GPIOG</span><span class="p">,</span> <span class="n">GPIO_PIN_13</span><span class="p">);</span>
+        <span class="n">HAL_Delay</span><span class="p">(</span><span class="mi">1000</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>If there isn’t any problem, the output should be:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+</pre></td><td class="rouge-code"><pre>--- Test 1: Reading boot state ---
+Boot state: 
+Magic: 0x...
+Active Bank: ...
+Bank A Status: ...
+Bank B Status: ...
+--- Test 2: Writing new boot state ---
+Erasing boot state sector...
+Erase successful!
+Writing boot state...
+Write successful!
+--- Test 3: Reading back ---
+Boot state: Valid!
+Magic: ...
+Active Bank: ...
+Bank A Status: ...
+Bank B Status: ...
+CRC32: 0x...
+--- Test 4: Bank addresses ---
+Bank A address: 0x08010000
+Bank B address: 0x08050000
+Invalid bank address: 0x00000000
+========================================
+All tests complete!
+========================================
+</pre></td></tr></tbody></table></code></pre></div></div> <p>However, my actual output was:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="rouge-code"><pre>--- Test 1: Reading boot state ---
+Boot state: CRC mismatch - CORRUPTED!
+--- Test 2: Writing new boot state ---
+Erasing boot state sector...
+Erase successful!
+Writing boot state...
+Write successful!
+--- Test 3: Reading back ---
+ERROR: Read failed with code -2
+--- Test 4: Bank addresses ---
+Bank A address: 0x08010000
+Bank B address: 0x08050000
+Invalid bank address: 0x00000000
+========================================
+All tests complete!
+========================================
+</pre></td></tr></tbody></table></code></pre></div></div> <p>The write says it succeeded, but reading back immediately fails with a CRC error. We also got <code class="language-plaintext highlighter-rouge">ERROR: Read failed with code -2</code>, meaning <code class="language-plaintext highlighter-rouge">boot_state_read</code> returned -2 for some reason.</p> <p>First, let’s read the <code class="language-plaintext highlighter-rouge">boot_state_read</code> code carefully:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+</pre></td><td class="rouge-code"><pre><span class="kt">int</span> <span class="nf">boot_state_read</span><span class="p">(</span><span class="n">boot_state_t</span> <span class="o">*</span><span class="n">state</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Step 1: Read from flash</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">BOOT_STATE_ADDRESS</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+    <span class="c1">// Step 2: Check magic number</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">state</span><span class="o">-&gt;</span><span class="n">magic_number</span> <span class="o">!=</span> <span class="n">BOOT_STATE_MAGIC</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// Step 3: Calculate what the CRC should be</span>
+    <span class="kt">uint32_t</span> <span class="n">saved_crc</span> <span class="o">=</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span><span class="p">;</span>
+    <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">uint32_t</span> <span class="n">calculated_crc</span> <span class="o">=</span> <span class="n">calculate_crc32</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  calculated CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">calculated_crc</span><span class="p">);</span>
+    <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="n">saved_crc</span><span class="p">;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">calculated_crc</span> <span class="o">!=</span> <span class="n">saved_crc</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC MISMATCH!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Okay, it’s because <code class="language-plaintext highlighter-rouge">calculated_crc</code> doesn’t match <code class="language-plaintext highlighter-rouge">saved_crc</code>. In other words, the CRC value stored in flash memory is not equal to the CRC value it is supposed to be.</p> <p>But we still didn’t pinpoint the cause, because CRC32 value is calculated from the entire values in <code class="language-plaintext highlighter-rouge">boot_state</code>. <code class="language-plaintext highlighter-rouge">boot_state</code> consists of <code class="language-plaintext highlighter-rouge">magic_number</code>, <code class="language-plaintext highlighter-rouge">bank_a_status</code>, <code class="language-plaintext highlighter-rouge">bank_b_status</code>, <code class="language-plaintext highlighter-rouge">active_bank</code>, and <code class="language-plaintext highlighter-rouge">crc32</code>. We do not know if one (or more) of these are corrupted, if flash operation didn’t work, if we wrote in the wrong memory address, etc.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-26/CRC32_mismatch-480.webp 480w,/assets/post-attachments/2026-01-26/CRC32_mismatch-800.webp 800w,/assets/post-attachments/2026-01-26/CRC32_mismatch-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-26/CRC32_mismatch.png" class="img-fluid rounded z-depth-1" width="500px" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p>Let’s debug it systematically. Add debug output for every attribute of <code class="language-plaintext highlighter-rouge">boot_state</code>.</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+</pre></td><td class="rouge-code"><pre><span class="kt">int</span> <span class="nf">boot_state_read</span><span class="p">(</span><span class="n">boot_state_t</span> <span class="o">*</span><span class="n">state</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// Step 1: Read from flash</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span><span class="n">BOOT_STATE_ADDRESS</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"DEBUG: Raw data from flash:</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  magic_number: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">magic_number</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  bank_a_status: 0x%02X</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">bank_a_status</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  bank_b_status: 0x%02X</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">bank_b_status</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  active_bank: 0x%02X</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">active_bank</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  stored CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span><span class="p">);</span>
+
+    <span class="c1">// Step 2: Check magic number</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">state</span><span class="o">-&gt;</span><span class="n">magic_number</span> <span class="o">!=</span> <span class="n">BOOT_STATE_MAGIC</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Step 3: Calculate what the CRC should be</span>
+    <span class="kt">uint32_t</span> <span class="n">saved_crc</span> <span class="o">=</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span><span class="p">;</span>
+    <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">uint32_t</span> <span class="n">calculated_crc</span> <span class="o">=</span> <span class="n">calculate_crc32</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  calculated CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">calculated_crc</span><span class="p">);</span>
+
+    <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="n">saved_crc</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">calculated_crc</span> <span class="o">!=</span> <span class="n">saved_crc</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC MISMATCH!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Also add debug output to <code class="language-plaintext highlighter-rouge">boot_state_write()</code>:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+</pre></td><td class="rouge-code"><pre><span class="kt">int</span> <span class="nf">boot_state_write</span><span class="p">(</span><span class="k">const</span> <span class="n">boot_state_t</span> <span class="o">*</span><span class="n">state</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">boot_state_t</span> <span class="n">state_copy</span><span class="p">;</span>
+    <span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">state_copy</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+
+    <span class="c1">// Calculate CRC32</span>
+    <span class="n">state_copy</span><span class="p">.</span><span class="n">crc32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="n">state_copy</span><span class="p">.</span><span class="n">crc32</span> <span class="o">=</span> <span class="n">calculate_crc32</span><span class="p">(</span><span class="o">&amp;</span><span class="n">state_copy</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+
+    <span class="n">printf</span><span class="p">(</span><span class="s">"DEBUG: Writing to flash:</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  magic_number: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state_copy</span><span class="p">.</span><span class="n">magic_number</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  bank_a_status: 0x%02X</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state_copy</span><span class="p">.</span><span class="n">bank_a_status</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  bank_b_status: 0x%02X</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state_copy</span><span class="p">.</span><span class="n">bank_b_status</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  active_bank: 0x%02X</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state_copy</span><span class="p">.</span><span class="n">active_bank</span><span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">state_copy</span><span class="p">.</span><span class="n">crc32</span><span class="p">);</span>
+
+    <span class="c1">// Verify CRC</span>
+    <span class="kt">uint32_t</span> <span class="n">saved_crc</span> <span class="o">=</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span><span class="p">;</span>
+    <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">uint32_t</span> <span class="n">calculated_crc</span> <span class="o">=</span> <span class="n">calculate_crc32</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
+    
+    <span class="n">printf</span><span class="p">(</span><span class="s">"  calculated CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">calculated_crc</span><span class="p">);</span>
+    <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="n">saved_crc</span><span class="p">;</span>
+    
+    <span class="k">if</span> <span class="p">(</span><span class="n">calculated_crc</span> <span class="o">!=</span> <span class="n">saved_crc</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC MISMATCH!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Here’s what the debug output revealed:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+</pre></td><td class="rouge-code"><pre>--- Test 1: Reading boot state ---
+DEBUG: Raw data from flash:
+  magic_number: 0xDEADBEEF
+  bank_a_status: 0x01
+  bank_b_status: 0x00
+  active_bank: 0x00
+  stored CRC32: 0xFFFFFF9D
+  calculated CRC32: 0xA43B5D9D
+Boot state: CRC mismatch - CORRUPTED!
+--- Test 2: Writing new boot state ---
+Erasing boot state sector...
+Erase successful!
+Writing boot state...
+DEBUG: Writing to flash:
+  magic_number: 0xDEADBEEF
+  bank_a_status: 0x01
+  bank_b_status: 0x00
+  active_bank: 0x00
+  CRC32: 0xA43B5D9D
+Write successful!
+--- Test 3: Reading back ---
+DEBUG: Raw data from flash:
+  magic_number: 0xDEADBEEF
+  bank_a_status: 0x01
+  bank_b_status: 0x00
+  active_bank: 0x00
+  stored CRC32: 0xFFFFFF9D
+  calculated CRC32: 0xA43B5D9D
+ERROR: Read failed with code -2
+--- Test 4: Bank addresses ---
+Bank A address: 0x08010000
+Bank B address: 0x08050000
+Invalid bank address: 0x00000000
+========================================
+All tests complete!
+========================================
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Now we found the problem. We calculated CRC during write: <code class="language-plaintext highlighter-rouge">0xA43B5D9D</code>. Calculated CRC during read is also <code class="language-plaintext highlighter-rouge">0xA43B5D9D</code>. But CRC value stored in flash is <code class="language-plaintext highlighter-rouge">0xFFFFFF9D</code>!</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+</pre></td><td class="rouge-code"><pre>0xFFFFFFFF -&gt; Initial empty state
+0xA43B5D9D -&gt; Calculated value
+0xFFFFFF9D -&gt; What is stored in flash
+________9D -&gt; Only the last byte is correct!
+</pre></td></tr></tbody></table></code></pre></div></div> <p>This means it’s not a CRC calculation problem, but a flash write problem.</p> <h2 id="finding-the-root-cause">Finding the Root Cause</h2> <p>Let’s look at the original <code class="language-plaintext highlighter-rouge">boot_state</code> structure:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="rouge-code"><pre><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">uint32_t</span> <span class="n">magic_number</span><span class="p">;</span>       <span class="c1">// 4 bytes</span>
+    <span class="n">bank_status_t</span> <span class="n">bank_a_status</span><span class="p">;</span> <span class="c1">// 1 byte (enum)</span>
+    <span class="n">bank_status_t</span> <span class="n">bank_b_status</span><span class="p">;</span> <span class="c1">// 1 byte (enum)</span>
+    <span class="n">active_bank_t</span> <span class="n">active_bank</span><span class="p">;</span>   <span class="c1">// 1 byte (enum)</span>
+    <span class="kt">uint32_t</span> <span class="n">crc32</span><span class="p">;</span>              <span class="c1">// 4 bytes</span>
+<span class="p">}</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">packed</span><span class="p">))</span> <span class="n">boot_state_t</span><span class="p">;</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Total size is 4 + 1 + 1 + 4 = 11 bytes.</p> <p>Since the problem is in flash write, let’s look at the <code class="language-plaintext highlighter-rouge">boot_state_write</code> code:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="rouge-code"><pre><span class="kt">uint32_t</span> <span class="o">*</span><span class="n">data</span> <span class="o">=</span> <span class="p">(</span><span class="kt">uint32_t</span><span class="o">*</span><span class="p">)</span><span class="o">&amp;</span><span class="n">state_copy</span><span class="p">;</span>
+<span class="kt">uint32_t</span> <span class="n">address</span> <span class="o">=</span> <span class="n">BOOT_STATE_ADDRESS</span><span class="p">;</span>
+
+<span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">HAL_FLASH_Program</span><span class="p">(</span><span class="n">FLASH_TYPEPROGRAM_WORD</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+    <span class="n">address</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">sizeof(boot_state_t)</code> is 11 bytes. But if <code class="language-plaintext highlighter-rouge">11 / 4</code>, it’s 2 (integer division act as floor function).</p> <p>Therefore, we iterate twice, writing only 8 bytes instead of all 11 bytes. The last 3 bytes never get written.</p> <p>Now every puzzle falls into place:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+</pre></td><td class="rouge-code"><pre>Memory layout of boot_state_t (11 bytes):
+┌────────────┬───┬───┬───┬─────────────┐
+│  magic     │ a │ b │ c │   crc32     │
+│  (4 bytes) │ 1 │ 1 │ 1 │  (4 bytes)  │
+└────────────┴───┴───┴───┴─────────────┘
+ Word 0       Word 1        Word 2
+ (written)    (written)   (NOT written)
+              └─ Only first byte of Word 2 gets written
+</pre></td></tr></tbody></table></code></pre></div></div> <h2 id="two-solutions">Two Solutions</h2> <p>First approach handles partial words:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+</pre></td><td class="rouge-code"><pre>    <span class="c1">// Write full words first</span>
+    <span class="kt">int</span> <span class="n">num_words</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">num_words</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+        <span class="kt">uint32_t</span> <span class="n">word</span> <span class="o">=</span> <span class="o">*</span><span class="p">((</span><span class="kt">uint32_t</span><span class="o">*</span><span class="p">)(</span><span class="n">data</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="mi">4</span><span class="p">));</span>
+        <span class="n">HAL_FLASH_Program</span><span class="p">(</span><span class="n">FLASH_TYPEPROGRAM_WORD</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">word</span><span class="p">);</span>
+        <span class="n">address</span> <span class="o">+=</span> <span class="mi">4</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// Write remaining bytes</span>
+    <span class="kt">int</span> <span class="n">remaining_bytes</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">remaining_bytes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// Program remaining bytes as a word (pad with 0xFF)</span>
+        <span class="kt">uint32_t</span> <span class="n">last_word</span> <span class="o">=</span> <span class="mh">0xFFFFFFFF</span><span class="p">;</span>  <span class="c1">// Erased flash value</span>
+        <span class="n">memcpy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">last_word</span><span class="p">,</span> <span class="n">data</span> <span class="o">+</span> <span class="n">num_words</span> <span class="o">*</span> <span class="mi">4</span><span class="p">,</span> <span class="n">remaining_bytes</span><span class="p">);</span>
+
+        <span class="n">HAL_FLASH_Program</span><span class="p">(</span><span class="n">FLASH_TYPEPROGRAM_WORD</span><span class="p">,</span> <span class="n">address</span><span class="p">,</span> <span class="n">last_word</span><span class="p">);</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>This is obviously the most intuitive way to fix the problem, but what if we don’t want the extra code below?</p> <p>The second approach is to redesign the structure to be word-aligned.</p> <p>Previously, <code class="language-plaintext highlighter-rouge">boot_state_t</code> struct was defined in 11 bytes:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+</pre></td><td class="rouge-code"><pre><span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+    <span class="n">BANK_A</span> <span class="o">=</span> <span class="mh">0x00</span><span class="p">,</span>
+    <span class="n">BANK_B</span> <span class="o">=</span> <span class="mh">0x01</span><span class="p">,</span>
+    <span class="n">BANK_INVALID</span> <span class="o">=</span> <span class="mh">0xFF</span>
+<span class="p">}</span> <span class="n">active_bank_t</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">enum</span> <span class="p">{</span>
+    <span class="n">BANK_STATUS_INVALID</span> <span class="o">=</span> <span class="mh">0x00</span><span class="p">,</span>
+    <span class="n">BANK_STATUS_VALID</span> <span class="o">=</span> <span class="mh">0x01</span><span class="p">,</span>
+    <span class="n">BANK_STATUS_TESTING</span> <span class="o">=</span> <span class="mh">0x02</span>
+<span class="p">}</span> <span class="n">bank_status_t</span><span class="p">;</span>
+
+<span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">uint32_t</span> <span class="n">magic_number</span><span class="p">;</span>
+    <span class="n">bank_status_t</span> <span class="n">bank_a_status</span><span class="p">;</span>
+    <span class="n">bank_status_t</span> <span class="n">bank_b_status</span><span class="p">;</span>
+    <span class="n">active_bank_t</span> <span class="n">active_bank</span><span class="p">;</span>
+    <span class="kt">uint32_t</span> <span class="n">crc32</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">__attribute__</span><span class="p">((</span><span class="n">packed</span><span class="p">))</span> <span class="n">boot_state_t</span><span class="p">;</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p><code class="language-plaintext highlighter-rouge">active_bank_t</code> and <code class="language-plaintext highlighter-rouge">bank_status_t</code> were both enum struct, each 1 byte. But if we change <code class="language-plaintext highlighter-rouge">active_bank</code> and bank status type into <code class="language-plaintext highlighter-rouge">uint32_t</code> (4 byte):</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+2
+3
+4
+5
+6
+7
+</pre></td><td class="rouge-code"><pre><span class="k">typedef</span> <span class="k">struct</span> <span class="p">{</span>
+    <span class="kt">uint32_t</span> <span class="n">magic_number</span><span class="p">;</span>           <span class="c1">// 4 bytes</span>
+    <span class="kt">uint32_t</span> <span class="n">bank_a_status</span><span class="p">;</span>          <span class="c1">// 4 bytes (was 1 byte)</span>
+    <span class="kt">uint32_t</span> <span class="n">bank_b_status</span><span class="p">;</span>          <span class="c1">// 4 bytes (was 1 byte)</span>
+    <span class="kt">uint32_t</span> <span class="n">active_bank</span><span class="p">;</span>            <span class="c1">// 4 bytes (was 1 byte)</span>
+    <span class="kt">uint32_t</span> <span class="n">crc32</span><span class="p">;</span>                  <span class="c1">// 4 bytes</span>
+<span class="p">}</span> <span class="n">boot_state_t</span><span class="p">;</span>  <span class="c1">// Total: 20 bytes = 5 words, perfectly aligned!</span>
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Then we do not have to worry about extra remaining bytes. We can leave <code class="language-plaintext highlighter-rouge">boot_state_write</code> as it was, and it will fix the CRC mismatch issue.</p> <h2 id="small-discussion">Small Discussion</h2> <p>Claude argued the second approach is better in that it doesn’t need special handling, it makes code simpler, and it’s less error-prone. I agree with it at some point: We use 9 extra bytes in flash to make <code class="language-plaintext highlighter-rouge">boot_state</code> word-aligned, but for a structure stored once in a 128KB sector, this is completely negligible. However, I don’t think the first approach is a bad idea; it also works, but it makes a code just a bit more complicated. If I choose the second approach, and if this is a collaborative project, programmers would need to establish an explicit design rule: all structures stored in flash memory must be word-aligned.</p>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[In Phase 4, I implemented the boot state structure with CRC32 integrity checking. The code looked correct, the logic made sense, and everything compiled without warnings.]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 4: Implementing Persistent Boot State</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 4: Implementing Persistent Boot State"/><published>2026-01-20T14:48:37+00:00</published><updated>2026-01-20T14:48:37+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase4/"><![CDATA[<p>In Phase 3, we built a dual-bank system where Bank A and Bank B can each hold a complete firmware image. <strong>But when the device powers on, how does the bootloader know which bank to boot from?</strong> That’s where the “boot state” comes in. We store the boot state in persistent storage so that it can be retrieved across power cycles.</p> <p>To give its definition, the <strong>boot state</strong> is a small data structure stored in flash memory that tells the bootloader about 1) which bank is currently active 2) which bank contains valid firmware 3) which bank is being tested after an update.</p> <p>Phase 4 focuses on designing this boot state structure and implementing the read/write/erase functions to manage it in flash memory. We’ll also explore CRC32 integrity checks and how to handle structure alignment constraints.</p> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/post-attachments/2026-01-20/boot_state_structure-480.webp 480w,/assets/post-attachments/2026-01-20/boot_state_structure-800.webp 800w,/assets/post-attachments/2026-01-20/boot_state_structure-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/post-attachments/2026-01-20/boot_state_structure.png" class="img-fluid rounded z-depth-1 figure-lines" width="100%" height="auto" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <h2 id="designing-boot_state-structure">Designing <code class="language-plaintext highlighter-rouge">boot_state</code> Structure</h2> <p>Here is the basic structure of <code class="language-plaintext highlighter-rouge">boot_state</code>:</p> <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -6684,7 +7294,7 @@ MEMORY
 2
 </pre></td><td class="rouge-code"><pre><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">app_reset_handler</span><span class="p">)(</span><span class="kt">void</span><span class="p">)</span> <span class="o">=</span> <span class="p">(</span><span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="p">)(</span><span class="kt">void</span><span class="p">))</span><span class="n">app_entry_point</span><span class="p">;</span>
 <span class="n">app_reset_handler</span><span class="p">();</span>
-</pre></td></tr></tbody></table></code></pre></div></div> <p>Finally, we create a function pointer <code class="language-plaintext highlighter-rouge">app_reset_handler</code> that points to the application’s Reset_Handler. We cast <code class="language-plaintext highlighter-rouge">app_entry_point</code>, which is just a number like <code class="language-plaintext highlighter-rouge">0x08010195</code>, to a function pointer type.</p>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[Roadmap]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 1: Flash Operations</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase1/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 1: Flash Operations"/><published>2026-01-14T07:18:44+00:00</published><updated>2026-01-14T07:18:44+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase1</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase1/"><![CDATA[<h2 id="the-problem-where-should-the-bootloader-store-state">The Problem: Where Should the Bootloader Store State?</h2> <p>Here’s the core question of Phase 1: <strong>The bootloader needs to remember which firmware bank is active and whether the last boot was successful. Where should this information live?</strong></p> <p>The requirements are clear:</p> <ul> <li>The data must <strong>survive power cycles</strong> (no battery-backed RAM)</li> <li>It needs to be <strong>updated during the OTA process</strong> (the bootloader writes it)</li> <li>Both the <strong>bootloader and application</strong> might need to read or modify it</li> </ul> <p>RAM is volatile memory, which means the information stored inside will be gone as power is off. External EEPROM could work, but that adds hardware complexity. Thus, the answer is <strong>internal flash memory</strong>. It’s non-volatile, already present on the chip, and can be programmed during runtime.</p> <p>That’s why Claude first allocated the STM32 flash memory layout before writing code:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
+</pre></td></tr></tbody></table></code></pre></div></div> <p>Finally, we create a function pointer <code class="language-plaintext highlighter-rouge">app_reset_handler</code> that points to the application’s Reset_Handler. We cast <code class="language-plaintext highlighter-rouge">app_entry_point</code>, which is just a number like <code class="language-plaintext highlighter-rouge">0x08010195</code>, to a function pointer type.</p>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[What does it look like?]]></summary></entry><entry><title type="html">Bootloader with OTA Phase 1: Flash Operations</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase1/" rel="alternate" type="text/html" title="Bootloader with OTA Phase 1: Flash Operations"/><published>2026-01-14T07:18:44+00:00</published><updated>2026-01-14T07:18:44+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase1</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-OTA-Phase1/"><![CDATA[<h2 id="the-problem-where-should-the-bootloader-store-state">The Problem: Where Should the Bootloader Store State?</h2> <p>Here’s the core question of Phase 1: <strong>The bootloader needs to remember which firmware bank is active and whether the last boot was successful. Where should this information live?</strong></p> <p>The requirements are clear:</p> <ul> <li>The data must <strong>survive power cycles</strong> (no battery-backed RAM)</li> <li>It needs to be <strong>updated during the OTA process</strong> (the bootloader writes it)</li> <li>Both the <strong>bootloader and application</strong> might need to read or modify it</li> </ul> <p>RAM is volatile memory, which means the information stored inside will be gone as power is off. External EEPROM could work, but that adds hardware complexity. Thus, the answer is <strong>internal flash memory</strong>. It’s non-volatile, already present on the chip, and can be programmed during runtime.</p> <p>That’s why Claude first allocated the STM32 flash memory layout before writing code:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr><td class="rouge-gutter gl"><pre class="lineno">1
 2
 3
 4
@@ -7365,4 +7975,4 @@ Step 3: Reading back and verifying...
     <span class="n">HAL_FLASH_Lock</span><span class="p">();</span>
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></td></tr></tbody></table></code></pre></div></div>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[The Problem: Where Should the Bootloader Store State?]]></summary></entry><entry><title type="html">Building My First Firmware Project with Claude</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-Intro/" rel="alternate" type="text/html" title="Building My First Firmware Project with Claude"/><published>2026-01-12T19:43:16+00:00</published><updated>2026-01-12T19:43:16+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-Intro</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-Intro/"><![CDATA[<p>If you’re a student interested in firmware engineering, you’ve probably wondered what project to start with. Of course, being interested in firmware engineering at all is already a rare thing.</p> <p>The more I learn about firmware, the more I realize how specialized this field is. Universities don’t teach firmware engineering. There are no such hackathons or contests in firmware. Online resources aren’t nearly as abundant as they are for machine learning or app development. Even more, it’s demanding and has a high barrier to entry, because it requires both low-level software programming skills and a solid grasp of hardware fundamentals.</p> <p>That’s why if it were five years ago, I wouldn’t have even dreamed of becoming a firmware engineer. But now, we have AI tools. While I was working on this project with Claude AI, I felt like there is a senior firmware developer sitting next to me and coaching me in real time. It helped me choose topics, answer questions, and debug issues made this possible. AI is not perfect yet, but for a student working alone like me, it is truly a powerful source of motivation.</p> <p>After careful consideration with Claude, I decided to build a custom bootloader as my first project. First, there were relatively plenty of documents and open-source projects to reference. Of course, part of me wanted to jump straight into something more challenging, but I thought it would be better to build confidence with a successful first project before moving on to more complex ones. More importantly, bootloader development touches on concepts that are fundamental to embedded systems: memory management, hardware initialization, communication protocols, and safety-critical design.</p> <h2 id="what-is-a-bootloader-and-why-should-you-care">What Is a Bootloader? And Why Should You Care?</h2> <p>A bootloader is a small program (yes, it’s software!) that runs right after reset, executed from ROM (Read Only Memory) or flash when the device powers on. It initializes hardware and loads the main firmware image stored in flash into RAM.</p> <p>To make this easier to understand, I will use an analogy. Imagine a computer is like a kitchen. Then <strong>a bootloader is like a “opening manager” for a kitchen</strong>. Before opening hours, the kitchen is dark, the equipment is off, and nothing is ready to cook. Someone needs to:</p> <ul> <li>Turn on the ovens and check they’re at the right temperature</li> <li>Make sure the refrigerators are working</li> <li>Verify the gas lines are connected properly</li> <li>Check that all the cooking stations have their tools ready</li> </ul> <p>Only then the manager will hand control over to the head chef to start cooking.</p> <p>Similarly, a microcontroller hardware has nothing configured yet before pressing the power button. The bootloader’s job is to:</p> <ul> <li>Wake up the hardware (clocks, memory, peripherals) so that higher-level firmware can run correctly</li> <li>Decide which application firmware to run if there are multiple versions installed</li> <li>Verify that the chosen firmware is safe to execute. For “secure boot”, it can check digital signatures or hashes to allow only trusted firmware</li> <li>Transfer control to the main application</li> <li>Offer fallback/rollback behavior (e.g., dual‑image or recovery mode) if the main application is missing, corrupt, or fails to start</li> </ul> <p>Bootloaders are everywhere in modern electronics, but we rarely see them because they’re not a type of software we can directly interact with. For example, every STM32 microcontroller ships with a built-in bootloader in ROM that lets you flash firmware over USB or UART. Arduino boards use a bootloader to accept sketches over USB without needing a dedicated programmer. Wireless earbuds or car’s dashboard all have bootloaders that enable firmware updates without replacing the hardware.</p> <h3 id="meaning-of-application-in-this-discussion">Meaning of “Application” in This Discussion</h3> <p>To clarify one more thing: <strong>the “application” referred to here means firmware</strong>. I’m using “application” as a term that contrasts with “bootloader,” so you shouldn’t think of it as a typical user-application. In other words, within the firmware category, there’s “bootloader firmware” and “non-bootloader firmware.” To distinguish from the bootloader, I’ll simply refer to regular firmware as “application” from now on.</p> <h2 id="core-project-goals">Core Project Goals</h2> <p>I focused on three specific challenges that represent key bootloader functionality:</p> <ol> <li><strong>Dual-Bank Architecture</strong>: By dividing flash memory into two “banks”, the bootloader can roll back to the previous working version (Bank A) if the new firmware (in Bank B) is broken. This backup memory architecture provides <strong>fail-safe updates</strong>.</li> <li><strong>Persistent State Management</strong>: The bootloader state (current active bank, boot failure count, etc.) has to survive across power on/off cycles, which requires read/write operations in flash memory. Flash read/erase/write operations are quite different from just assigning values to variables and understanding this distinction is crucial.</li> <li><strong>Over-The-Air (OTA) Protocol</strong>: OTA allows engineers to fix bugs, patch security issues, and ship new features to devices in the field without physically touching them. But in this project, I used UART (with a USB-A to Mini-USB cable) to send firmware updates from a host computer to the microcontroller. The OTA feature includes chunking (breaking the firmware into 1KB pieces), CRC32 verification (detecting corrupted data), retransmission on errors, and atomic switching.</li> </ol> <p>Since I developed this bootloader for self-learning purposes, it lacks most of the features required in production bootloaders. Instead I chose to focus on these three core concepts as to study them in depth.</p> <h2 id="how-and-why-i-wrote-this-blog">How and Why I wrote this Blog</h2> <p>I tried my best to make my blog posts “<strong>process-driven</strong>”, not “result-driven”. I focused on these two:</p> <ol> <li>The conversations with Claude AI</li> <li>Debugging steps.</li> </ol> <p>I avoided simply listing information like a textbook. Instead, I described the questions I had and how I solved problems.</p> <p>To make one thing clear, this project is the result of collaboration between Claude AI and myself. Without Claude, I would have never been able to start or finish the project. For beginners like me who want to learn firmware engineering, AI feels like a launch booster that helps push beyond the steep learning curve. I found potential in AI not just as a tool for writing code, but as an attentive tutor that helps you think, ask questions, and make gradual progress on projects at your own level.</p> <p>I hope that beginners like me in firmware engineering will gain courage from reading my posts. I’m pretty sure some people might think, “Oh wow, this guys basically AI prompted his whole project? I could definitely do better than this!” - and honestly, nothing would make me happier if my posts annoy (or inspire) someone to start their own project.</p> <h2 id="what-youll-find-in-this-series">What You’ll Find in This Series</h2> <p>I’ve broken down the project into phases, roughly corresponding to how I built it:</p> <ul> <li> <p><strong>Phase 1: Understanding Flash Operations</strong> - How to read, write, and erase flash memory on the STM32F429. Why flash requires word alignment, and how to handle data structures that aren’t neat multiples of 4 bytes.</p> </li> <li> <p><strong>Phase 2: Minimal Bootloader and Jump-to-Application</strong> - Creating a bootloader that runs at address <code class="language-plaintext highlighter-rouge">0x08000000</code> and can transfer control to an application at <code class="language-plaintext highlighter-rouge">0x08010000</code>. Vector table relocation, stack pointer initialization, and the ARM Cortex-M startup sequence.</p> </li> <li> <p><strong>Phase 3: Dual-Bank Selection</strong> - Implementing the logic to choose between Bank A and Bank B based on a flag stored in flash. Validating the application before jumping (checking the stack pointer, verifying the reset handler).</p> </li> <li> <p><strong>Phase 4: Persistent State Management</strong> - Designing the <code class="language-plaintext highlighter-rouge">boot_state_t</code> structure, implementing CRC32 integrity checks, and writing atomic read/write/erase functions. Handling structure padding and word alignment constraints.</p> </li> <li> <p><strong>Phase 5: OTA Protocol Implementation</strong> - Building the packet-based protocol for firmware downloads. Chunking, per-chunk CRC verification, flash writes during transfer, and retransmission logic.</p> </li> <li> <p><strong>Phase 6: Verification and Rollback</strong> - Adding safety mechanisms to prevent bricking. Boot attempt counters, automatic rollback after failed boots, and safe mode when no valid firmware exists.</p> </li> <li> <p><strong>Phase 7: Lessons Learned and Future Improvements</strong> - What worked, what didn’t, and what I’d do differently next time. Ideas for production hardening (secure boot, WiFi OTA, power-failure resilience).</p> </li> </ul> <p>Each post will include the actual code I wrote, the debugging challenges I hit, and the lessons I extracted.</p> <h2 id="hardware-and-ide-specifications">Hardware and IDE Specifications</h2> <ul> <li>GitHub Link:</li> <li>Hardware and IDE: STM32F429I-DISC1 / STM32CubeIDE</li> <li>OS: Ubuntu 24.04 LTS</li> </ul>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[If you’re a student interested in firmware engineering, you’ve probably wondered what project to start with. Of course, being interested in firmware engineering at all is already a rare thing.]]></summary></entry><entry><title type="html">Basic Keywords for Developing a Linux Device Driver</title><link href="https://seanshnkim.github.io/blog/2025/TIL-Basic-Keywords-Device-Driver/" rel="alternate" type="text/html" title="Basic Keywords for Developing a Linux Device Driver"/><published>2025-11-23T23:48:41+00:00</published><updated>2025-11-23T23:48:41+00:00</updated><id>https://seanshnkim.github.io/blog/2025/TIL-Basic-Keywords-Device-Driver</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2025/TIL-Basic-Keywords-Device-Driver/"><![CDATA[<h2 id="1-character-device-vs-block-device">1. Character Device vs. Block Device</h2> <p><strong>Character device</strong>: Keyboards, serial port, sound cards, etc. As you can see, keyboards transmit data as a stream of characters(bytes). One of the main characteristic of character devices is that it doesn’t have buffering for sequential data. Typically random access is not allowed (there is a reason why I said “typically” <sup id="fnref:1"><a href="#fn:1" class="footnote" rel="footnote" role="doc-noteref">1</a></sup>, because it only handles “sequential” access.</p> <p><strong>Block device</strong>: Hard drives, SSDs, USB drives, etc. They are buffered, handle data in fixed-size blocks and support random access. Operations involve reading/writing whole blocks of data, supporting operations such as seeking within a file.​</p> <h2 id="2-major-number-vs-minor-number">2. Major Number vs. Minor Number</h2> <blockquote> <p>Devices have major and minor numbers. The <strong>major number</strong> specifies the device type whereas the <strong>minor number</strong> specifies an instance of that type. As such, it is common that a single device driver takes care of an entire major number.</p> </blockquote> <p>If the major number identifies the driver (type) associated with a device, then the minor number differentiates between individual instances or units handled by the same driver. For example, multiple serial ports may use the same driver (same major number) but are differentiated by their minor numbers.</p> <h2 id="kernel-module">Kernel Module</h2> <p>Device drivers are often built as <strong>kernel modules</strong>. A kernel module can be simply thought as a piece of code, but with special purposes. It can be dynamically loaded/unloaded into the OS kernel without rebooting or recompiling the kernel. <sup id="fnref:2"><a href="#fn:2" class="footnote" rel="footnote" role="doc-noteref">2</a></sup></p> <p>A device driver is a specific type of kernel module. A driver itself is software, or some special type of software that serves as an “interface” to hardware devices for operating systems.<sup id="fnref:3"><a href="#fn:3" class="footnote" rel="footnote" role="doc-noteref">3</a></sup></p> <h2 id="device-file">Device File</h2> <p>Device in Linux is interpreted as a file. These special files located in <code class="language-plaintext highlighter-rouge">/dev</code> (like <code class="language-plaintext highlighter-rouge">/dev/sda</code> or <code class="language-plaintext highlighter-rouge">/dev/tty</code>) are the interface between user space and device drivers. Then why is it represented as a file? Because then an user (or user applications) can communicate with hardware using standard file operations. Device drivers in the kernel space cannot be accessed by user directly.</p> <h2 id="references">References</h2> <div class="footnotes" role="doc-endnotes"> <ol> <li id="fn:1"> <p>https://www.linuxquestions.org/questions/linux-newbie-8/what-are-the-differences-between-character-devices-and-block-devices-4175530933/ <a href="#fnref:1" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> <li id="fn:2"> <p>The Linux Kernel Module Programming Guide: https://sysprog21.github.io/lkmpg/. Most kernel programming guides available in the internet seem to be outdated (2.6.x kernel version), but this project updates its contents to the latest version (5.x and 6.x kernel versions). For more information, look into the github repository. <a href="#fnref:2" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> <li id="fn:3"> <p>https://en.wikipedia.org/wiki/Device_driver <a href="#fnref:3" class="reversefootnote" role="doc-backlink">&#8617;</a></p> </li> </ol> </div>]]></content><author><name></name></author><category term="TIL"/><summary type="html"><![CDATA[1. Character Device vs. Block Device]]></summary></entry></feed>
+</pre></td></tr></tbody></table></code></pre></div></div>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[The Problem: Where Should the Bootloader Store State?]]></summary></entry><entry><title type="html">Building My First Firmware Project with Claude</title><link href="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-Intro/" rel="alternate" type="text/html" title="Building My First Firmware Project with Claude"/><published>2026-01-12T19:43:16+00:00</published><updated>2026-01-12T19:43:16+00:00</updated><id>https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-Intro</id><content type="html" xml:base="https://seanshnkim.github.io/blog/2026/Dual-Bank-Bootloader-Intro/"><![CDATA[<p>If you’re a student interested in firmware engineering, you’ve probably wondered what project to start with. Of course, being interested in firmware engineering at all is already a rare thing.</p> <p>The more I learn about firmware, the more I realize how specialized this field is. Universities don’t teach firmware engineering. There are no such hackathons or contests in firmware. Online resources aren’t nearly as abundant as they are for machine learning or app development. Even more, it’s demanding and has a high barrier to entry, because it requires both low-level software programming skills and a solid grasp of hardware fundamentals.</p> <p>That’s why if it were five years ago, I wouldn’t have even dreamed of becoming a firmware engineer. But now, we have AI tools. While I was working on this project with Claude AI, I felt like there is a senior firmware developer sitting next to me and coaching me in real time. It helped me choose topics, answer questions, and debug issues made this possible. AI is not perfect yet, but for a student working alone like me, it is truly a powerful source of motivation.</p> <p>After careful consideration with Claude, I decided to build a custom bootloader as my first project. First, there were relatively plenty of documents and open-source projects to reference. Of course, part of me wanted to jump straight into something more challenging, but I thought it would be better to build confidence with a successful first project before moving on to more complex ones. More importantly, bootloader development touches on concepts that are fundamental to embedded systems: memory management, hardware initialization, communication protocols, and safety-critical design.</p> <h2 id="what-is-a-bootloader-and-why-should-you-care">What Is a Bootloader? And Why Should You Care?</h2> <p>A bootloader is a small program (yes, it’s software!) that runs right after reset, executed from ROM (Read Only Memory) or flash when the device powers on. It initializes hardware and loads the main firmware image stored in flash into RAM.</p> <p>To make this easier to understand, I will use an analogy. Imagine a computer is like a kitchen. Then <strong>a bootloader is like a “opening manager” for a kitchen</strong>. Before opening hours, the kitchen is dark, the equipment is off, and nothing is ready to cook. Someone needs to:</p> <ul> <li>Turn on the ovens and check they’re at the right temperature</li> <li>Make sure the refrigerators are working</li> <li>Verify the gas lines are connected properly</li> <li>Check that all the cooking stations have their tools ready</li> </ul> <p>Only then the manager will hand control over to the head chef to start cooking.</p> <p>Similarly, a microcontroller hardware has nothing configured yet before pressing the power button. The bootloader’s job is to:</p> <ul> <li>Wake up the hardware (clocks, memory, peripherals) so that higher-level firmware can run correctly</li> <li>Decide which application firmware to run if there are multiple versions installed</li> <li>Verify that the chosen firmware is safe to execute. For “secure boot”, it can check digital signatures or hashes to allow only trusted firmware</li> <li>Transfer control to the main application</li> <li>Offer fallback/rollback behavior (e.g., dual‑image or recovery mode) if the main application is missing, corrupt, or fails to start</li> </ul> <p>Bootloaders are everywhere in modern electronics, but we rarely see them because they’re not a type of software we can directly interact with. For example, every STM32 microcontroller ships with a built-in bootloader in ROM that lets you flash firmware over USB or UART. Arduino boards use a bootloader to accept sketches over USB without needing a dedicated programmer. Wireless earbuds or car’s dashboard all have bootloaders that enable firmware updates without replacing the hardware.</p> <h3 id="meaning-of-application-in-this-discussion">Meaning of “Application” in This Discussion</h3> <p>To clarify one more thing: <strong>the “application” referred to here means firmware</strong>. I’m using “application” as a term that contrasts with “bootloader,” so you shouldn’t think of it as a typical user-application. In other words, within the firmware category, there’s “bootloader firmware” and “non-bootloader firmware.” To distinguish from the bootloader, I’ll simply refer to regular firmware as “application” from now on.</p> <h2 id="core-project-goals">Core Project Goals</h2> <p>I focused on three specific challenges that represent key bootloader functionality:</p> <ol> <li><strong>Dual-Bank Architecture</strong>: By dividing flash memory into two “banks”, the bootloader can roll back to the previous working version (Bank A) if the new firmware (in Bank B) is broken. This backup memory architecture provides <strong>fail-safe updates</strong>.</li> <li><strong>Persistent State Management</strong>: The bootloader state (current active bank, boot failure count, etc.) has to survive across power on/off cycles, which requires read/write operations in flash memory. Flash read/erase/write operations are quite different from just assigning values to variables and understanding this distinction is crucial.</li> <li><strong>Over-The-Air (OTA) Protocol</strong>: OTA allows engineers to fix bugs, patch security issues, and ship new features to devices in the field without physically touching them. But in this project, I used UART (with a USB-A to Mini-USB cable) to send firmware updates from a host computer to the microcontroller. The OTA feature includes chunking (breaking the firmware into 1KB pieces), CRC32 verification (detecting corrupted data), retransmission on errors, and atomic switching.</li> </ol> <p>Since I developed this bootloader for self-learning purposes, it lacks most of the features required in production bootloaders. Instead I chose to focus on these three core concepts as to study them in depth.</p> <h2 id="how-and-why-i-wrote-this-blog">How and Why I wrote this Blog</h2> <p>I tried my best to make my blog posts “<strong>process-driven</strong>”, not “result-driven”. I focused on these two:</p> <ol> <li>The conversations with Claude AI</li> <li>Debugging steps.</li> </ol> <p>I avoided simply listing information like a textbook. Instead, I described the questions I had and how I solved problems.</p> <p>To make one thing clear, this project is the result of collaboration between Claude AI and myself. Without Claude, I would have never been able to start or finish the project. For beginners like me who want to learn firmware engineering, AI feels like a launch booster that helps push beyond the steep learning curve. I found potential in AI not just as a tool for writing code, but as an attentive tutor that helps you think, ask questions, and make gradual progress on projects at your own level.</p> <p>I hope that beginners like me in firmware engineering will gain courage from reading my posts. I’m pretty sure some people might think, “Oh wow, this guys basically AI prompted his whole project? I could definitely do better than this!” - and honestly, nothing would make me happier if my posts annoy (or inspire) someone to start their own project.</p> <h2 id="what-youll-find-in-this-series">What You’ll Find in This Series</h2> <p>I’ve broken down the project into phases, roughly corresponding to how I built it:</p> <ul> <li> <p><strong>Phase 1: Understanding Flash Operations</strong> - How to read, write, and erase flash memory on the STM32F429. Why flash requires word alignment, and how to handle data structures that aren’t neat multiples of 4 bytes.</p> </li> <li> <p><strong>Phase 2: Minimal Bootloader and Jump-to-Application</strong> - Creating a bootloader that runs at address <code class="language-plaintext highlighter-rouge">0x08000000</code> and can transfer control to an application at <code class="language-plaintext highlighter-rouge">0x08010000</code>. Vector table relocation, stack pointer initialization, and the ARM Cortex-M startup sequence.</p> </li> <li> <p><strong>Phase 3: Dual-Bank Selection</strong> - Implementing the logic to choose between Bank A and Bank B based on a flag stored in flash. Validating the application before jumping (checking the stack pointer, verifying the reset handler).</p> </li> <li> <p><strong>Phase 4: Persistent State Management</strong> - Designing the <code class="language-plaintext highlighter-rouge">boot_state_t</code> structure, implementing CRC32 integrity checks, and writing atomic read/write/erase functions. Handling structure padding and word alignment constraints.</p> </li> <li> <p><strong>Phase 5: OTA Protocol Implementation</strong> - Building the packet-based protocol for firmware downloads. Chunking, per-chunk CRC verification, flash writes during transfer, and retransmission logic.</p> </li> <li> <p><strong>Phase 6: Verification and Rollback</strong> - Adding safety mechanisms to prevent bricking. Boot attempt counters, automatic rollback after failed boots, and safe mode when no valid firmware exists.</p> </li> <li> <p><strong>Phase 7: Lessons Learned and Future Improvements</strong> - What worked, what didn’t, and what I’d do differently next time. Ideas for production hardening (secure boot, WiFi OTA, power-failure resilience).</p> </li> </ul> <p>Each post will include the actual code I wrote, the debugging challenges I hit, and the lessons I extracted.</p> <h2 id="hardware-and-ide-specifications">Hardware and IDE Specifications</h2> <ul> <li>GitHub Link:</li> <li>Hardware and IDE: STM32F429I-DISC1 / STM32CubeIDE</li> <li>OS: Ubuntu 24.04 LTS</li> </ul>]]></content><author><name></name></author><category term="Firmware"/><summary type="html"><![CDATA[If you’re a student interested in firmware engineering, you’ve probably wondered what project to start with. Of course, being interested in firmware engineering at all is already a rare thing.]]></summary></entry></feed>
