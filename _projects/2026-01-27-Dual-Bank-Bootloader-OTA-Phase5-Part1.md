@@ -4,10 +4,9 @@ title: "Bootloader with OTA Phase 5: OTA Protocol Implementation - Part 1"
 dat: 2026-01-27 21:14:50
 category: Dual-Bank Bootloader with OTA Update
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
-
 
 ## Before We Dive In
 

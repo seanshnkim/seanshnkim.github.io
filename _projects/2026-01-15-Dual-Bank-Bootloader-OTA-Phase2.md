@@ -4,8 +4,8 @@ title: "Bootloader with OTA Phase 2: Minimal Bootloader"
 date: 2026-01-14 20:05:18
 category: Dual-Bank Bootloader with OTA Update
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 ## Roadmap

@@ -4,8 +4,8 @@ title: "Debugging Bootloader: Part 2"
 date: 2026-01-16 01:45:05
 category: Dual-Bank Bootloader with OTA Update
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 ## Part 1 Summary

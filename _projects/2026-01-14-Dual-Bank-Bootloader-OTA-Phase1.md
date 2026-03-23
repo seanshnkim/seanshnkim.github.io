@@ -4,8 +4,8 @@ title: "Bootloader with OTA Phase 1: Flash Operations"
 date: 2026-01-14 07:18:44
 category: Dual-Bank Bootloader with OTA Update
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 ## The Problem: Where Should the Bootloader Store State?

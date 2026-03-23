@@ -4,8 +4,8 @@ title: "Building My First Firmware Project with Claude"
 date: 2026-01-12 19:43:16
 category: Dual-Bank Bootloader with OTA Update
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 If you're a student interested in firmware engineering, you've probably wondered what project to start with. Of course, being interested in firmware engineering at all is already a rare thing.

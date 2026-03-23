@@ -4,8 +4,8 @@ title: "Bootloader with OTA Phase 3: Dual Bank Selection"
 date: 2026-01-17 01:26:50
 category: Dual-Bank Bootloader with OTA Update
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 ## Phase 3 Overview

@@ -4,8 +4,8 @@ title: "Bootloader with OTA Phase 4: Implementing Persistent Boot State"
 date: 2026-01-20 14:48:37
 categories: Firmware
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 In Phase 3, we built a dual-bank system where Bank A and Bank B can each hold a complete firmware image. **But when the device powers on, how does the bootloader know which bank to boot from?** That's where the "boot state" comes in. We store the boot state in persistent storage so that it can be retrieved across power cycles.
@@ -67,6 +67,7 @@ uint32_t boot_state_get_bank_address(active_bank_t bank);
 ```
 
 Key design decisions:
+
 1. **Magic number (`0xDEADBEEF`)**: Acts as a signature to detect valid boot state vs. erased/corrupted flash
 2. **Bank status enum**: Tracks whether each bank is VALID, INVALID, or TESTING (for rollback after OTA)
 3. **CRC32 field**: Integrity check to detect flash corruption or incomplete writes

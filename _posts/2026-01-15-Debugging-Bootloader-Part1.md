@@ -4,8 +4,8 @@ title: "Debugging Bootloader: Part 1"
 date: 2026-01-15 01:21:27
 categories: Firmware
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 In this post, I'll share the debugging process I went through in Phase 2. Looking at just the conclusion, the cause was really simple. But as with all debugging, you have no choice but to find the cause through trial and error. I think it's worth recording how I solved it.

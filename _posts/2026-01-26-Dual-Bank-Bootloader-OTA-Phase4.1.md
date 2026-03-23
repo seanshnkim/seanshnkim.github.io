@@ -4,8 +4,8 @@ title: "Bootloader with OTA Phase 4.1: Debugging the CRC Mismatch"
 date: 2026-01-26 19:40:10
 categories: Firmware
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
 
 In Phase 4, I implemented the boot state structure with CRC32 integrity checking. The code looked correct, the logic made sense, and everything compiled without warnings.
@@ -96,7 +96,7 @@ If there isn't any problem, the output should be:
 
 ```
 --- Test 1: Reading boot state ---
-Boot state: 
+Boot state:
 Magic: 0x...
 Active Bank: ...
 Bank A Status: ...
@@ -143,7 +143,7 @@ All tests complete!
 ========================================
 ```
 
-The write says it succeeded, but reading back immediately fails with a CRC error. We also got `ERROR: Read failed with code -2`, meaning `boot_state_read` returned -2 for some reason. 
+The write says it succeeded, but reading back immediately fails with a CRC error. We also got `ERROR: Read failed with code -2`, meaning `boot_state_read` returned -2 for some reason.
 
 First, let's read the `boot_state_read` code carefully:
 
@@ -162,7 +162,7 @@ int boot_state_read(boot_state_t *state) {
 
     printf("  calculated CRC32: 0x%08lX\r\n", calculated_crc);
     state->crc32 = saved_crc;
-    
+
     if (calculated_crc != saved_crc) {
         printf("  CRC MISMATCH!\r\n");
         return -2;
@@ -240,15 +240,15 @@ int boot_state_write(const boot_state_t *state) {
     uint32_t saved_crc = state->crc32;
     state->crc32 = 0;
     uint32_t calculated_crc = calculate_crc32(state, sizeof(boot_state_t));
-    
+
     printf("  calculated CRC32: 0x%08lX\r\n", calculated_crc);
     state->crc32 = saved_crc;
-    
+
     if (calculated_crc != saved_crc) {
         printf("  CRC MISMATCH!\r\n");
         return -2;
     }
-    
+
     return 0;
 }
 ```
@@ -306,6 +306,7 @@ ________9D -> Only the last byte is correct!
 This means it's not a CRC calculation problem, but a flash write problem.
 
 ## Finding the Root Cause
+
 Let's look at the original `boot_state` structure:
 
 ```c
@@ -351,6 +352,7 @@ Memory layout of boot_state_t (11 bytes):
 ```
 
 ## Two Solutions
+
 First approach handles partial words:
 
 ```c
@@ -372,7 +374,7 @@ First approach handles partial words:
         HAL_FLASH_Program(FLASH_TYPEPROGRAM_WORD, address, last_word);
 ```
 
-This is obviously the most intuitive way to fix the problem, but what if we don't want the extra code below? 
+This is obviously the most intuitive way to fix the problem, but what if we don't want the extra code below?
 
 The second approach is to redesign the structure to be word-aligned.
 
@@ -415,5 +417,6 @@ typedef struct {
 Then we do not have to worry about extra remaining bytes. We can leave `boot_state_write` as it was, and it will fix the CRC mismatch issue.
 
 ## Small Discussion
-Claude argued the second approach is better in that it doesn't need special handling, it makes code simpler, and it's less error-prone. I agree with it at some point: We use 9 extra bytes in flash to make `boot_state` word-aligned, but for a structure stored once in a 128KB sector, this is completely negligible. 
+
+Claude argued the second approach is better in that it doesn't need special handling, it makes code simpler, and it's less error-prone. I agree with it at some point: We use 9 extra bytes in flash to make `boot_state` word-aligned, but for a structure stored once in a 128KB sector, this is completely negligible.
 However, I don't think the first approach is a bad idea; it also works, but it makes a code just a bit more complicated. If I choose the second approach, and if this is a collaborative project, programmers would need to establish an explicit design rule: all structures stored in flash memory must be word-aligned.

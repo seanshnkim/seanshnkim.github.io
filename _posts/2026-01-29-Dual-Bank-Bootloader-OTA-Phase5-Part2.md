@@ -4,9 +4,10 @@ title: "Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation"
 date: 2026-01-29 22:10:21
 categories: Firmware
 toc:
-   beginning: true
-   sidebar: left
+  beginning: true
+  sidebar: left
 ---
+
 ## Phase 5 Overview
 
 - Design complete OTA protocol (START, DATA, END packets)
