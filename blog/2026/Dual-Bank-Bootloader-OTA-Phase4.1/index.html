@@ -182,7 +182,7 @@
 24
 25
 </pre></td> <td class="rouge-code"><pre>--- Test 1: Reading boot state ---
-Boot state: 
+Boot state:
 Magic: 0x...
 Active Bank: ...
 Bank A Status: ...
@@ -275,7 +275,7 @@ All tests complete!
 
     <span class="n">printf</span><span class="p">(</span><span class="s">"  calculated CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">calculated_crc</span><span class="p">);</span>
     <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="n">saved_crc</span><span class="p">;</span>
-    
+
     <span class="k">if</span> <span class="p">(</span><span class="n">calculated_crc</span> <span class="o">!=</span> <span class="n">saved_crc</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC MISMATCH!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
         <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
@@ -397,15 +397,15 @@ All tests complete!
     <span class="kt">uint32_t</span> <span class="n">saved_crc</span> <span class="o">=</span> <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span><span class="p">;</span>
     <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
     <span class="kt">uint32_t</span> <span class="n">calculated_crc</span> <span class="o">=</span> <span class="n">calculate_crc32</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">boot_state_t</span><span class="p">));</span>
-    
+
     <span class="n">printf</span><span class="p">(</span><span class="s">"  calculated CRC32: 0x%08lX</span><span class="se">\r\n</span><span class="s">"</span><span class="p">,</span> <span class="n">calculated_crc</span><span class="p">);</span>
     <span class="n">state</span><span class="o">-&gt;</span><span class="n">crc32</span> <span class="o">=</span> <span class="n">saved_crc</span><span class="p">;</span>
-    
+
     <span class="k">if</span> <span class="p">(</span><span class="n">calculated_crc</span> <span class="o">!=</span> <span class="n">saved_crc</span><span class="p">)</span> <span class="p">{</span>
         <span class="n">printf</span><span class="p">(</span><span class="s">"  CRC MISMATCH!</span><span class="se">\r\n</span><span class="s">"</span><span class="p">);</span>
         <span class="k">return</span> <span class="o">-</span><span class="mi">2</span><span class="p">;</span>
     <span class="p">}</span>
-    
+
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></td> </tr></tbody></table></code></pre></div></div> <p>Here’s what the debug output revealed:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code><table class="rouge-table"><tbody><tr>

@@ -23,7 +23,40 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-bootloader-with-ota-phase-5-part-2-ota-handler-implementation",
+        },{id: "post-uart-bare-metal-driver-phase-2-implementing-isr",
+      
+        title: "UART Bare-Metal Driver Phase 2: Implementing ISR",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/UART-Baremetal-Driver-Phase2/";
+        
+      },
+    },{id: "post-uart-bare-metal-driver-phase-1-clock-init-and-gpio-configuration",
+      
+        title: "UART Bare-Metal Driver Phase 1: Clock Init and GPIO Configuration",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/UART-Baremetal-Driver-Phase1/";
+        
+      },
+    },{id: "post-uart-bare-metal-driver-project-overview",
+      
+        title: "UART Bare-Metal Driver Project Overview",
+      
+      description: "",
+      section: "Posts",
+      handler: () => {
+        
+          window.location.href = "/blog/2026/UART-Baremetal-Driver-Overview/";
+        
+      },
+    },{id: "post-bootloader-with-ota-phase-5-part-2-ota-handler-implementation",
       
         title: "Bootloader with OTA Phase 5 - Part 2: OTA Handler Implementation",
       
