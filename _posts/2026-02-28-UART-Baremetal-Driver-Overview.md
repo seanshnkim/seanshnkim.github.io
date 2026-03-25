@@ -51,9 +51,9 @@ But we only started Phase 1 of the entire project. There are total three phases:
 - Understand what startup file and linker script are actually doing
 - Write register-level code to 1) enable the clock and 2) configure GPIO
 
-### UART vs. SPI vs. I2C
+### Does UART project help with SPI and I2C later?
 
-Side question: But before jumping into implementing UART, there are two other commonly used protocols: SPI and I2C. If I had to build a custom driver for SPI or I2C, how would they be different from UART?
+There are two other commonly used protocols: SPI and I2C. If I had to build a custom driver for SPI or I2C, how would they be different from UART?
 
 ```
 UART (interrupt-driven)
@@ -63,6 +63,8 @@ SPI
 I2C
     ↓ hardest — adds addressing, ACK, repeated start, state machine
 ```
+
+If I were to implement bare-metal SPI and I2C driver, then Interrupt patterns, register workflow, and init sequence all transfer. However, code will not be reused directly.
 
 UART is the best starting point. It's the simplest protocol but exposes every foundational concept.
 
@@ -91,11 +93,20 @@ I used STM32F429I-DISC1, but any other STM32F4xxx board is fine.
 | USB-to-TTL adapter       | Not needed — ST-Link VCP handles it                  |
 | Solder bridges SB11/SB15 | Closed ✅ (verified physically)                      |
 
-### Do I need a USB-to-TTL serial adaptor?
+### 2.1. Do I need a USB-to-TTL serial adaptor?
 
-No, because there is an alternative.
+The answer is "No".
+To explain first what a USB-to-TTL serial adaptor is, and why it may be necessary:
 
-The STM32F429I-DISC1 board actually has **ST-Link built in**, and ST-Link exposes a **Virtual COM Port (VCP)** over the same USB cable you use for programming. It means your laptop already sees it as a serial port. However, the VCP on the Discovery board is **hardwired to a specific USART peripheral and pins**.
+My laptop sends data over USB (=protocol), but my STM32 board receives data through UART at TTL-level serial. The adapter converts USB packets ↔ UART frames so your PC can open a COM port and exchange serial data with the MCU. Without it, you'd have no way to connect a bare UART to a PC directly. That's why we should raise this question: Do I need a USB-to-TTL serial adaptor?
+
+Thanks to on-board ST-Link V2 debugger, it handles the adaptor's task. To be more specific, the ST-Link firmware exposes a **Virtual COM Port (VCP)** which the PC sees as a standard serial port.
+
+```
+PC (USB)  ←→       ST-Link MCU         ←→  Target MCU UART (STM32F429)
+              [VCP / USB-CDC class]        [via SB11/SB15 solder bridges]
+                acts as the bridge
+```
 
 In the STM32F429I-DISC1 user manual (UM1670), it says:
 
@@ -109,11 +120,12 @@ In the STM32F429I-DISC1 user manual (UM1670), it says:
 
 ![[solder-bridge.jpg | 500]]
 
-**USART1** is the _peripheral_. It is the hardware block inside the STM32 chip that handles serial communication. On the other hand, **PA9 and PA10** are the _physical pins_ on the chip where USART1's TX and RX signals come out.
+### 2.2. I'm confused with the terms: USART1 vs. PA9 (or PA10)
 
-If configured USART1 in software, but the signal only appears in the real world through PA9 (TX) and PA10 (RX).
+- **USART1** is the _peripheral_. It is the hardware block inside the STM32 chip that handles serial communication.
+- **PA9 and PA10** are the _physical pins_ on the chip where USART1's TX and RX signals come out.
 
-The setup is:
+If configured USART1 in software, but the signal only appears in the real world through PA9 (TX) and PA10 (RX). The setup is:
 
 ```
 STM32F429 (USART1) → PA9/PA10 → SB11/SB15 → ST-Link VCP → USB → Laptop
@@ -201,9 +213,9 @@ Src
 ├── system_stm32f4xx.c
 ```
 
-### 3.1 Startup File (`startup_stm32f429zitx.s`)
+### 3.1 What's the Purpose of Startup File (`startup_stm32f429zitx.s`)?
 
-**Common misconception:** The startup file does NOT initialize peripherals or clocks.
+Startup file prepares C runtime environment before `main()`. There is common misconception here — the startup file does NOT initialize peripherals or clocks.
 
 **What it actually does (in order):**
 

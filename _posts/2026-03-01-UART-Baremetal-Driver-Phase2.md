@@ -21,6 +21,13 @@ Step 5: Configure NVIC      → NVIC_EnableIRQ, NVIC_SetPriority  ← DONE
 Step 6: Write ISR           → USART1_IRQHandler() pseudocode    ← DONE
 ```
 
+### x.8 The NVIC (Nested Vector Interrupt Controller)
+
+- Hardware block that manages which interrupts are enabled and at what priority
+- Acts as a **gatekeeper** — even if USART1 fires an interrupt, NVIC can block it
+- You must call `NVIC_EnableIRQ(USART1_IRQn)` to allow it through
+- Your ISR must be named exactly **`USART1_IRQHandler()`** — must match the vector table entry in startup file
+
 ---
 
 ## 2. Key Concepts Learned
