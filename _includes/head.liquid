@@ -36,8 +36,15 @@
   defer
   rel="stylesheet"
   href="{{ '/assets/css/jekyll-pygments-themes-github.css' | relative_url | bust_file_cache }}"
-  media=""
+  media="(prefers-color-scheme: light)"
   id="highlight_theme_light"
+>
+<link
+  defer
+  rel="stylesheet"
+  href="{{ '/assets/css/jekyll-pygments-themes-native.css' | relative_url | bust_file_cache }}"
+  media="(prefers-color-scheme: dark)"
+  id="highlight_theme_dark"
 >
 
 {% if page.toc and page.toc.sidebar %}
@@ -72,13 +79,6 @@
 <!-- Dark Mode -->
 <script src="{{ '/assets/js/theme.js' | relative_url | bust_file_cache }}"></script>
 {% if site.enable_darkmode %}
-  <link
-    defer
-    rel="stylesheet"
-    href="{{ '/assets/css/jekyll-pygments-themes-native.css' | relative_url | bust_file_cache }}"
-    media="none"
-    id="highlight_theme_dark"
-  >
   <script>
     initTheme();
   </script>
