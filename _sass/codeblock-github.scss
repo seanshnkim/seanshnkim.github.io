@@ -65,13 +65,29 @@ code {
     color: #e6edf3;
   }
 
-  .highlight .hll { background-color: #2d2d2d; }
-  .highlight .c  { color: #8b949e; } /* comments */
-  .highlight .k  { color: #ff7b72; } /* keywords */
-  .highlight .n  { color: #e6edf3; } /* names */
-  .highlight .s  { color: #a5d6ff; } /* strings */
-  .highlight .p  { color: #e6edf3; } /* punctuation */
-  .highlight .o  { color: #ff7b72; } /* operators */
+  .highlight .hll {
+    background-color: #2d2d2d;
+  }
+  .highlight .c {
+    color: #8b949e;
+  } /* comments */
+  .highlight .k {
+    color: #ff7b72;
+  } /* keywords */
+  .highlight .n {
+    color: #e6edf3;
+  } /* names */
+  .highlight .s {
+    color: #a5d6ff;
+  } /* strings */
+  .highlight .p {
+    color: #e6edf3;
+  } /* punctuation */
+  .highlight .o {
+    color: #ff7b72;
+  } /* operators */
   .highlight .mi,
-  .highlight .mf { color: #79c0ff; } /* numbers */
+  .highlight .mf {
+    color: #79c0ff;
+  } /* numbers */
 }

@@ -2,7 +2,7 @@
 # Site settings
 # -----------------------------------------------------------------------------
 
-title: Sean Kim's Blog # the website title (if blank, full name will be used instead)
+title: Sean Kim # the website title (if blank, full name will be used instead)
 first_name: Sean
 last_name: Kim
 # contact_note: >
@@ -86,7 +86,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: Sean Kim's Blog # blog_name will be displayed in your blog page
+blog_name: Sean Kim # blog_name will be displayed in your blog page
 # blog_description: Projects, tech studies, personal thoughts
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
@@ -267,7 +267,7 @@ jekyll-archives:
     category: "/blog/category/:name/"
 
 display_tags: [] # these tags will be displayed on the front page of your blog
-display_categories: ["RTOS", "System Programming", "Firmware", "TIL"] # these categories will be displayed on the front page of your blog
+display_categories: ["RTOS", "Firmware", "AI Agent Engineering", "TIL"] # these categories will be displayed on the front page of your blog
 # How many categories to keep expanded/open by default in the sidebar
 sidebar_open_categories: 0
 
@@ -454,7 +454,7 @@ third_party_libraries:
     version: "5.5.0"
   google_fonts:
     url:
-      fonts: "https://fonts.googleapis.com/css?family=Roboto:300,400,500,700|Roboto+Slab:100,300,400,500,700|Material+Icons&display=swap"
+      fonts: "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap"
   highlightjs:
     integrity:
       css:

@@ -8,6 +8,7 @@ body {
   background-color: var(--global-bg-color);
   color: var(--global-text-color);
   transition: background-color 0.3s ease-in-out;
+  font-family: "IBM Plex Sans", sans-serif;
 }
 
 p,
@@ -300,6 +301,11 @@ ul.task-list input[type="checkbox"] {
 
   .navbar-brand {
     color: var(--global-text-color);
+
+    .navbar-logo {
+      height: 28px;
+      width: auto;
+    }
   }
 
   .navbar-nav .nav-item .nav-link {

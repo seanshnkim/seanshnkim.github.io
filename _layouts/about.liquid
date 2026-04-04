@@ -1,89 +1,213 @@
 ---
 layout: default
 ---
-<div class="post">
-  <header class="post-header">
-    <h1 class="post-title">
-      {% if site.title == 'blank' %}
-        {{ site.first_name }}
-        {{ site.middle_name }}
-        {{ site.last_name }}
+<div class="about-container">
+  <!-- Sidebar -->
+  <aside class="about-sidebar">
+    {% if page.profile and page.profile.image %}
+      {% assign profile_image_path = page.profile.image | prepend: 'assets/img/' %}
+      {% if page.profile.image_circular %}
+        {% assign profile_image_class = 'about-profile-img rounded-circle' %}
       {% else %}
-        {{ site.title }}
+        {% assign profile_image_class = 'about-profile-img' %}
       {% endif %}
+      {%
+        include figure.liquid loading="eager" path=profile_image_path class=profile_image_class
+        alt=page.profile.image cache_bust=true
+      %}
+    {% endif %}
+
+    <h1 class="about-name">
+      {{ site.first_name }}
+      {{ site.last_name }}
     </h1>
-    <p class="desc">{{ page.subtitle }}</p>
-  </header>
 
-  <article>
-    {% if page.profile %}
-      <div class="profile float-{% if page.profile.align == 'left' %}left{% else %}right{% endif %}">
-        {% if page.profile.image %}
-          {% assign profile_image_path = page.profile.image | prepend: 'assets/img/' %}
-          {% if page.profile.image_circular %}
-            {% assign profile_image_class = 'img-fluid z-depth-1 rounded-circle' %}
-          {% else %}
-            {% assign profile_image_class = 'img-fluid z-depth-1
-      rounded' %}
-          {% endif %}
-          {% capture sizes %}(min-width: {{ site.max_width }}) {{ site.max_width | minus: 30 | times: 0.3}}px, (min-width: 576px)
-      30vw, 95vw"{% endcapture %}
-          {%
-            include figure.liquid loading="eager" path=profile_image_path class=profile_image_class sizes=sizes alt=page.profile.image
-            cache_bust=true
-          %}
-        {% endif %}
-        {% if page.profile.more_info %}
-          <div class="more-info">{{ page.profile.more_info }}</div>
-        {% endif %}
-      </div>
+    {% if page.job_title %}
+      <p class="about-job-title">{{ page.job_title }}</p>
     {% endif %}
 
+    <ul class="about-links">
+      {% for social in site.data.socials %}
+        {% case social[0] %}
+          {% when 'email' %}
+            <li>
+              <i class="fa-solid fa-envelope"></i>
+              <a href="mailto:{{ social[1] | encode_email }}">Email</a>
+            </li>
+          {% when 'linkedin_username' %}
+            <li>
+              <i class="fa-brands fa-linkedin"></i>
+              <a href="https://www.linkedin.com/in/{{ social[1] }}" target="_blank">LinkedIn</a>
+            </li>
+          {% when 'github_username' %}
+            <li>
+              <i class="fa-brands fa-github"></i>
+              <a href="https://github.com/{{ social[1] }}" target="_blank">GitHub</a>
+            </li>
+        {% endcase %}
+      {% endfor %}
+    </ul>
+
+    {% if page.education %}
+      <div class="about-edu-box">
+        {{ page.education }}
+      </div>
+    {% endif %}
+  </aside>
+
+  <!-- Main Content -->
+  <main class="about-main">
     <div class="clearfix">{{ content }}</div>
-
-    <!-- News -->
-    {% if page.news and site.announcements and site.announcements.enabled %}
-      <h2>
-        <a href="{{ '/news/' | relative_url }}" style="color: inherit">news</a>
-      </h2>
-      {% include news.liquid limit=true %}
-    {% endif %}
-
-    <!-- Latest posts -->
-    {% if site.latest_posts and site.latest_posts.enabled %}
-      <h2>
-        <a href="{{ '/blog/' | relative_url }}" style="color: inherit">latest posts</a>
-      </h2>
-      {% include latest_posts.liquid %}
-    {% endif %}
-
-    <!-- Selected papers -->
-    {% if page.selected_papers %}
-      <h2>
-        <a href="{{ '/publications/' | relative_url }}" style="color: inherit">selected publications</a>
-      </h2>
-      {% include selected_papers.liquid %}
-    {% endif %}
-
-    <!-- Social -->
-    {% if page.social %}
-      <div class="social">
-        <div class="contact-icons">{% include social.liquid %}</div>
-        <div class="contact-note">{{ site.contact_note }}</div>
-      </div>
-    {% endif %}
-
-    {% if site.newsletter and site.newsletter.enabled and site.footer_fixed %}
-      {% include newsletter.liquid center=true %}
-    {% endif %}
-  </article>
+  </main>
 </div>
 
 <style>
-  .social .contact-icons {
-    font-size: 2rem; /* Adjusts the size of the icons */
+  .about-container {
+    display: flex;
+    gap: 2.5rem;
+    align-items: flex-start;
+    padding-top: 1rem;
   }
-  .social .contact-icons a {
-    margin-right: 10px;
+
+  /* --- Sidebar --- */
+  .about-sidebar {
+    flex: 0 0 220px;
+    position: sticky;
+    top: 5rem;
+  }
+
+  .about-sidebar .about-profile-img,
+  .about-sidebar figure img {
+    width: 100%;
+    border-radius: 0;
+    margin-bottom: 1rem;
+  }
+
+  .about-sidebar .rounded-circle,
+  .about-sidebar figure img.rounded-circle {
+    border-radius: 50%;
+  }
+
+  /* Remove figure caption/margin added by al-folio figure include */
+  .about-sidebar figure {
+    margin: 0 0 1rem 0;
+  }
+
+  .about-name {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0 0 0.3rem 0;
+  }
+
+  .about-job-title {
+    font-size: 0.95rem;
+    color: var(--global-text-color-light, #666);
+    margin-bottom: 1rem;
+  }
+
+  .about-links {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem 0;
+  }
+
+  .about-links li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .about-links li i {
+    width: 16px;
+    color: var(--global-text-color-light, #666);
+    flex-shrink: 0;
+  }
+
+  .about-edu-box {
+    border-top: 1px solid var(--global-divider-color, #e0e0e0);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--global-text-color-light, #666);
+    line-height: 1.5;
+  }
+
+  /* --- Main Content --- */
+  .about-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* --- Timeline --- */
+  .about-timeline {
+    position: relative;
+    margin: 2rem 0;
+    padding-left: 1.75rem;
+  }
+
+  /* Vertical line */
+  .about-timeline::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--global-divider-color, #e0e0e0);
+  }
+
+  .about-timeline-entry {
+    position: relative;
+    padding: 0.25rem 0 1.5rem 1.25rem;
+  }
+
+  /* Circle dot on the line */
+  .about-timeline-entry::before {
+    content: '';
+    position: absolute;
+    left: -1.1rem;
+    top: 0.4rem;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    background-color: var(--global-bg-color, #fff);
+    border: 2px solid var(--global-theme-color, #58a6ff);
+  }
+
+  .about-timeline-entry h3 {
+    margin: 0 0 0.2rem 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+  }
+
+  .about-timeline-entry .timeline-meta {
+    font-size: 0.82rem;
+    color: var(--global-text-color-light, #666);
+    margin-bottom: 0.5rem;
+  }
+
+  .about-timeline-entry p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--global-text-color-light, #666);
+  }
+
+  /* --- Responsive --- */
+  @media (max-width: 768px) {
+    .about-container {
+      flex-direction: column;
+    }
+    .about-sidebar {
+      flex: none;
+      width: 100%;
+      position: relative;
+      top: 0;
+    }
+    .about-sidebar .about-profile-img,
+    .about-sidebar figure img {
+      width: 140px;
+    }
   }
 </style>

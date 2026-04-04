@@ -1,14 +1,92 @@
 ---
 layout: post
-title: "UART Bare-Metal Driver Phase 2: Implementing ISR"
+title: "UART Bare-Metal Driver Phase 2: Baud Rate, Control Register, and NVIC"
 date: 2026-03-01 12:41:50
 categories: Firmware
 toc: '{"beginning":true,"sidebar":"left"}'
 ---
 
-**Status:** ✅ BRR, CR1 configured. ISR pseudocode complete. Ring buffer next.
+## Baud Rate Register (BRR)
 
----
+We are not done yet with UART Init! Now it's time to configure the USART1 peripheral. Another register to tackle is **BRR (Baud Rate Register)**.
+
+Before I explain it, open RM0090 and find **Section 30.6.3: Fractional baud rate generation**. And then answer this question:
+_What does the STM32F429 use as its clock source **immediately after reset**, before any software has touched the RCC registers?_
+
+Or starting from USART's view: _your USART1 is on APB2 — do you know what clock frequency APB2 runs at on your STM32F429 by default, straight after reset?_
+
+-> In p.222, 7.2.6. System clock (SYSCLK) selection, it says: "After a system reset, the **HSI oscillator** is selected as the system clock. When a clock source is used directly or through PLL as the system clock, it is not possible to stop it."
+
+1. What frequency does HSI run at? (It's right there in that section or nearby.)
+   -> The HSI clock signal is generated from an internal 16MHz RC oscillator, so it should be 16MHz.
+2. HSI feeds SYSCLK — but your USART1 is on APB2, not directly on SYSCLK. What sits between SYSCLK and APB2? And does that divider have a default value after reset?
+   -> From looking at the clock tree diagram in p.218, I think what sits between SYSCLK and APB2 is APB PRESC (prescaler), but I didn't find a default value of this divider in the manual.
+
+For the default prescaler value — check **RCC_CFGR register** (should be in Section 7.3.3). Look for the PPRE2 bits. PPRE2 stands for APB high-speed prescaler (APB2). It defaults to `000`, meaning APB2 prescaler = 1 (no division).
+
+-> Reset value: 0x0000 0000 And PPRE2 is bit 15:13, so it is `000`. 
+
+The clocks are divided with the new prescaler factor from 1 to 16 AHB cycles after PPRE2 write.
+What is the APB2 clock frequency your USART1 sees by default after reset?
+
+### The Full Chain
+
+1. Immediately after a system reset, the HSI oscillator is selected as the system clock (SYSCLK).
+2. The HSI clock signal is generated from an internal 16MHz RC oscillator, so the HSI runs at 16MHz frequency.
+3. APB PRESC (prescaler) sits between SYSCLK and APB2, and its default value (reset value) is 1 (= "no divison").
+4. From 3, we can conclude that SYSCLK frequency is the same as APB2 clock frequency.
+5. Therefore, APB2 clock frequency is 16MHz.
+
+```
+HSI → SYSCLK → AHB → APB2
+```
+
+Again, this is only after reset by default.
+
+### formula relating `fCK` (peripheral clock)
+
+Open **RM0090 Section 30.6.3 — Fractional baud rate generation**.
+Your target baud rate is **9600 bps** (standard starting point).
+
+The section will give you a formula relating `fCK` (peripheral clock), the BRR register value, and the resulting baud rate. Find that formula and tell me:
+
+Given `fCK = 16 MHz` and desired baud rate = 9600, what BRR value do you need to write into the register?
+
+-> formula in p.971, underneath the Figure 296. USART block diagram.
+
+```
+USARTDIV = DIV_Mantissa + (DIV_Fraction / 8 * (2 - OVER8) )
+```
+
+- OVER8: OVER8 controls the oversampling ratio. The section should describe two modes — oversampling by 16 (OVER8=0) and oversampling by 8 (OVER8=1). For now, just use **OVER8=0** (oversampling by 16). It's the default and the safe choice at 9600 baud. When OVER8=0, the formula simplifies.
+- **On the fractional result:** 104.1667 can't be represented exactly, so you round to the nearest value the register can express. With OVER8=0, DIV_Fraction is 4 bits (0–15), giving you 1/16th resolution. So: USARTDIV should be `(16MHz / 9600Hz) / 16 = 104.1666...`
+  - Mantissa = 104
+  - Fraction = 0.1667 × 16 = 2.6667
+
+104 in binary is `0000 0110 1000`, and the closest integer to 2.666 is 3, so in binary it is `0011`.
+Combined, `0000 0110 1000 0011`.
+
+So BRR value in hexadecimal is `0x00000683`. `0x683`.
+
+Now verify it. Plug USARTDIV back into the formula:
+
+USARTDIV = 104 + 3/16 = 104.1875
+
+Baud = 16,000,000 / (8 × 2 × 104.1875) = ?
+
+-> `16,000,000 / (8 × 2 × 104.1875) = 9,598.08038392322` So  the error rate:
+`(9600 - 16,000,000 / (8 × 2 × 104.1875)) / 9600 *100 = 0.0199`
+Is calculated, about 0.02%.
+
+So to summarize what you now have:
+
+- `USART1->BRR = 0x0683`
+- OVER8 = 0 (oversampling by 16, default)
+- Actual baud rate error: ~0.02%
+
+Now you're ready to move to **CR1** — the main USART control register. This is where you enable TX, RX, the RXNE interrupt, and finally the USART itself (UE bit).
+
+Open RM0090 and find the CR1 register description. Tell me which bits you think you need to set and why, based on your planned interrupt-driven driver.
 
 ## 1. Progress This Session
 

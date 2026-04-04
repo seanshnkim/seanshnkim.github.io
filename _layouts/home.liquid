@@ -1,0 +1,163 @@
+---
+layout: default
+---
+<div class="home-page">
+  <!-- Hero: Brief intro -->
+  <section class="home-hero">
+    <div class="home-intro">
+      {{ content }}
+    </div>
+  </section>
+
+  <!-- Projects list -->
+  <section class="home-projects">
+    {% assign projects = page.featured_projects %}
+    {% if projects == null or projects.size == 0 %}
+      {% assign projects = '' | split: '' %}
+      {% for i in (1..4) %}
+        {% assign dummy = '' %}
+        {% assign projects = projects | push: dummy %}
+      {% endfor %}
+    {% endif %}
+
+    {% for project in page.featured_projects %}
+      <a class="home-project-row" href="{{ project.url | relative_url }}">
+        <div class="home-project-title">
+          <h3>{{ project.title }}</h3>
+        </div>
+        <div class="home-project-body">
+          {% if project.description %}
+            <p>{{ project.description }}</p>
+          {% endif %}
+          {% if project.tags %}
+            <p class="home-project-tags">{{ project.tags | join: ' · ' }}</p>
+          {% endif %}
+        </div>
+        <div class="home-project-thumb">
+          {% if project.img %}
+            <img src="{{ project.img | relative_url }}" alt="{{ project.title }}">
+          {% else %}
+            <div class="home-project-thumb-placeholder"></div>
+          {% endif %}
+        </div>
+      </a>
+    {% else %}
+      {% for i in (1..4) %}
+        <div class="home-project-row">
+          <div class="home-project-title"><h3>Project Title</h3></div>
+          <div class="home-project-body">
+            <p>Short description of the project goes here.</p>
+            <p class="home-project-tags">Category · Tag · Platform</p>
+          </div>
+          <div class="home-project-thumb">
+            <div class="home-project-thumb-placeholder"></div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endfor %}
+  </section>
+</div>
+
+<style>
+  .home-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 1rem 4rem;
+  }
+
+  /* --- Hero --- */
+  .home-hero {
+    margin-bottom: 4rem;
+  }
+
+  .home-intro p {
+    font-size: 1.4rem;
+    line-height: 1.5;
+    color: var(--global-text-color);
+    margin: 0;
+  }
+
+  /* --- Project rows --- */
+  .home-project-row {
+    display: grid;
+    grid-template-columns: 1fr 2fr auto;
+    column-gap: 2rem;
+    align-items: center;
+    padding: 1.75rem 0;
+    border-top: 1px solid var(--global-divider-color, #e0e0e0);
+    text-decoration: none;
+    color: inherit;
+    transition: opacity 0.15s ease;
+  }
+
+  .home-project-row:last-child {
+    border-bottom: 1px solid var(--global-divider-color, #e0e0e0);
+  }
+
+  .home-project-row:hover {
+    opacity: 0.7;
+    text-decoration: none;
+  }
+
+  .home-project-title h3 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--global-text-color);
+    line-height: 1.3;
+  }
+
+  .home-project-body p {
+    font-size: 0.875rem;
+    color: var(--global-text-color-light, #666);
+    margin: 0 0 0.35rem 0;
+    line-height: 1.5;
+  }
+
+  .home-project-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .home-project-tags {
+    font-size: 0.78rem;
+    color: var(--global-text-color-light, #999);
+  }
+
+  .home-project-thumb {
+    width: 240px;
+    aspect-ratio: 4 / 3;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 6px;
+    background-color: var(--global-divider-color, #e8e8e8);
+  }
+
+  .home-project-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .home-project-thumb-placeholder {
+    width: 100%;
+    height: 100%;
+    background-color: var(--global-divider-color, #e0e0e0);
+  }
+
+  @media (max-width: 640px) {
+    .home-intro p {
+      font-size: 1.1rem;
+    }
+
+    .home-project-row {
+      grid-template-columns: 1fr;
+      row-gap: 0.75rem;
+    }
+
+    .home-project-thumb {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+    }
+  }
+</style>
