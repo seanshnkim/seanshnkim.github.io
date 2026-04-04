@@ -3,18 +3,18 @@ const ninja = document.querySelector('ninja-keys');
 
 // add the home and posts menu items
 ninja.data = [{
-    id: "nav-",
-    title: "",
+    id: "nav-home",
+    title: "Home",
     section: "Navigation",
     handler: () => {
       window.location.href = "/";
     },
-  },{id: "nav-post",
-          title: "Post",
+  },{id: "nav-posts",
+          title: "Posts",
           description: "",
           section: "Navigation",
           handler: () => {
-            window.location.href = "/index.html";
+            window.location.href = "/blog/";
           },
         },{id: "nav-projects",
           title: "Projects",
@@ -23,9 +23,9 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-uart-bare-metal-driver-phase-2-implementing-isr",
+        },{id: "post-uart-bare-metal-driver-phase-2-baud-rate-control-register-and-nvic",
       
-        title: "UART Bare-Metal Driver Phase 2: Implementing ISR",
+        title: "UART Bare-Metal Driver Phase 2: Baud Rate, Control Register, and NVIC",
       
       description: "",
       section: "Posts",
@@ -414,6 +414,26 @@ ninja.data = [{
           description: "",
           section: "Projects",handler: () => {
               window.location.href = "/projects/Dual-Bank-Bootloader-OTA-Phase5-Part2/";
+            },},{id: "projects-bare-metal-uart-driver",
+          title: 'Bare-Metal UART Driver',
+          description: "UART is the simplest form of communication protocol in embedded systems. Built on STM32F429I, I walked through every building process of bare-metal UART driver from scratch.",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/bare-metal-uart/";
+            },},{id: "projects-building-a-bootloader-with-ota-update",
+          title: 'Building a Bootloader with OTA Update',
+          description: "A custom bootloader that enables Over-The-Air (OTA) update through Bluetooth.",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/bootloader-ota/";
+            },},{id: "projects-embedded-sentry-with-gyroscope",
+          title: 'Embedded Sentry with Gyroscope',
+          description: "The project demonstrates hand gesture matching algorithm using an in-built gyroscope.",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/embedded-sentry/";
+            },},{id: "projects-llm-powered-meeting-intelligence-platform",
+          title: 'LLM-Powered Meeting Intelligence Platform',
+          description: "United Nations diplomats often spend hours every week with vast amount of meeting transcripts and video recordings. To help them automate this process, our team developed LLM-based meeting analysis platform.",
+          section: "Projects",handler: () => {
+              window.location.href = "/projects/llm-meeting-intelligence/";
             },},{
         id: 'social-email',
         title: 'email',
