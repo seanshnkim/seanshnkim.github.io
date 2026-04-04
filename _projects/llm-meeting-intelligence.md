@@ -4,6 +4,9 @@ title: "LLM-Powered Meeting Intelligence Platform"
 permalink: /projects/llm-meeting-intelligence/
 description: "United Nations diplomats often spend hours every week with vast amount of meeting transcripts and video recordings. To help them automate this process, our team developed LLM-based meeting analysis platform."
 tags: ["MLOps", "CI/CD", "Cloud Engineering"]
+category: MLOps
+importance: 1
+timeline: "Sep – Dec 2025"
 toc:
   sidebar: left
 ---

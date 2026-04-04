@@ -7,12 +7,12 @@ profile:
   image: my-profile.jpg
   image_circular: false
 
-job_title: Embedded Systems & Firmware Engineer
+job_title:
 
 education: >
-  <strong>M.S. Computer Engineering</strong><br>
+  <strong>Computer Engineering, M.S.</strong><br>
   NYU Tandon School of Engineering<br>
-  Expected May 2026
+  Class of 2026
 
 selected_papers: false
 social: false
@@ -35,7 +35,7 @@ My interests in the field range from TinyML, MLOps to FreeRTOS, IoT, robotics an
 <div class="about-timeline">
 
   <div class="about-timeline-entry">
-    <h3>SSD Architecture Engineer</h3>
+    <h3>SSD Architecture Engineering Intern</h3>
     <div class="timeline-meta">Samsung Electronics | Jun - Aug 2025</div>
     <p>Worked as an intern in SSD Product Development Team. Simulated high-performance data transmission pipelines to assess system throughput in SSD, and conducted experiments including process control and unit tests. Identified potential bottlenecks in data read process by running various I/O workload tests within simulated environment.</p>
   </div>

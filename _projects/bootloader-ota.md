@@ -4,6 +4,9 @@ title: "Building a Bootloader with OTA Update"
 permalink: /projects/bootloader-ota/
 description: "A custom bootloader that enables Over-The-Air (OTA) update through Bluetooth."
 tags: ["Firmware", "STM32", "Dual Bank Memory"]
+category: Firmware
+importance: 1
+timeline: "Jan – Mar 2026"
 toc:
   sidebar: left
 ---

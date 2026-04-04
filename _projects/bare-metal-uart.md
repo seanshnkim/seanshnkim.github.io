@@ -4,6 +4,9 @@ title: "Bare-Metal UART Driver"
 permalink: /projects/bare-metal-uart/
 description: "UART is the simplest form of communication protocol in embedded systems. Built on STM32F429I, I walked through every building process of bare-metal UART driver from scratch."
 tags: ["Firmware", "UART", "BLE"]
+category: Firmware
+importance: 2
+timeline: "Feb – Mar 2026"
 toc:
   sidebar: left
 ---

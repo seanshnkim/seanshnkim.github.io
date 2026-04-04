@@ -4,6 +4,9 @@ title: "Embedded Sentry with Gyroscope"
 permalink: /projects/embedded-sentry/
 description: "The project demonstrates hand gesture matching algorithm using an in-built gyroscope."
 tags: ["Embedded Systems", "STM32"]
+category: Firmware
+importance: 3
+timeline: "Nov – Dec 2025"
 toc:
   sidebar: left
 ---

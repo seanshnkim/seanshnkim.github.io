@@ -23,6 +23,7 @@ featured_projects:
     tags: ["Embedded Systems", "STM32"]
 ---
 
-I'm Sean Kim — a Computer Engineer specializing in embedded systems and firmware, currently pursuing my M.S. at NYU Tandon.
-I write about the intersection of low-level hardware, real-time operating systems, and machine learning at the edge.
-This site documents the projects I build and the things I learn along the way.
+I'm **Sean**, a Computer Engineer specializing in **AI** and **embedded systems**. I like to solve problems that live under the hood — from firmware-level programming to AI engineering, I dig into the fundamentals.
+
+As a passionate follower of AI, I love experimenting with new tools to sharpen how I build and think.
+Lately, I often find myself asking: _what makes a great engineer, even in the age of AI_?
