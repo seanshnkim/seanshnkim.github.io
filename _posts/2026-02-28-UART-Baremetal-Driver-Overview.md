@@ -6,23 +6,32 @@ categories: Firmware
 toc: '{"beginning":true,"sidebar":"left"}'
 ---
 
-## 1. Project Overview
+## 1. What We're Building — and Why the Hard Way
 
-The project goal is to build an **interrupt-driven STM32 bare-metal UART driver**.
+The goal of this project is to build an **interrupt-driven STM32 UART driver from scratch**. By bare-metal it means, "with no HAL, no CubeMX, and no auto-generated code". Just registers, datasheets, and a blank `main.c`.
 
-A device driver is software that **abstracts hardware**. It sits between the OS (or application layer) and physical hardware, translating generic commands like `read()` / `write()` into hardware-specific register operations. Think of it as a "translator" between software that doesn't know about hardware specifics and hardware that doesn't know about software.
+Before diving in, it's worth being clear about what a device driver actually is. A _driver_ is software that **abstracts hardware**.
 
-Linux kernel driver runs on a laptop, interfaces via the kernel. Bare-metal / RTOS peripheral driver runs directly on MCU (e.g. STM32). No OS needed.
+It sits between the application layer (operating systems) and the physical hardware, translating generic commands like `read()` / `write()` into hardware-specific register operations. Think of it as a translator: the application doesn't need to know which specific hardware it's talking to, and the hardware doesn't need to know anything about your application.
 
-**Bare-metal** means "without relying on HAL or CubeMX-generated code". Then why such a hassle? It is to develop a deep understanding of register-level embedded programming. 그리고 임베디드 엔지니어로서, 추상화되어 있는 레이어를 벗겨내 그 안의 작동원리를 근본부터 파헤쳐보는 건 늘 재미있는 일이다.
+There are two broad categories of drivers:
 
-### In This Project, We Will Learn...
+- **Linux kernel drivers**: They run on a host computer, mediated by the OS kernel
+- **Bare-metal / RTOS peripheral drivers**: They run directly on an MCU like STM32, with no OS involved.
 
-- How hardware registers map to software
-- Experience with interrupt-driven design
-- **Peripheral initialization sequence**. every peripheral follows: enable clock → configure pins → set parameters → enable interrupt → enable peripheral
-- **Volatile and memory barrier discipline**. Learn why these matter in UART and it carries over directly
-- **Circular buffer / ring buffer**. A classic UART pattern for interrupt-driven RX that you'll reuse in other drivers
+This project falls into the second category. "Bare-metal" specifically means we're not relying on ST's Hardware Abstraction Layer (HAL) or any CubeMX-generated initialization code.
+
+But why are we putting ourselves through this "reinventing the wheel"? It's because writing register-level code forces you to understand exactly what the hardware is doing at every step. As an embedded engineer, peeling back the abstraction layers and digging into how things actually work at the foundation is one of the most satisfying parts of the job.
+
+### What You'll Learn From This Project (Or, What I Hoped to Learn)
+
+There is good news: every concept here generalizes directly to other peripherals and future drivers.
+
+- **How hardware registers map to software** — memory-mapped I/O is the foundation of all embedded peripheral programming.
+- **Interrupt-driven design** — understanding the difference between polling and interrupts, and why it matters for real systems.
+- **Peripheral initialization sequence** — every peripheral follows the similar pattern: enable clock → configure pins → set parameters → enable interrupt → enable peripheral. Once you learn it how to build UART, then SPI and I2C become much less intimidating
+- **`volatile` and memory barrier discipline** — learning why these keywords exist and when to use them
+- **Circular (ring) buffer** — this is a classic UART RX pattern you'll reuse in other drivers throughout your career
 
 ```
 1. Enable clocks    → RCC->AHB1ENR  (GPIOA)
@@ -43,17 +52,19 @@ Linux kernel driver runs on a laptop, interfaces via the kernel. Bare-metal / RT
 5. Write ISR        → USART1_IRQHandler()
 ```
 
-### In Phase 1, We Will....
+### Scope of Phase 1
 
-But we only started Phase 1 of the entire project. There are total three phases: Phase 1, Phase 2, and Phase 3. In this phase, we will:
+This series is broken into three phases. Phase 1 covers the groundwork:
 
-- Set up an empty bare-metal project in STM32CubeIDE. Since it's "bare-metal", there should be **NO** CubeMX or HAL code
-- Understand what startup file and linker script are actually doing
-- Write register-level code to 1) enable the clock and 2) configure GPIO
+- Sett up an empty bare-metal project in STM32CubeIDE. It's "bare-metal", meaning no CubeMX, or no HAL
+- Understand what startup file and linker script actually do
+- Write register-level code to enable the peripheral clock and configure GPIO
 
-### Does UART project help with SPI and I2C later?
+### Sidenote: Does UART Transfer to SPI and I2C?
 
-There are two other commonly used protocols: SPI and I2C. If I had to build a custom driver for SPI or I2C, how would they be different from UART?
+Before I chose to focus on UART, I actually considered two other protocols as well: **SPI** and **I2C**. If I had to build a custom driver for one of them, how would they be different from UART?
+
+The answer is Yes. UART is the right starting point because it's the simplest of the three protocols, but it introduces every foundational concept:
 
 ```
 UART (interrupt-driven)
@@ -64,13 +75,16 @@ I2C
     ↓ hardest — adds addressing, ACK, repeated start, state machine
 ```
 
-If I were to implement bare-metal SPI and I2C driver, then Interrupt patterns, register workflow, and init sequence all transfer. However, code will not be reused directly.
+- Interrupt patterns
+- Register workflow
+- Initialization sequence
+  They all carry over to SPI and I2C. The actual code won't be reused directly, but the mental model transfers completely.
 
-UART is the best starting point. It's the simplest protocol but exposes every foundational concept.
+Again, UART is the best starting point. It's the simplest protocol but exposes every foundational concept.
 
 ---
 
-## 2. Hardware to Prepare
+## 2. Hardware Setup
 
 {% include figure.liquid
    loading="eager"
@@ -78,10 +92,13 @@ UART is the best starting point. It's the simplest protocol but exposes every fo
    class="img-fluid rounded z-depth-1" width="500px"
    %}
 
-![[hardware-to-prepare_labeled.jpg]]
+The hardware setup is minimal:
 
-With a STM32 board, a cable, and a laptop with STM32CubeIDE installed, you can easily build your own custom STM32 bare-metal UART driver.
-I used STM32F429I-DISC1, but any other STM32F4xxx board is fine.
+- an STM32 development board
+- a USB cable
+- a laptop with STM32CubeIDE installed
+
+I used the **STM32F429I-DISC1**, but any STM32F4xx series board should work with minor adjustments.
 
 | Item                     | Detail                                               |
 | ------------------------ | ---------------------------------------------------- |
@@ -95,12 +112,7 @@ I used STM32F429I-DISC1, but any other STM32F4xxx board is fine.
 
 ### 2.1. Do I need a USB-to-TTL serial adaptor?
 
-The answer is "No".
-To explain first what a USB-to-TTL serial adaptor is, and why it may be necessary:
-
-My laptop sends data over USB (=protocol), but my STM32 board receives data through UART at TTL-level serial. The adapter converts USB packets ↔ UART frames so your PC can open a COM port and exchange serial data with the MCU. Without it, you'd have no way to connect a bare UART to a PC directly. That's why we should raise this question: Do I need a USB-to-TTL serial adaptor?
-
-Thanks to on-board ST-Link V2 debugger, it handles the adaptor's task. To be more specific, the ST-Link firmware exposes a **Virtual COM Port (VCP)** which the PC sees as a standard serial port.
+No, and here's why that question is worth asking in the first place.
 
 ```
 PC (USB)  ←→       ST-Link MCU         ←→  Target MCU UART (STM32F429)
@@ -108,7 +120,11 @@ PC (USB)  ←→       ST-Link MCU         ←→  Target MCU UART (STM32F429)
                 acts as the bridge
 ```
 
-In the STM32F429I-DISC1 user manual (UM1670), it says:
+A laptop communicates over USB, but an STM32 UART peripheral speaks TTL-level serial. Normally, you'd need a USB-to-TTL adapter to bridge those two worlds. The adaptor converts USB packets to UART frames so your PC can open a COM port, and exchange serial data with the MCU. Without one, there's no straightforward way to connect a bare UART pin to a laptop.
+
+On the STM32F429I-DISC1, however, the on-board **ST-Link V2 debugger** handles this automatically. The ST-Link firmware exposes a **Virtual COM Port (VCP)**, which the PC sees as a standard serial port. To summarize it, no external adapter is needed.
+
+From the STM32F429I-DISC1 user manual (UM1670, p.15):
 
 > "The ST-LINK/V2-B on STM32F429I-DISC1 supports Virtual COM port (VCP) on U2 pin 12 (ST-LINK_TX) and U2 pin 13 (ST-LINK_RX), which are connected to the STM32F429 target STM32 USART1 (PA9, PA10) for Mbed support, thanks to the SB11 and SB15 solder bridges."[^3]
 
@@ -118,12 +134,12 @@ In the STM32F429I-DISC1 user manual (UM1670), it says:
    class="img-fluid rounded z-depth-1" width="500px"
    %}
 
-![[solder-bridge.jpg | 500]]
+### 2.2. USART1 vs. PA9/PA10 — What's the Difference?
 
-### 2.2. I'm confused with the terms: USART1 vs. PA9 (or PA10)
+To be honest, this point confused me while I was digging into datasheets. It seemed like `USART1` and `PA9` all refer to the same thing. But they actually represent different concepts.
 
-- **USART1** is the _peripheral_. It is the hardware block inside the STM32 chip that handles serial communication.
-- **PA9 and PA10** are the _physical pins_ on the chip where USART1's TX and RX signals come out.
+- **USART1** is the _peripheral_. A hardware block inside the STM32 chip that handles serial communication logic
+- **PA9 and PA10** are the _physical pins_ on the chip where USART1's TX and RX signals appear in the real world
 
 If configured USART1 in software, but the signal only appears in the real world through PA9 (TX) and PA10 (RX). The setup is:
 
@@ -133,33 +149,32 @@ STM32F429 (USART1) → PA9/PA10 → SB11/SB15 → ST-Link VCP → USB → Laptop
 
 ## 3. Setting Up a Bare-Metal Project in STM32CubeIDE
 
-Before writing the driver, let's check if my Linux laptop detects the STM32 board.
+Before writing any driver code, let's verify that the board is visible to my Linux laptop (the host machine).
 
-1. Plug your board into your laptop via USB
-2. Check which COM port / ttyUSB device your laptop sees the board as
+Plug the board in via USB, then run:
 
-Linux command that lists out any file (device is also considered file in Linux) named `/dev/ttyACM*`:
-
-```
+```bash
 ls /dev/ttyACM*
 
-# or if Mac:
+# On macOS:
 ls /dev/ttyUSB*
 ```
 
-I see the STM board is detected as `/dev/tty/ACM0`.
+I saw my STM board is detected as `/dev/tty/ACM0` in Linux laptop. If nothing appears, check the USB cable and confirm the ST-Link firmware is up to date.
 
-And then, follow these steps carefully:
+Once confirmed, create the project:
 
 1. Open STM32CubeIDE
 2. `File → New → STM32 Project`
-3. In the Board Selector, search for **STM32F429I-DISC1** in Commercial Part Number (your exact chip)
-4. Click on the uploaded board item on the bottom of the right window, and click Next
-5. Give it a name like `uart_bare_metal`
-6. **THIS IS IMPORTANT**: Under **"Targeted Project Type"** — select **`Empty`**, not STM32Cube. Leave everything as it is. Click Finish
+3. In the Board Selector, search for **STM32F429I-DISC1** (or your exact chip) in Commercial Part Number
+4. Select the board entry (on the right bottom panel) and click Next
+5. Give a project name, e.g. `uart_bare_metal`
+6. Under "Targeted Project Type," select **`Empty`**, not `STM32Cube`. If you click `STM32Cube`, it will create all the HAL and CubeMX template code automatically, which is unnecessary for a bare-metal project!
+7. Click Finish.
 
-This is the key difference. Selecting `Empty` gives you a minimal project without HAL, without CubeMX, without generated code. There is just the startup file, linker script, and a blank `main.c`.
-Once created, a project structure should be like:
+Selecting `Empty` option gives you a minimal project with no HAL, no CubeMX, or no generated code. Just the startup file, the linker script, and a blank `main.c` exists only.
+
+Once created, the resulting project structure should look like:
 
 ```
 uart_bare_metal/
@@ -179,12 +194,9 @@ uart_bare_metal/
    class="img-fluid rounded z-depth-1" width="500px"
    %}
 
-![[empty-project-file-structure1.png]]
+There's one more step before the project will build cleanly. If you try to build the project with these default files, it will return multiple errors. It's because we're missing the **CMSIS and STM32 device headers.** These define the register structures that all your driver code will depend on. Although the project is bare-metal, it still needs software support from the CMSIS and STM32 device headers.
 
-However, this is not enough. If you build the project only with the default files, it will return many errors.
-Although it is a bare-metal project, it still needs software support from STM and CMSIS headers.
-
-![[empty-project-file-structure2.png | 500]]
+The easiest way to get the headers is to copy them from an existing STM32Cube project.
 
 {% include figure.liquid
    loading="eager"
@@ -192,7 +204,7 @@ Although it is a bare-metal project, it still needs software support from STM an
    class="img-fluid rounded z-depth-1" width="500px"
    %}
 
-Here are the headers that must be inserted under `Inc` folder. The easiest way to create these files is to just copy and paste them from an existing project (any project that is created with STM32Cube configuration, not Empty).
+Add the following files under `Inc/`:
 
 ```
 Inc
@@ -206,41 +218,41 @@ Inc
 ├── system_stm32f4xx.h
 ```
 
-And a source file `system_stm32f4xx.c`, that configures the system clock (HCLK), sets up flash memory latency, and initializes the microcontroller after reset:
+And add a source file `system_stm32f4xx.c` under `Src/`. `system_stm32f4xx.c` configures the system clock (HCLK), sets up flash memory latency, and initializes the microcontroller after reset:
 
 ```
 Src
 ├── system_stm32f4xx.c
 ```
 
-### 3.1 What's the Purpose of Startup File (`startup_stm32f429zitx.s`)?
+### 3.1. What Does the Startup File Actually Do?
 
-Startup file prepares C runtime environment before `main()`. There is common misconception here — the startup file does NOT initialize peripherals or clocks.
+I once had a common misconception about the startup file (`startup_stm32f429zitx.s`): "Doesn't it initialize peripherals or clocks?"
+The answer is No, it does not initialize peripherals or clocks. That's a programmer's job to implement in `main()` function. What the startup file does is prepare the C runtime environment so that `main()` can run at all.
 
-**What it actually does (in order):**
+In order, it:
 
 1. Sets up the **stack pointer**
-2. Calls `SystemInit()` (minimal clock setup, runs before `main()`)
+2. Calls `SystemInit()` — minimal clock setup, runs before `main()`
 3. Copies **initialized global variables** from flash to RAM
-4. **Zero-fills the BSS segment** (uninitialized globals)
-5. Calls **static constructors**
+4. **Zero-fills the BSS segment** — clears uninitialized globals to 0
+5. Calls **static constructors** (relevant for C++)
 6. Calls **`main()`**
 
-The peripheral and clock initialization is programmer's responsibility to fill inside `main()`.
+Think of it as the behind-the-scenes work that makes C's memory model work correctly before your first line of code executes. Again, the peripheral and clock initialization is a programmer's responsibility to fill inside `main()`.
 
-### 3.2 Linker Script (`STM32F429ZITX_FLASH.ld`)
+### 3.2. Which Linker Script to Use?
 
-The linker script tells the linker **where to place code, data, and stack in memory**.  
-Two linker scripts exist:
+Two linker scripts are generated by default:
 
-- `FLASH.ld` — normal use, code lives permanently in flash -> Use this
-- `RAM.ld` — loads code entirely into RAM (faster debug, not standard)
+- **`FLASH.ld`** — the standard configuration: code lives permanently in flash, data in RAM. **Use this one.**
+- **`RAM.ld`** — loads everything into RAM. Faster for debug cycles but not suitable for normal use.
 
-### 3.3. Sidenote
+The linker script tells the linker **where to place code, data, and stack in memory**.
 
-**`syscalls.c` and `sysmem.c`** are minimal C runtime stubs. They provide bare-bones implementations of system calls like `_write()` and `_sbrk()` that the C standard library expects to exist.
+### 3.3. What Are `syscalls.c` and `sysmem.c`?
 
-**Two linker scripts**: `FLASH.ld` and `RAM.ld`. FLASH is the normal configuration where code lives permanently in flash memory. RAM.ld is for loading code entirely into RAM (useful for faster debug cycles, but not what we want here).
+These are minimal C runtime stubs. The C standard library assumes certain low-level functions exist, such as `_write()` (used by `printf`) and `_sbrk()` (used by `malloc`). On a bare-metal system with no OS, there's nothing to provide these by default. `syscalls.c` and `sysmem.c` provide empty or minimal implementations so the linker doesn't complain. You can ignore them for the purposes of this driver.
 
 ---
 
