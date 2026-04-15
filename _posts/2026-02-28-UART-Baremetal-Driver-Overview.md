@@ -14,77 +14,62 @@ Before diving in, it's worth being clear about what a device driver actually is.
 
 It sits between the application layer (operating systems) and the physical hardware, translating generic commands like `read()` / `write()` into hardware-specific register operations. Think of it as a translator: the application doesn't need to know which specific hardware it's talking to, and the hardware doesn't need to know anything about your application.
 
+{% include figure.liquid
+   loading="eager"
+   path="/assets/post-attachments/2026-02-28/driver-illustration.jpeg"
+   class="img-fluid rounded z-depth-1" width="500px"
+   %}
+
 There are two broad categories of drivers:
 
 - **Linux kernel drivers**: They run on a host computer, mediated by the OS kernel
-- **Bare-metal / RTOS peripheral drivers**: They run directly on an MCU like STM32, with no OS involved.
+- **Bare-metal / RTOS peripheral drivers**: They run directly on a microcontroller chip (MCU) like STM32. No operating system is involved.
 
-This project falls into the second category. "Bare-metal" specifically means we're not relying on ST's Hardware Abstraction Layer (HAL) or any CubeMX-generated initialization code.
-
+This project falls into the second category. "Bare-metal" specifically means we're not relying on ST's Hardware Abstraction Layer (HAL) or any CubeMX-generated initialization code. And discarding software abstractions means committing to incredibly tedious, low-level work.
 But why are we putting ourselves through this "reinventing the wheel"? It's because writing register-level code forces you to understand exactly what the hardware is doing at every step. As an embedded engineer, peeling back the abstraction layers and digging into how things actually work at the foundation is one of the most satisfying parts of the job.
 
 ### What You'll Learn From This Project (Or, What I Hoped to Learn)
 
 There is good news: every concept here generalizes directly to other peripherals and future drivers.
 
-- **How hardware registers map to software** — memory-mapped I/O is the foundation of all embedded peripheral programming.
-- **Interrupt-driven design** — understanding the difference between polling and interrupts, and why it matters for real systems.
+- **How hardware registers map to software** — memory-mapped I/O is the foundation of all embedded peripheral programming
+- **Interrupt-driven design** — understanding the difference between polling and interrupts, and why it matters for real systems
 - **Peripheral initialization sequence** — every peripheral follows the similar pattern: enable clock → configure pins → set parameters → enable interrupt → enable peripheral. Once you learn it how to build UART, then SPI and I2C become much less intimidating
 - **`volatile` and memory barrier discipline** — learning why these keywords exist and when to use them
 - **Circular (ring) buffer** — this is a classic UART RX pattern you'll reuse in other drivers throughout your career
 
+---
+
+## 2. The Full Roadmap of the Project
+
 ```
+========== PHASE 1 ==========
 1. Enable clocks    → RCC->AHB1ENR  (GPIOA)
                     → RCC->APB2ENR  (USART1)
 
 2. Configure pins   → PA9, PA10 to Alternate Function mode
                     → Set AF7 for both pins
 
+========== PHASE 2 ==========
 3. Configure USART1 → Set BRR (baud rate)
                     → Set word length, stop bits, parity
-                    → Enable TX, RX
+                    → Enable TX/RX (Transmit and Receive)
                     → Enable RXNE interrupt
                     → Enable USART1 (UE bit)
 
-4. Configure NVIC   → Enable USART1_IRQn
+========== PHASE 3 ==========
+4. Configure NVIC   → Enable USART1_IRQn (NVIC_EnableIRQ)
                     → Set priority
 
 5. Write ISR        → USART1_IRQHandler()
+
+========== PHASE 4 ==========
+6. Implement Circular Buffer
 ```
-
-### Scope of Phase 1
-
-This series is broken into three phases. Phase 1 covers the groundwork:
-
-- Sett up an empty bare-metal project in STM32CubeIDE. It's "bare-metal", meaning no CubeMX, or no HAL
-- Understand what startup file and linker script actually do
-- Write register-level code to enable the peripheral clock and configure GPIO
-
-### Sidenote: Does UART Transfer to SPI and I2C?
-
-Before I chose to focus on UART, I actually considered two other protocols as well: **SPI** and **I2C**. If I had to build a custom driver for one of them, how would they be different from UART?
-
-The answer is Yes. UART is the right starting point because it's the simplest of the three protocols, but it introduces every foundational concept:
-
-```
-UART (interrupt-driven)
-    ↓ teaches you interrupt patterns + register workflow
-SPI
-    ↓ same foundation, adds duplex + mode configuration
-I2C
-    ↓ hardest — adds addressing, ACK, repeated start, state machine
-```
-
-- Interrupt patterns
-- Register workflow
-- Initialization sequence
-  They all carry over to SPI and I2C. The actual code won't be reused directly, but the mental model transfers completely.
-
-Again, UART is the best starting point. It's the simplest protocol but exposes every foundational concept.
 
 ---
 
-## 2. Hardware Setup
+## 3. Setting Up Hardware
 
 {% include figure.liquid
    loading="eager"
@@ -100,57 +85,17 @@ The hardware setup is minimal:
 
 I used the **STM32F429I-DISC1**, but any STM32F4xx series board should work with minor adjustments.
 
-| Item                     | Detail                                               |
-| ------------------------ | ---------------------------------------------------- |
-| Board                    | STM32F429I-DISC1                                     |
-| USART peripheral         | USART1                                               |
-| TX pin                   | PA9                                                  |
-| RX pin                   | PA10                                                 |
-| Connection path          | PA9/PA10 → SB11/SB15 (closed ✅) → ST-Link VCP → USB |
-| USB-to-TTL adapter       | Not needed — ST-Link VCP handles it                  |
-| Solder bridges SB11/SB15 | Closed ✅ (verified physically)                      |
+| Item                     | Detail                                            |
+| ------------------------ | ------------------------------------------------- |
+| Board                    | STM32F429I-DISC1                                  |
+| USART peripheral         | USART1                                            |
+| TX pin                   | PA9                                               |
+| RX pin                   | PA10                                              |
+| Connection path          | PA9/PA10 → SB11/SB15 (closed) → ST-Link VCP → USB |
+| USB-to-TTL adapter       | Not needed — ST-Link VCP handles it               |
+| Solder bridges SB11/SB15 | Closed (verified physically)                      |
 
-### 2.1. Do I need a USB-to-TTL serial adaptor?
-
-No, and here's why that question is worth asking in the first place.
-
-```
-PC (USB)  ←→       ST-Link MCU         ←→  Target MCU UART (STM32F429)
-              [VCP / USB-CDC class]        [via SB11/SB15 solder bridges]
-                acts as the bridge
-```
-
-A laptop communicates over USB, but an STM32 UART peripheral speaks TTL-level serial. Normally, you'd need a USB-to-TTL adapter to bridge those two worlds. The adaptor converts USB packets to UART frames so your PC can open a COM port, and exchange serial data with the MCU. Without one, there's no straightforward way to connect a bare UART pin to a laptop.
-
-On the STM32F429I-DISC1, however, the on-board **ST-Link V2 debugger** handles this automatically. The ST-Link firmware exposes a **Virtual COM Port (VCP)**, which the PC sees as a standard serial port. To summarize it, no external adapter is needed.
-
-From the STM32F429I-DISC1 user manual (UM1670, p.15):
-
-> "The ST-LINK/V2-B on STM32F429I-DISC1 supports Virtual COM port (VCP) on U2 pin 12 (ST-LINK_TX) and U2 pin 13 (ST-LINK_RX), which are connected to the STM32F429 target STM32 USART1 (PA9, PA10) for Mbed support, thanks to the SB11 and SB15 solder bridges."[^3]
-
-{% include figure.liquid
-   loading="eager"
-   path="/assets/post-attachments/2026-02-28/solder-bridge.jpeg"
-   class="img-fluid rounded z-depth-1" width="500px"
-   %}
-
-### 2.2. USART1 vs. PA9/PA10 — What's the Difference?
-
-To be honest, this point confused me while I was digging into datasheets. It seemed like `USART1` and `PA9` all refer to the same thing. But they actually represent different concepts.
-
-- **USART1** is the _peripheral_. A hardware block inside the STM32 chip that handles serial communication logic
-- **PA9 and PA10** are the _physical pins_ on the chip where USART1's TX and RX signals appear in the real world
-
-If configured USART1 in software, but the signal only appears in the real world through PA9 (TX) and PA10 (RX). The setup is:
-
-```
-STM32F429 (USART1) → PA9/PA10 → SB11/SB15 → ST-Link VCP → USB → Laptop
-```
-
-## 3. Setting Up a Bare-Metal Project in STM32CubeIDE
-
-Before writing any driver code, let's verify that the board is visible to my Linux laptop (the host machine).
-
+Before writing any code, let's verify that the board is visible to my Linux laptop (the host machine).
 Plug the board in via USB, then run:
 
 ```bash
@@ -162,7 +107,11 @@ ls /dev/ttyUSB*
 
 I saw my STM board is detected as `/dev/tty/ACM0` in Linux laptop. If nothing appears, check the USB cable and confirm the ST-Link firmware is up to date.
 
-Once confirmed, create the project:
+---
+
+## 4. Setting Up a Bare-Metal Project in STM32CubeIDE
+
+As hardware is all set up, let's get our software ready:
 
 1. Open STM32CubeIDE
 2. `File → New → STM32 Project`
@@ -225,12 +174,72 @@ Src
 ├── system_stm32f4xx.c
 ```
 
-### 3.1. What Does the Startup File Actually Do?
+---
+
+## 5. Sidenotes (Questions You Might Have Asked... Or Not)
+
+### 5.1. Does Learning How to Build a UART Driver Transfer to SPI and I2C Driver?
+
+**Yes**. UART is the right starting point because it's the simplest of the three protocols, but it introduces every foundational concept.
+
+```
+UART (interrupt-driven)
+    ↓ teaches you interrupt patterns + register workflow
+SPI
+    ↓ same foundation, adds duplex + mode configuration
+I2C
+    ↓ hardest — adds addressing, ACK, repeated start, state machine
+```
+
+- Interrupt patterns
+- Register workflow
+- Initialization sequence
+
+Most of the actual code of SPI or I2C driver won't be reused directly, but the mental model will transfer completely. I actually considered choosing either **SPI** or **I2C** as the project topic, but UART still seems to be the best starting point. It's the simplest protocol but exposes every foundational concept.
+
+### 5.2. Do I Need a USB-to-TTL Serial Adaptor For Debugging?
+
+**No**. But here's why that question is worth asking in the first place.
+
+```
+PC (USB)  ←→       ST-Link MCU         ←→  Target MCU UART (STM32F429)
+              [VCP / USB-CDC class]        [via SB11/SB15 solder bridges]
+                acts as the bridge
+```
+
+A laptop communicates over USB, but an STM32 UART peripheral speaks TTL-level serial. Normally, you'd need a USB-to-TTL adapter to bridge those two worlds. The adaptor converts USB packets to UART frames so your PC can open a COM port, and exchange serial data with the MCU. Without one, there's no straightforward way to connect a bare UART pin to a laptop.
+
+On the STM32F429I-DISC1, however, the on-board **ST-Link V2 debugger** handles this automatically. The ST-Link firmware exposes a **Virtual COM Port (VCP)**, which the PC sees as a standard serial port. To summarize it, no external adapter is needed.
+
+From the STM32F429I-DISC1 user manual (UM1670, p.15):
+
+> "The ST-LINK/V2-B on STM32F429I-DISC1 supports Virtual COM port (VCP) on U2 pin 12 (ST-LINK_TX) and U2 pin 13 (ST-LINK_RX), which are connected to the STM32F429 target STM32 USART1 (PA9, PA10) for Mbed support, thanks to the SB11 and SB15 solder bridges."[^3]
+
+{% include figure.liquid
+   loading="eager"
+   path="/assets/post-attachments/2026-02-28/solder-bridge.jpeg"
+   class="img-fluid rounded z-depth-1" width="500px"
+   %}
+
+### 5.3. USART1 vs. PA9/PA10 — What's the Difference?
+
+To be honest, this point confused me while I was digging into the datasheets. It seemed like `USART1` and `PA9` all refer to the same thing. But they actually represent different concepts.
+
+- **USART1** is the _peripheral_. A hardware block inside the STM32 chip that handles serial communication logic
+- **PA9 and PA10** are the _physical pins_ on the chip where USART1's TX and RX signals appear in the real world
+
+If configured USART1 in software, but the signal only appears in the real world through PA9 (TX) and PA10 (RX). The setup is:
+
+```
+STM32F429 (USART1) → PA9/PA10 → SB11/SB15 → ST-Link VCP → USB → Laptop
+```
+
+### 5.4. What Does The Startup File Actually Do?
 
 I once had a common misconception about the startup file (`startup_stm32f429zitx.s`): "Doesn't it initialize peripherals or clocks?"
-The answer is No, it does not initialize peripherals or clocks. That's a programmer's job to implement in `main()` function. What the startup file does is prepare the C runtime environment so that `main()` can run at all.
+The answer is **No**. It does not initialize peripherals or clocks. That's a programmer's job to implement in `main()` function. What the startup file does is prepare the C runtime environment so that `main()` can run at all.
 
-In order, it:
+The startup file takes steps in the following order:
 
 1. Sets up the **stack pointer**
 2. Calls `SystemInit()` — minimal clock setup, runs before `main()`
@@ -239,28 +248,32 @@ In order, it:
 5. Calls **static constructors** (relevant for C++)
 6. Calls **`main()`**
 
-Think of it as the behind-the-scenes work that makes C's memory model work correctly before your first line of code executes. Again, the peripheral and clock initialization is a programmer's responsibility to fill inside `main()`.
+It works behind-the-scenes, making C's memory model work correctly before your first line of code executes.
+That said, **the peripheral and clock initialization is a programmer's responsibility to fill inside `main()`.**
 
-### 3.2. Which Linker Script to Use?
+### 5.5. I See Two Linker Scripts Created. Which Linker Script Do I Use?
 
-Two linker scripts are generated by default:
+The linker script tells the linker **where to place code, data, and stack in memory**. There are two linker scripts generated by default in a STM32CubeIDE project:
 
-- **`FLASH.ld`** — the standard configuration: code lives permanently in flash, data in RAM. **Use this one.**
+- **`FLASH.ld`** — the standard configuration: code lives permanently in flash, data in RAM.
 - **`RAM.ld`** — loads everything into RAM. Faster for debug cycles but not suitable for normal use.
 
-The linker script tells the linker **where to place code, data, and stack in memory**.
+We don't need RAM linker script for now; instead, we will be using `FLASH.ld` only.
 
-### 3.3. What Are `syscalls.c` and `sysmem.c`?
+### 5.6. What Are `syscalls.c` and `sysmem.c`?
 
-These are minimal C runtime stubs. The C standard library assumes certain low-level functions exist, such as `_write()` (used by `printf`) and `_sbrk()` (used by `malloc`). On a bare-metal system with no OS, there's nothing to provide these by default. `syscalls.c` and `sysmem.c` provide empty or minimal implementations so the linker doesn't complain. You can ignore them for the purposes of this driver.
+They are minimal C runtime stubs. The C standard library assumes certain low-level functions exist, such as `_write()` (used by `printf`) and `_sbrk()` (used by `malloc`). On a bare-metal system with no OS, there's nothing to provide these by default. `syscalls.c` and `sysmem.c` provide empty or minimal implementations so the linker doesn't complain. You can ignore them for the purposes of this driver.
 
 ---
 
-**Key reference documents:**
+## 6. Reference For The Project
 
-- RM0090 — STM32F429 Reference Manual (main register reference)
-- UM1670 — STM32F429I-DISC1 User Manual (board-level details)
-- STM32F429 Datasheet — Table 11 (alternate function mapping), Table 12 (pin definitions)
+There are two main datasheets for STM32F429I-DISC1.
+
+1. RM0090: 1,757 page long, Reference Manual (STM32F405/415, STM32F407/417, STM32F427/437 and STM32F429/439 advanced Arm®-based 32-bit MCUs)
+2. UM1670: 32 page long, User Manual (Discovery kit with STM32F429ZI MCU)
+
+RM0090 has general information about registers of STM32F4xx devices, while UM1670 has specific pin numbers or AF (Alternate Function) numbers for the STM32F429I-DISC1 device.
 
 [^1]: p.270, 8.3. GPIO functional description, RM0090 Reference Manual
 
