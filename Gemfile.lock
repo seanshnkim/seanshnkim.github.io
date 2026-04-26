@@ -36,6 +36,7 @@ GEM
     css_parser (1.21.0)
       addressable
     cssminify2 (2.0.1)
+    csv (3.3.5)
     deep_merge (1.2.2)
     drb (2.2.1)
     em-websocket (0.5.3)
@@ -215,6 +216,7 @@ PLATFORMS
 DEPENDENCIES
   classifier-reborn
   css_parser
+  csv
   jekyll
   jekyll-archives
   jekyll-email-protect

@@ -1,5 +1,3 @@
-require 'feedjira'
-require 'httparty'
 require 'jekyll'
 require 'nokogiri'
 require 'time'
@@ -11,6 +9,8 @@ module ExternalPosts
 
     def generate(site)
       if site.config['external_sources'] != nil
+        require 'feedjira'  # only load when external_sources is configured
+        require 'httparty'  # add feedjira + httparty to Gemfile if you enable external_sources
         site.config['external_sources'].each do |src|
           puts "Fetching external posts from #{src['name']}:"
           if src['rss_url']

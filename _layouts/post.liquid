@@ -77,12 +77,7 @@ layout: default
     {% include citation.liquid %}
   {% endif %}
 
-  {% if page.related_publications %}
-    <h2>References</h2>
-    <div class="publications">
-      {% bibliography --group_by none --cited_in_order %}
-    </div>
-  {% endif %}
+  <!-- related_publications block removed (requires jekyll-scholar) -->
 
   {% if site.disqus_shortname and page.disqus_comments %}
     {% include disqus.liquid %}
