@@ -23,9 +23,9 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/projects/";
           },
-        },{id: "post-uart-bare-metal-driver-phase-2-baud-rate-control-register-and-nvic",
+        },{id: "post-uart-bare-metal-driver-phase-2-baud-rate-and-control-registers",
       
-        title: "UART Bare-Metal Driver Phase 2: Baud Rate, Control Register, and NVIC",
+        title: "UART Bare-Metal Driver Phase 2: Baud Rate and Control Registers",
       
       description: "",
       section: "Posts",
@@ -34,9 +34,9 @@ ninja.data = [{
           window.location.href = "/blog/2026/UART-Baremetal-Driver-Phase2/";
         
       },
-    },{id: "post-uart-bare-metal-driver-phase-1-clock-init-and-gpio-configuration",
+    },{id: "post-uart-bare-metal-driver-phase-1-initializing-clock-and-configuring-gpio-pins",
       
-        title: "UART Bare-Metal Driver Phase 1: Clock Init and GPIO Configuration",
+        title: "UART Bare-Metal Driver Phase 1: Initializing Clock and Configuring GPIO Pins",
       
       description: "",
       section: "Posts",
