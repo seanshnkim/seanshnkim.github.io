@@ -4,7 +4,7 @@ title: External Clock Will Not Work Unless You Have A External Hardware
 date: 2025-11-14 23:48:46
 description:
 tags:
-categories: TIL
+categories: ["Today I Learned"]
 ---
 
 Today I worked on setting up Real Time Clock (RTC) on STM32 board. I spent more than a few hours debugging - or actually prompting AI.

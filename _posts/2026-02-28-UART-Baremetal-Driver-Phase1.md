@@ -1,11 +1,13 @@
 ---
 layout: post
-title: "UART Bare-Metal Driver Phase 1: Clock Init and GPIO Configuration"
+title: "UART Bare-Metal Driver Phase 1: Initializing Clock and Configuring GPIO Pins"
 date: 2026-02-28 22:45:47
 categories: Firmware
-toc: '{"beginning":true,"sidebar":"left"}'
+toc:
+  beginning: true
+  sidebar: left
 ---
-
+   
 ## Phase 1 Roadmap: From Clock, GPIO, to Alternate Function
 
 ```
@@ -123,7 +125,7 @@ void uart_init(void)
 This is a question worth pausing on.
 
 - **AHB** stands for **Advanced High Performance Bus**, a high-speed bus for high-bandwidth components: CPU, DMA controllers, and flash memory. Also where **GPIO**s live, because they need fast response times.
-- **APB** stands for **Advanced Peripheral Bus**. **AHB** is a lower-speed, lower-power bus for peripherals that don't require high data rates: UART, Timers, I2C.
+- **APB** stands for **Advanced Peripheral Bus**. **APB** is a lower-speed, lower-power bus for peripherals that don't require high data rates: UART, Timers, I2C.
 
 USART1 is on APB2 rather than AHB because a serial communication peripheral topping out at a few megabits per second simply doesn't need a high-speed bus. Putting it on APB keeps power consumption down.
 

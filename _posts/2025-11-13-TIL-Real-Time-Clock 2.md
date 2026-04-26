@@ -4,7 +4,7 @@ title: Clock Sources and Types in STM32
 date: 2025-11-13 23:38:08
 description:
 tags:
-categories: TIL
+categories: ["Today I Learned"]
 ---
 
 ## Acknowledgements

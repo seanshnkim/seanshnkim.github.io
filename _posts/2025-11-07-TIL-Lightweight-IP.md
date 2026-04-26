@@ -2,7 +2,7 @@
 layout: post
 title: LightWeight IP (lwIP)
 date: 2025-11-07 21:58:27
-categories: TIL
+categories: ["Today I Learned"]
 ---
 
 ## Lightweight IP

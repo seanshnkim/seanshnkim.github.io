@@ -2,7 +2,7 @@
 layout: post
 title: "fork() vs. clone(): What is the difference?"
 date: 2025-11-17 23:48:01
-categories: TIL
+categories: ["Today I Learned"]
 ---
 
 ## `fork()`

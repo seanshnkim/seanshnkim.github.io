@@ -4,7 +4,7 @@ title: Real Time Clock in STM32
 date: 2025-11-11 21:08:46
 description:
 tags:
-categories: TIL
+categories: ["Today I Learned"]
 ---
 
 ## What is Real Time Clock (RTC)?

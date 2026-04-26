@@ -3,7 +3,9 @@ layout: post
 title: UART Bare-Metal Driver Project Overview
 date: 2026-02-28 16:17:34
 categories: Firmware
-toc: '{"beginning":true,"sidebar":"left"}'
+toc:
+   beginning: true
+   sidebar: left
 ---
 
 ## 1. What We're Building — and Why the Hard Way

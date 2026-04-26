@@ -4,7 +4,7 @@ title: Basic Keywords for Developing a Linux Device Driver
 date: 2025-11-23 23:48:41
 description:
 tags:
-categories: TIL
+categories: ["Today I Learned"]
 ---
 
 ## 1. Character Device vs. Block Device
